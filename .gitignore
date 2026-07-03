@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ShiftBench local data and experiment artifacts
+data/raw/
+data/processed/
+data/external/
+runs/*
+results/*
+artifacts/
+!runs/.gitkeep
+!results/.gitkeep
