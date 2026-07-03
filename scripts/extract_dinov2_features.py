@@ -1,4 +1,4 @@
-"""TODO scaffold for frozen DINOv2 feature extraction."""
+"""Scaffold for frozen DINOv2 feature extraction."""
 import argparse
 import csv
 import os
