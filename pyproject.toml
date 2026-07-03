@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shiftbench"
+version = "0.1.0"
+description = "Research benchmark for real and synthetic dataset mixture shifts."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "ShiftBench contributors" }
+]
+dependencies = []
+
+[project.scripts]
+shiftbench-run = "shiftbench.experiments.run:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

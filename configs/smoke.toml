@@ -1,0 +1,21 @@
+[experiment]
+name = "smoke"
+seed = 42
+output_root = "../runs"
+
+[dataset]
+path = "../data/sample/tiny_shiftbench.csv"
+required_columns = [
+  "sample_id",
+  "split",
+  "source",
+  "label",
+  "text",
+]
+id_column = "sample_id"
+split_column = "split"
+source_column = "source"
+label_column = "label"
+text_column = "text"
+allowed_splits = ["train", "validation", "test"]
+allowed_sources = ["real", "synthetic"]
