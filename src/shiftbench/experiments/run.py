@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser, Namespace
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from shutil import copy2
@@ -13,8 +14,12 @@ import random
 import subprocess
 import sys
 
-from shiftbench.config import ExperimentConfig, load_experiment_config
+import numpy as np
+
+from shiftbench.config import ExperimentConfig, ShiftConfig, load_experiment_config
 from shiftbench.datasets.schema import validate_csv_dataset
+from shiftbench.metrics import get_metric
+from shiftbench.provenance import describe, require_same_encoder
 
 
 def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
@@ -37,12 +42,7 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
 
     config = load_experiment_config(config_path)
     if output_root is not None:
-        config = ExperimentConfig(
-            name=config.name,
-            seed=config.seed,
-            output_root=output_root.resolve(),
-            dataset=config.dataset,
-        )
+        config = replace(config, output_root=output_root.resolve())
 
     random.seed(config.seed)
     run_dir = _create_run_dir(config)
@@ -70,6 +70,19 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
         "source_counts": dict(validation.source_counts),
         "label_counts": dict(validation.label_counts),
     }
+
+    if config.shift is not None:
+        try:
+            metrics["shift"] = _compute_shift_metrics(config.shift)
+        except ValueError as error:
+            _write_log(
+                run_dir,
+                config,
+                status="failed",
+                details={"errors": [str(error)]},
+            )
+            raise
+
     _write_json(run_dir / "metrics.json", metrics)
     _write_json(run_dir / "config.normalized.json", config.to_jsonable())
     _write_log(run_dir, config, status="completed", details=metrics)
@@ -115,6 +128,48 @@ def _parse_args(argv: list[str] | None) -> Namespace:
         help="Override the configured output root.",
     )
     return parser.parse_args(argv)
+
+
+def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
+    """Compare two precomputed stats files and record what was compared.
+
+    Args:
+        shift: Stats file paths and the distances to compute.
+
+    Returns:
+        The distances, plus the encoder provenance they were computed under.
+
+    Raises:
+        ValueError: If a stats file is unreadable, or if the two files came
+            from different encoders.
+    """
+
+    try:
+        stats_a = np.load(shift.stats_a)
+        stats_b = np.load(shift.stats_b)
+    except OSError as error:
+        msg = f"Could not read shift stats: {error}"
+        raise ValueError(msg) from error
+
+    require_same_encoder(str(shift.stats_a), stats_a, str(shift.stats_b), stats_b)
+    encoder, model = describe(stats_a)
+
+    distances = {
+        name: get_metric(name).compute(
+            stats_a["mu"],
+            stats_a["sigma"],
+            stats_b["mu"],
+            stats_b["sigma"],
+        )
+        for name in shift.metrics
+    }
+    return {
+        "encoder": encoder,
+        "model": model,
+        "stats_a": str(shift.stats_a),
+        "stats_b": str(shift.stats_b),
+        "distances": distances,
+    }
 
 
 def _create_run_dir(config: ExperimentConfig) -> Path:
