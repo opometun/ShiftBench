@@ -22,6 +22,8 @@ class DatasetSchemaConfig:
         text_column: Input text column.
         allowed_splits: Accepted split names.
         allowed_sources: Accepted data source names.
+        image_column: Image path column, for image datasets. None for
+            text-only datasets, which is why it is the one optional column.
     """
 
     path: Path
@@ -33,6 +35,7 @@ class DatasetSchemaConfig:
     text_column: str
     allowed_splits: tuple[str, ...]
     allowed_sources: tuple[str, ...]
+    image_column: str | None = None
 
 
 @dataclass(frozen=True)
@@ -90,6 +93,7 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
     source_column = _required_str(dataset, "source_column")
     label_column = _required_str(dataset, "label_column")
     text_column = _required_str(dataset, "text_column")
+    image_column = _optional_str(dataset, "image_column")
     allowed_splits = tuple(_required_list(dataset, "allowed_splits"))
     allowed_sources = tuple(_required_list(dataset, "allowed_sources"))
 
@@ -100,6 +104,8 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         label_column,
         text_column,
     }
+    if image_column is not None:
+        schema_columns.add(image_column)
     missing_schema_columns = schema_columns.difference(required_columns)
     if missing_schema_columns:
         formatted = ", ".join(sorted(missing_schema_columns))
@@ -116,6 +122,7 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         text_column=text_column,
         allowed_splits=allowed_splits,
         allowed_sources=allowed_sources,
+        image_column=image_column,
     )
     return ExperimentConfig(
         name=name,
@@ -144,6 +151,16 @@ def _required_str(data: dict[str, Any], key: str) -> str:
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
         msg = f"Missing non-empty string field: {key}"
+        raise ValueError(msg)
+    return value
+
+
+def _optional_str(data: dict[str, Any], key: str) -> str | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        msg = f"Field must be a non-empty string when set: {key}"
         raise ValueError(msg)
     return value
 
