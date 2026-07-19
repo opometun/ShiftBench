@@ -15,15 +15,6 @@ from transformers import AutoImageProcessor, AutoModel
 DEFAULT_MODEL_NAME = "facebook/dinov2-base"
 
 
-def get_device() -> torch.device:
-    """Best available torch device, preferring CUDA then Apple MPS."""
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    return torch.device("cpu")
-
-
 def load_frozen_dinov2(
     device: torch.device,
     model_name: str = DEFAULT_MODEL_NAME,
