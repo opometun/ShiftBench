@@ -12,7 +12,17 @@ license = { text = "MIT" }
 authors = [
   { name = "ShiftBench contributors" }
 ]
-dependencies = []
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+features = [
+  "torch>=2.2",
+  "transformers>=4.40",
+  "pillow>=10.0",
+]
 
 [project.scripts]
 shiftbench-run = "shiftbench.experiments.run:main"

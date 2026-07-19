@@ -1,16 +1,15 @@
 """Compute and save feature distribution statistics."""
 
 import argparse
+import sys
+from pathlib import Path
 
 import numpy as np
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-def compute_mean(embeddings):
-    return embeddings.mean(axis=0)
-
-
-def compute_covariance(embeddings):
-    return np.cov(embeddings, rowvar=False)
+from shiftbench.metrics import compute_covariance, compute_mean  # noqa: E402
 
 
 def main():
@@ -18,9 +17,8 @@ def main():
     parser.add_argument("embeddings_path")
     args = parser.parse_args()
     embeddings = np.load(args.embeddings_path, mmap_mode="r")
-    mu = embeddings.mean(axis=0)
-    centered = embeddings - mu
-    sigma = centered.T @ centered / (embeddings.shape[0] - 1)
+    mu = compute_mean(embeddings)
+    sigma = compute_covariance(embeddings)
     np.savez("feature_stats.npz", mu=mu, sigma=sigma)
 
 

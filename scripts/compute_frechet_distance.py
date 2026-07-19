@@ -1,9 +1,15 @@
 """Compute Fréchet distance between two feature distributions."""
 
 import argparse
+import sys
+from pathlib import Path
 
 import numpy as np
-import scipy.linalg
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from shiftbench.metrics import frechet_distance  # noqa: E402
 
 
 def main():
@@ -18,19 +24,12 @@ def main():
     args = parser.parse_args()
     stats_a = np.load(args.stats_a_path)
     stats_b = np.load(args.stats_b_path)
-    mu_a = stats_a["mu"]
-    mu_b = stats_b["mu"]
-    sigma_a = stats_a["sigma"]
-    sigma_b = stats_b["sigma"]
-    mean_term = (mu_a - mu_b) @ (mu_a - mu_b)
-    covmean = scipy.linalg.sqrtm(sigma_a @ sigma_b)
-    if np.iscomplexobj(covmean):
-        if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
-            raise ValueError("sqrtm returned significant imaginary values")
-        covmean = covmean.real
-    d2 = mean_term + sigma_a.trace() + sigma_b.trace() - 2.0 * covmean.trace()
-    d2 = max(d2, 0.0)
-    distance = np.sqrt(d2)
+    distance = frechet_distance(
+        stats_a["mu"],
+        stats_a["sigma"],
+        stats_b["mu"],
+        stats_b["sigma"],
+    )
     if args.output_path:
         with open(args.output_path, "w", encoding="utf-8") as file:
             file.write(f"{distance}\n")
