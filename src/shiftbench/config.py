@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 import tomllib
 
+from shiftbench.metrics import METRICS
+
 
 @dataclass(frozen=True)
 class DatasetSchemaConfig:
@@ -19,11 +21,14 @@ class DatasetSchemaConfig:
         split_column: Dataset split column.
         source_column: Data source column, for example real or synthetic.
         label_column: Target label column.
-        text_column: Input text column.
         allowed_splits: Accepted split names.
         allowed_sources: Accepted data source names.
-        image_column: Image path column, for image datasets. None for
-            text-only datasets, which is why it is the one optional column.
+        text_column: Input text column, for text datasets.
+        image_column: Image path column, for image datasets.
+
+    Exactly which of text_column and image_column is set depends on the
+    dataset's modality. At least one must be, but neither is required on its
+    own, so an image-only dataset does not have to invent a text column.
     """
 
     path: Path
@@ -32,10 +37,28 @@ class DatasetSchemaConfig:
     split_column: str
     source_column: str
     label_column: str
-    text_column: str
     allowed_splits: tuple[str, ...]
     allowed_sources: tuple[str, ...]
+    text_column: str | None = None
     image_column: str | None = None
+
+
+@dataclass(frozen=True)
+class ShiftConfig:
+    """Precomputed feature statistics to compare during a run.
+
+    Attributes:
+        stats_a: First .npz stats file, as written by compute_feature_stats.
+        stats_b: Second .npz stats file.
+        metrics: Names of the distances to compute, from shiftbench.metrics.
+
+    Statistics are precomputed rather than extracted here so that running an
+    experiment does not require torch.
+    """
+
+    stats_a: Path
+    stats_b: Path
+    metrics: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -47,12 +70,14 @@ class ExperimentConfig:
         seed: Random seed for deterministic experiment behavior.
         output_root: Root directory where run artifacts are written.
         dataset: Dataset schema and location.
+        shift: Distribution-shift comparison to run, if any.
     """
 
     name: str
     seed: int
     output_root: Path
     dataset: DatasetSchemaConfig
+    shift: ShiftConfig | None = None
 
     def to_jsonable(self) -> dict[str, Any]:
         """Return the config as JSON-serializable data."""
@@ -60,6 +85,9 @@ class ExperimentConfig:
         data = asdict(self)
         data["output_root"] = str(self.output_root)
         data["dataset"]["path"] = str(self.dataset.path)
+        if self.shift is not None:
+            data["shift"]["stats_a"] = str(self.shift.stats_a)
+            data["shift"]["stats_b"] = str(self.shift.stats_b)
         return data
 
 
@@ -92,20 +120,24 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
     split_column = _required_str(dataset, "split_column")
     source_column = _required_str(dataset, "source_column")
     label_column = _required_str(dataset, "label_column")
-    text_column = _required_str(dataset, "text_column")
+    text_column = _optional_str(dataset, "text_column")
     image_column = _optional_str(dataset, "image_column")
     allowed_splits = tuple(_required_list(dataset, "allowed_splits"))
     allowed_sources = tuple(_required_list(dataset, "allowed_sources"))
+
+    if text_column is None and image_column is None:
+        msg = "dataset must set text_column, image_column, or both"
+        raise ValueError(msg)
 
     schema_columns = {
         id_column,
         split_column,
         source_column,
         label_column,
-        text_column,
     }
-    if image_column is not None:
-        schema_columns.add(image_column)
+    schema_columns.update(
+        column for column in (text_column, image_column) if column is not None
+    )
     missing_schema_columns = schema_columns.difference(required_columns)
     if missing_schema_columns:
         formatted = ", ".join(sorted(missing_schema_columns))
@@ -129,6 +161,33 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         seed=seed,
         output_root=output_root,
         dataset=dataset_config,
+        shift=_shift_from_config(config_path, raw_config.get("shift")),
+    )
+
+
+def _shift_from_config(
+    config_path: Path,
+    raw_shift: Any,
+) -> ShiftConfig | None:
+    """Parse the optional [shift] table, validating metric names early."""
+    if raw_shift is None:
+        return None
+    if not isinstance(raw_shift, dict):
+        msg = "[shift] must be a table"
+        raise ValueError(msg)
+
+    metrics = tuple(_required_list(raw_shift, "metrics"))
+    unknown = sorted(set(metrics).difference(METRICS))
+    if unknown:
+        available = ", ".join(sorted(METRICS))
+        formatted = ", ".join(unknown)
+        msg = f"Unknown shift metrics: {formatted}. Available: {available}"
+        raise ValueError(msg)
+
+    return ShiftConfig(
+        stats_a=_path_from_config(config_path, _required_str(raw_shift, "stats_a")),
+        stats_b=_path_from_config(config_path, _required_str(raw_shift, "stats_b")),
+        metrics=metrics,
     )
 
 

@@ -9,7 +9,34 @@ from __future__ import annotations
 import csv
 import os
 
+from shiftbench.config import DatasetSchemaConfig
+
 FALLBACK_IMAGE_COLUMNS = ("image_path", "file_path", "filepath", "path", "image")
+
+
+def resolve_image_path(manifest_dir: str, raw_path: str) -> str:
+    """Resolve one manifest cell into an absolute image path.
+
+    Shared with schema validation so that what validation checks for is
+    exactly what extraction later opens.
+    """
+    image_path = os.path.expanduser(raw_path.strip())
+    if not os.path.isabs(image_path):
+        image_path = os.path.join(manifest_dir, image_path)
+    return image_path
+
+
+def load_image_paths_from_config(schema: DatasetSchemaConfig) -> list[str]:
+    """Read image paths using a configured dataset schema.
+
+    This is the path that makes image_column load-bearing: the column named in
+    the TOML is the column actually read, with no guessing in between.
+
+    Raises:
+        ValueError: If the schema declares no image_column and the manifest
+            has no recognizable one either.
+    """
+    return load_image_paths(str(schema.path), schema.image_column)
 
 
 def load_image_paths(
@@ -47,12 +74,9 @@ def load_image_paths(
         for row_number, row in enumerate(reader, start=2):
             if column_index >= len(row):
                 raise ValueError(f"Row {row_number}: missing image path")
-            image_path = os.path.expanduser(row[column_index].strip())
-            if not image_path:
+            if not row[column_index].strip():
                 raise ValueError(f"Row {row_number}: missing image path")
-            if not os.path.isabs(image_path):
-                image_path = os.path.join(manifest_dir, image_path)
-            image_paths.append(image_path)
+            image_paths.append(resolve_image_path(manifest_dir, row[column_index]))
 
     return image_paths
 

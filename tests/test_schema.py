@@ -8,7 +8,7 @@ import unittest
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from shiftbench.config import load_experiment_config
+from shiftbench.config import DatasetSchemaConfig, load_experiment_config
 from shiftbench.datasets.schema import validate_csv_dataset
 
 
@@ -50,6 +50,63 @@ same,test,synthetic,negative,Second item.
 
         self.assertFalse(result.is_valid)
         self.assertIn("duplicate id", result.errors[0])
+
+
+class ImageDatasetValidationTest(unittest.TestCase):
+    """Validation must catch broken image paths before the model is loaded."""
+
+    def _schema(self, path: Path) -> DatasetSchemaConfig:
+        return DatasetSchemaConfig(
+            path=path,
+            required_columns=("sample_id", "split", "source", "label", "image_path"),
+            id_column="sample_id",
+            split_column="split",
+            source_column="source",
+            label_column="label",
+            allowed_splits=("train",),
+            allowed_sources=("real",),
+            image_column="image_path",
+        )
+
+    def test_accepts_images_that_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "a.png").write_bytes(b"fake")
+            manifest = root / "m.csv"
+            manifest.write_text(
+                "sample_id,split,source,label,image_path\n0,train,real,x,a.png\n",
+                encoding="utf-8",
+            )
+
+            result = validate_csv_dataset(self._schema(manifest))
+
+        self.assertTrue(result.is_valid, result.errors)
+
+    def test_reports_images_that_are_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "present.png").write_bytes(b"fake")
+            manifest = root / "m.csv"
+            manifest.write_text(
+                "sample_id,split,source,label,image_path\n"
+                "0,train,real,x,present.png\n"
+                "1,train,real,x,gone.png\n",
+                encoding="utf-8",
+            )
+
+            result = validate_csv_dataset(self._schema(manifest))
+
+        self.assertFalse(result.is_valid)
+        self.assertIn("Row 3", result.errors[0])
+        self.assertIn("gone.png", result.errors[0])
+
+    def test_text_only_dataset_skips_the_image_check(self) -> None:
+        config = load_experiment_config(PROJECT_ROOT / "configs" / "smoke.toml")
+
+        result = validate_csv_dataset(config.dataset)
+
+        self.assertIsNone(config.dataset.image_column)
+        self.assertTrue(result.is_valid, result.errors)
 
 
 if __name__ == "__main__":
