@@ -123,5 +123,93 @@ allowed_sources = ["real"]
                 load_experiment_config(config_path)
 
 
+class MaskConfigTest(unittest.TestCase):
+    """mask_column and num_classes must travel together, so the class count a
+    label metric assumed is always recorded in the config."""
+
+    def _write_config(self, directory: str, dataset_body: str) -> Path:
+        config_path = Path(directory) / "mask.toml"
+        config_path.write_text(
+            f"""
+[experiment]
+name = "mask"
+seed = 1
+output_root = "runs"
+
+[dataset]
+path = "data.csv"
+id_column = "sample_id"
+split_column = "split"
+source_column = "source"
+label_column = "label"
+image_column = "image_path"
+allowed_splits = ["train"]
+allowed_sources = ["real"]
+{dataset_body}
+""".strip(),
+            encoding="utf-8",
+        )
+        return config_path
+
+    def test_accepts_mask_column_with_num_classes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'required_columns = ["sample_id", "split", "source", "label", '
+                '"image_path", "seg_path"]\nmask_column = "seg_path"\n'
+                "num_classes = 19",
+            )
+
+            config = load_experiment_config(config_path)
+
+            self.assertEqual(config.dataset.mask_column, "seg_path")
+            self.assertEqual(config.dataset.num_classes, 19)
+
+    def test_rejects_mask_column_without_num_classes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'required_columns = ["sample_id", "split", "source", "label", '
+                '"image_path", "seg_path"]\nmask_column = "seg_path"',
+            )
+
+            with self.assertRaisesRegex(ValueError, "num_classes"):
+                load_experiment_config(config_path)
+
+    def test_rejects_num_classes_without_mask_column(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'required_columns = ["sample_id", "split", "source", "label", '
+                '"image_path"]\nnum_classes = 19',
+            )
+
+            with self.assertRaisesRegex(ValueError, "mask_column"):
+                load_experiment_config(config_path)
+
+    def test_rejects_non_positive_num_classes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'required_columns = ["sample_id", "split", "source", "label", '
+                '"image_path", "seg_path"]\nmask_column = "seg_path"\n'
+                "num_classes = 0",
+            )
+
+            with self.assertRaisesRegex(ValueError, "positive integer"):
+                load_experiment_config(config_path)
+
+    def test_mask_column_must_be_declared_required(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'required_columns = ["sample_id", "split", "source", "label", '
+                '"image_path"]\nmask_column = "seg_path"\nnum_classes = 19',
+            )
+
+            with self.assertRaisesRegex(ValueError, "seg_path"):
+                load_experiment_config(config_path)
+
+
 if __name__ == "__main__":
     unittest.main()

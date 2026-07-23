@@ -25,10 +25,15 @@ class DatasetSchemaConfig:
         allowed_sources: Accepted data source names.
         text_column: Input text column, for text datasets.
         image_column: Image path column, for image datasets.
+        mask_column: Semantic-mask path column, for label-based shift metrics.
+        num_classes: Class count the masks are labeled with. Required whenever
+            mask_column is set, so every label metric records the class count
+            it assumed instead of falling back to a silent default.
 
     Exactly which of text_column and image_column is set depends on the
     dataset's modality. At least one must be, but neither is required on its
     own, so an image-only dataset does not have to invent a text column.
+    mask_column is supplementary, not a modality on its own.
     """
 
     path: Path
@@ -41,6 +46,8 @@ class DatasetSchemaConfig:
     allowed_sources: tuple[str, ...]
     text_column: str | None = None
     image_column: str | None = None
+    mask_column: str | None = None
+    num_classes: int | None = None
 
 
 @dataclass(frozen=True)
@@ -122,11 +129,19 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
     label_column = _required_str(dataset, "label_column")
     text_column = _optional_str(dataset, "text_column")
     image_column = _optional_str(dataset, "image_column")
+    mask_column = _optional_str(dataset, "mask_column")
+    num_classes = _optional_int(dataset, "num_classes")
     allowed_splits = tuple(_required_list(dataset, "allowed_splits"))
     allowed_sources = tuple(_required_list(dataset, "allowed_sources"))
 
     if text_column is None and image_column is None:
         msg = "dataset must set text_column, image_column, or both"
+        raise ValueError(msg)
+    if mask_column is not None and num_classes is None:
+        msg = "Setting mask_column requires num_classes"
+        raise ValueError(msg)
+    if num_classes is not None and mask_column is None:
+        msg = "num_classes is set but mask_column is not"
         raise ValueError(msg)
 
     schema_columns = {
@@ -136,7 +151,9 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         label_column,
     }
     schema_columns.update(
-        column for column in (text_column, image_column) if column is not None
+        column
+        for column in (text_column, image_column, mask_column)
+        if column is not None
     )
     missing_schema_columns = schema_columns.difference(required_columns)
     if missing_schema_columns:
@@ -155,6 +172,8 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         allowed_splits=allowed_splits,
         allowed_sources=allowed_sources,
         image_column=image_column,
+        mask_column=mask_column,
+        num_classes=num_classes,
     )
     return ExperimentConfig(
         name=name,
@@ -220,6 +239,16 @@ def _optional_str(data: dict[str, Any], key: str) -> str | None:
         return None
     if not isinstance(value, str) or not value.strip():
         msg = f"Field must be a non-empty string when set: {key}"
+        raise ValueError(msg)
+    return value
+
+
+def _optional_int(data: dict[str, Any], key: str) -> int | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        msg = f"Field must be a positive integer when set: {key}"
         raise ValueError(msg)
     return value
 
