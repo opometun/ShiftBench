@@ -18,7 +18,7 @@ import numpy as np
 
 from shiftbench.config import ExperimentConfig, ShiftConfig, load_experiment_config
 from shiftbench.datasets.schema import validate_csv_dataset
-from shiftbench.metrics import get_metric
+from shiftbench.metrics import SUMMARIES, Metric, get_metric
 from shiftbench.provenance import (
     UNKNOWN,
     describe,
@@ -136,50 +136,135 @@ def _parse_args(argv: list[str] | None) -> Namespace:
 
 
 def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
-    """Compare two precomputed stats files and record what was compared.
+    """Compare two datasets with the configured metrics.
+
+    Metrics are grouped by the input they declare, each input is materialized
+    once, and every distance is recorded together with the provenance and
+    hyperparameters it was computed under.
 
     Args:
-        shift: Stats file paths and the distances to compute.
+        shift: Input sources and the distances to compute.
 
     Returns:
-        The distances, plus the encoder provenance they were computed under.
+        The distances plus what produced them.
 
     Raises:
-        ValueError: If a stats file is unreadable, or if the two files came
-            from different encoders.
+        ValueError: If an input is unreadable, the stats artifacts are not
+            comparable, or a requested metric cannot run from these inputs.
     """
 
-    try:
-        stats_a = np.load(shift.stats_a)
-        stats_b = np.load(shift.stats_b)
-    except OSError as error:
-        msg = f"Could not read shift stats: {error}"
-        raise ValueError(msg) from error
-
-    require_comparable(str(shift.stats_a), stats_a, str(shift.stats_b), stats_b)
-    encoder, model = describe(stats_a)
-    kind, _ = describe_summary(stats_a)
-
-    distances = {}
+    grouped: dict[str, list[Metric]] = {}
     for name in shift.metrics:
         metric = get_metric(name)
-        if metric.compare is None:
-            msg = f"Metric '{name}' is pairwise and cannot use precomputed stats"
+        if metric.compare is None or metric.summary is None:
+            msg = f"Metric '{name}' is pairwise and cannot use precomputed inputs"
             raise ValueError(msg)
-        if kind != UNKNOWN and kind != metric.summary:
-            msg = (
-                f"Metric '{name}' expects '{metric.summary}' summaries, "
-                f"these stats hold '{kind}'"
+        grouped.setdefault(metric.input, []).append(metric)
+
+    report: dict[str, Any] = {"distances": {}, "params": {}}
+
+    if "embeddings" in grouped:
+        try:
+            stats_a = np.load(shift.stats_a)
+            stats_b = np.load(shift.stats_b)
+        except OSError as error:
+            msg = f"Could not read shift stats: {error}"
+            raise ValueError(msg) from error
+
+        require_comparable(str(shift.stats_a), stats_a, str(shift.stats_b), stats_b)
+        kind, _ = describe_summary(stats_a)
+        report["encoder"], report["model"] = describe(stats_a)
+        report["stats_a"] = str(shift.stats_a)
+        report["stats_b"] = str(shift.stats_b)
+
+        for metric in grouped["embeddings"]:
+            if kind != UNKNOWN and kind != metric.summary:
+                msg = (
+                    f"Metric '{metric.name}' expects '{metric.summary}' "
+                    f"summaries, these stats hold '{kind}'"
+                )
+                raise ValueError(msg)
+            report["distances"][metric.name] = metric.compare(stats_a, stats_b)
+            report["params"][metric.name] = dict(
+                SUMMARIES[metric.summary].default_params
             )
-            raise ValueError(msg)
-        distances[name] = metric.compare(stats_a, stats_b)
-    return {
-        "encoder": encoder,
-        "model": model,
-        "stats_a": str(shift.stats_a),
-        "stats_b": str(shift.stats_b),
-        "distances": distances,
-    }
+
+    if "images" in grouped or "masks" in grouped:
+        report["manifest_a"] = str(shift.manifest_a)
+        report["manifest_b"] = str(shift.manifest_b)
+
+    if "images" in grouped:
+        images_a, images_b = _load_shift_images(shift)
+        for metric in grouped["images"]:
+            summary = SUMMARIES[metric.summary]
+            report["distances"][metric.name] = metric.compare(
+                summary.make(images_a), summary.make(images_b)
+            )
+            report["params"][metric.name] = {
+                **summary.default_params,
+                "image_column": shift.image_column,
+            }
+
+    if "masks" in grouped:
+        masks_a, masks_b = _load_shift_masks(shift)
+        for metric in grouped["masks"]:
+            summary = SUMMARIES[metric.summary]
+            report["distances"][metric.name] = metric.compare(
+                summary.make(masks_a, num_classes=shift.num_classes),
+                summary.make(masks_b, num_classes=shift.num_classes),
+            )
+            report["params"][metric.name] = {
+                **summary.default_params,
+                "mask_column": shift.mask_column,
+                "num_classes": shift.num_classes,
+            }
+
+    return report
+
+
+def _load_shift_images(shift: ShiftConfig) -> tuple[list, list]:
+    from shiftbench.datasets.manifest import load_image_paths
+
+    loaders = _import_loaders()
+    try:
+        return (
+            loaders.load_rgb_images(
+                load_image_paths(str(shift.manifest_a), shift.image_column)
+            ),
+            loaders.load_rgb_images(
+                load_image_paths(str(shift.manifest_b), shift.image_column)
+            ),
+        )
+    except OSError as error:
+        msg = f"Could not read shift manifest data: {error}"
+        raise ValueError(msg) from error
+
+
+def _load_shift_masks(shift: ShiftConfig) -> tuple[list, list]:
+    from shiftbench.datasets.manifest import load_mask_paths
+
+    loaders = _import_loaders()
+    try:
+        return (
+            loaders.load_masks(
+                load_mask_paths(str(shift.manifest_a), shift.mask_column)
+            ),
+            loaders.load_masks(
+                load_mask_paths(str(shift.manifest_b), shift.mask_column)
+            ),
+        )
+    except OSError as error:
+        msg = f"Could not read shift manifest data: {error}"
+        raise ValueError(msg) from error
+
+
+def _import_loaders():
+    try:
+        from shiftbench.datasets import loaders
+    except ModuleNotFoundError as error:  # pragma: no cover - env specific
+        msg = "Image and mask shift metrics need pillow; install '.[image]'"
+        raise ValueError(msg) from error
+    return loaders
 
 
 def _create_run_dir(config: ExperimentConfig) -> Path:

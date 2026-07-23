@@ -26,6 +26,36 @@ if HAS_PIL:
     from shiftbench.datasets.loaders import load_masks, load_rgb_images
 
 
+class NpyMaskLoaderTest(unittest.TestCase):
+    """The .npy mask path needs only numpy, so it runs everywhere."""
+
+    def setUp(self) -> None:
+        self._directory = tempfile.TemporaryDirectory()
+        self.directory = Path(self._directory.name)
+        self.addCleanup(self._directory.cleanup)
+
+    def test_npy_masks_load_without_pillow(self) -> None:
+        from shiftbench.datasets.loaders import load_masks
+
+        path = self.directory / "mask.npy"
+        mask = np.array([[0, 1], [2, 2]], dtype=np.uint8)
+        np.save(path, mask)
+
+        masks = load_masks([str(path)])
+
+        self.assertTrue(np.issubdtype(masks[0].dtype, np.integer))
+        np.testing.assert_array_equal(masks[0], mask)
+
+    def test_3d_npy_in_the_mask_column_is_rejected(self) -> None:
+        from shiftbench.datasets.loaders import load_masks
+
+        path = self.directory / "bad.npy"
+        np.save(path, np.zeros((2, 2, 3)))
+
+        with self.assertRaisesRegex(ValueError, "single-channel"):
+            load_masks([str(path)])
+
+
 @unittest.skipUnless(HAS_PIL, "requires pillow")
 class LoadersTest(unittest.TestCase):
     def setUp(self) -> None:

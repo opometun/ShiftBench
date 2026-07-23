@@ -211,5 +211,97 @@ allowed_sources = ["real"]
                 load_experiment_config(config_path)
 
 
+class ShiftValidationTest(unittest.TestCase):
+    """A [shift] table must fail at config load when a requested metric's
+    inputs are missing, not mid-run."""
+
+    def _write_config(self, directory: str, shift_body: str) -> Path:
+        config_path = Path(directory) / "shift.toml"
+        config_path.write_text(
+            f"""
+[experiment]
+name = "shift"
+seed = 1
+output_root = "runs"
+
+[dataset]
+path = "data.csv"
+required_columns = ["sample_id", "split", "source", "label", "text"]
+id_column = "sample_id"
+split_column = "split"
+source_column = "source"
+label_column = "label"
+text_column = "text"
+allowed_splits = ["train"]
+allowed_sources = ["real"]
+
+[shift]
+{shift_body}
+""".strip(),
+            encoding="utf-8",
+        )
+        return config_path
+
+    def test_accepts_mixed_inputs_when_all_sources_are_present(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["frechet", "class_frequency_js"]\n'
+                'stats_a = "a.npz"\nstats_b = "b.npz"\n'
+                'manifest_a = "a.csv"\nmanifest_b = "b.csv"\n'
+                'mask_column = "seg_path"\nnum_classes = 19',
+            )
+
+            shift = load_experiment_config(config_path).shift
+
+            self.assertEqual(
+                shift.metrics, ("frechet", "class_frequency_js")
+            )
+            self.assertEqual(shift.num_classes, 19)
+
+    def test_rejects_embeddings_metric_without_stats(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["frechet"]\n'
+                'manifest_a = "a.csv"\nmanifest_b = "b.csv"',
+            )
+
+            with self.assertRaisesRegex(ValueError, "stats_a and stats_b"):
+                load_experiment_config(config_path)
+
+    def test_rejects_image_metric_without_manifests(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["color_js"]\nstats_a = "a.npz"\nstats_b = "b.npz"',
+            )
+
+            with self.assertRaisesRegex(ValueError, "manifest_a and manifest_b"):
+                load_experiment_config(config_path)
+
+    def test_rejects_mask_metric_without_num_classes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["class_frequency_js"]\n'
+                'manifest_a = "a.csv"\nmanifest_b = "b.csv"\n'
+                'mask_column = "seg_path"',
+            )
+
+            with self.assertRaisesRegex(ValueError, "num_classes"):
+                load_experiment_config(config_path)
+
+    def test_rejects_half_a_stats_pair(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["frechet"]\nstats_a = "a.npz"',
+            )
+
+            with self.assertRaisesRegex(ValueError, "set together"):
+                load_experiment_config(config_path)
+
+
 if __name__ == "__main__":
     unittest.main()
