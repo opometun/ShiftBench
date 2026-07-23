@@ -66,6 +66,8 @@ class ShiftConfig:
         image_column: Manifest column holding image paths, for image metrics.
         mask_column: Manifest column holding mask paths, for mask metrics.
         num_classes: Class count of the masks, for mask metrics.
+        image_dir_a: First image directory, for pairwise metrics (SADGE).
+        image_dir_b: Second image directory.
 
     Which fields must be set follows from the requested metrics and is
     validated at load time, so a run fails at config parse rather than after
@@ -80,6 +82,8 @@ class ShiftConfig:
     image_column: str | None = None
     mask_column: str | None = None
     num_classes: int | None = None
+    image_dir_a: Path | None = None
+    image_dir_b: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -107,7 +111,11 @@ class ExperimentConfig:
         data["output_root"] = str(self.output_root)
         data["dataset"]["path"] = str(self.dataset.path)
         if self.shift is not None:
-            for key in ("stats_a", "stats_b", "manifest_a", "manifest_b"):
+            path_keys = (
+                "stats_a", "stats_b", "manifest_a", "manifest_b",
+                "image_dir_a", "image_dir_b",
+            )
+            for key in path_keys:
                 value = getattr(self.shift, key)
                 data["shift"][key] = None if value is None else str(value)
         return data
@@ -235,6 +243,8 @@ def _shift_from_config(
         image_column=_optional_str(raw_shift, "image_column"),
         mask_column=_optional_str(raw_shift, "mask_column"),
         num_classes=_optional_int(raw_shift, "num_classes"),
+        image_dir_a=optional_path("image_dir_a"),
+        image_dir_b=optional_path("image_dir_b"),
     )
 
     if (shift.stats_a is None) != (shift.stats_b is None):
@@ -243,11 +253,14 @@ def _shift_from_config(
     if (shift.manifest_a is None) != (shift.manifest_b is None):
         msg = "manifest_a and manifest_b must be set together"
         raise ValueError(msg)
+    if (shift.image_dir_a is None) != (shift.image_dir_b is None):
+        msg = "image_dir_a and image_dir_b must be set together"
+        raise ValueError(msg)
 
     for name in metrics:
         metric = METRICS[name]
-        if metric.summary is None:
-            msg = f"Metric '{name}' is pairwise and not yet supported in [shift]"
+        if metric.summary is None and shift.image_dir_a is None:
+            msg = f"Metric '{name}' needs image_dir_a and image_dir_b"
             raise ValueError(msg)
         if metric.input == "embeddings" and shift.stats_a is None:
             msg = f"Metric '{name}' needs stats_a and stats_b"

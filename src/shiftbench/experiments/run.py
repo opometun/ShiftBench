@@ -156,9 +156,6 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
     grouped: dict[str, list[Metric]] = {}
     for name in shift.metrics:
         metric = get_metric(name)
-        if metric.compare is None or metric.summary is None:
-            msg = f"Metric '{name}' is pairwise and cannot use precomputed inputs"
-            raise ValueError(msg)
         grouped.setdefault(metric.input, []).append(metric)
 
     report: dict[str, Any] = {"distances": {}, "params": {}}
@@ -218,6 +215,26 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
                 "mask_column": shift.mask_column,
                 "num_classes": shift.num_classes,
             }
+
+    if "image_dirs" in grouped:
+        report["image_dir_a"] = str(shift.image_dir_a)
+        report["image_dir_b"] = str(shift.image_dir_b)
+        for metric in grouped["image_dirs"]:
+            try:
+                value = metric.pairwise(
+                    str(shift.image_dir_a), str(shift.image_dir_b)
+                )
+            except ModuleNotFoundError as error:
+                msg = (
+                    f"Metric '{metric.name}' needs the '[sadge]' extras "
+                    f"(missing: {error.name})"
+                )
+                raise ValueError(msg) from error
+            except RuntimeError as error:
+                # e.g. the MASt3R submodule gating message, verbatim.
+                raise ValueError(str(error)) from error
+            report["distances"][metric.name] = value
+            report["params"][metric.name] = dict(metric.params)
 
     return report
 

@@ -292,6 +292,28 @@ allowed_sources = ["real"]
             with self.assertRaisesRegex(ValueError, "num_classes"):
                 load_experiment_config(config_path)
 
+    def test_accepts_pairwise_metric_with_image_dirs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["sadge"]\n'
+                'image_dir_a = "real_images"\nimage_dir_b = "synth_images"',
+            )
+
+            shift = load_experiment_config(config_path).shift
+
+            self.assertTrue(str(shift.image_dir_a).endswith("real_images"))
+
+    def test_rejects_pairwise_metric_without_image_dirs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = self._write_config(
+                directory,
+                'metrics = ["sadge"]\nstats_a = "a.npz"\nstats_b = "b.npz"',
+            )
+
+            with self.assertRaisesRegex(ValueError, "image_dir_a and image_dir_b"):
+                load_experiment_config(config_path)
+
     def test_rejects_half_a_stats_pair(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             config_path = self._write_config(

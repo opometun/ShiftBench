@@ -30,11 +30,18 @@ class T:
     def item(s): return float(s.arr)
 
 
+class _InferenceMode:
+    # Real torch.inference_mode() is both a context manager and a decorator.
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def __call__(self, fn): return fn
+
+
 torch = types.ModuleType("torch")
 torch.device = lambda x: f"dev:{x}"
 torch.cuda = types.SimpleNamespace(is_available=lambda: False)
 torch.backends = types.SimpleNamespace(mps=types.SimpleNamespace(is_available=lambda: False))
-torch.inference_mode = lambda: contextlib.nullcontext()
+torch.inference_mode = _InferenceMode
 torch.Tensor = T
 fn = types.ModuleType("torch.nn.functional")
 fn.normalize = lambda t, p=2, dim=-1: T(t.arr / np.linalg.norm(t.arr, axis=dim, keepdims=True))
@@ -96,6 +103,10 @@ class Img:
 pil.Image = types.SimpleNamespace(open=lambda p: Img())
 sys.modules["PIL"] = pil
 
+cv2 = types.ModuleType("cv2")
+cv2.error = Exception
+sys.modules["cv2"] = cv2
+
 sys.path.insert(0, "src")
 
 from shiftbench.features.registry import ENCODERS, get_encoder
@@ -128,6 +139,19 @@ value = metric.compute("real.png", "syn.png")
 assert abs(value - 1.0) < 1e-6, value
 assert LOADED["model"] == "facebook/dinov3-vitl16-pretrain-lvd1689m", LOADED
 assert metric.higher_is_better is True
+
+# An uninitialized MASt3R submodule must produce instructions, not a traceback.
+from pathlib import Path as _Path
+from shiftbench.shift_quantification_metrics.representation_based.sadge.metrics import (
+    geometry,
+)
+
+geometry.MAST3R_DIR = _Path("/nonexistent/mast3r")
+try:
+    geometry.GeoGapMetric("dev:cpu")._load()
+    raise AssertionError("expected RuntimeError")
+except RuntimeError as error:
+    assert "submodule update --init --recursive" in str(error), error
 
 print("REGISTRY_STUB_OK")
 """

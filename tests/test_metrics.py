@@ -196,11 +196,19 @@ class MetricRegistryTest(unittest.TestCase):
                 self.assertEqual(metric.name, name)
                 if metric.summary is None:
                     self.assertIsNone(metric.compare)
+                    self.assertIsNotNone(metric.pairwise)
                     self.assertEqual(metric.input, "image_dirs")
                 else:
                     self.assertIn(metric.summary, SUMMARIES)
                     self.assertEqual(SUMMARIES[metric.summary].input, metric.input)
                     self.assertIsNotNone(metric.compare)
+                    self.assertIsNone(metric.pairwise)
+
+    def test_sadge_records_its_direction(self) -> None:
+        # SADGE is a fused similarity: unlike every distance here, higher
+        # means MORE alike. That must be recorded next to the score.
+        self.assertTrue(METRICS["sadge"].params["higher_is_better"])
+        self.assertEqual(METRICS["sadge"].params["K"], 10)
 
     def test_expected_metric_names_are_registered(self) -> None:
         self.assertEqual(
@@ -211,6 +219,7 @@ class MetricRegistryTest(unittest.TestCase):
                 "class_presence_js",
                 "color_js",
                 "frechet",
+                "sadge",
                 "scene_complexity_js",
                 "texture_js",
             ],
