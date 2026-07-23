@@ -3,7 +3,7 @@
 import numpy as np
 import cv2
 
-from shiftbench.shift_quantification_metrics.distances import js_distance
+from shiftbench.metrics.distances import js_distance
 
 
 def hsv_histogram(img:np.ndarray, h_bins:int=32, s_bins:int=16, v_bins:int=16) -> np.ndarray:

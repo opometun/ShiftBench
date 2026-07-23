@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from skimage.feature import local_binary_pattern
 
-from shiftbench.shift_quantification_metrics.distances import js_distance
+from shiftbench.metrics.distances import js_distance
 
 
 def lbp_histogram(img:np.ndarray, n_neighbors:int=8, radius:int=1) -> np.ndarray:
