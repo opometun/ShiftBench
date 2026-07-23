@@ -102,6 +102,7 @@ def validate_csv_dataset(schema: DatasetSchemaConfig) -> DatasetValidationResult
                 errors=errors,
             )
             _validate_image_exists(row, row_index, schema, errors)
+            _validate_mask_exists(row, row_index, schema, errors)
 
             split_counts[row.get(schema.split_column, "")] += 1
             source_counts[row.get(schema.source_column, "")] += 1
@@ -166,6 +167,25 @@ def _validate_image_exists(
     manifest_dir = str(schema.path.parent)
     if not Path(resolve_image_path(manifest_dir, raw_path)).exists():
         errors.append(f"Row {row_index}: image not found: {raw_path}")
+
+
+def _validate_mask_exists(
+    row: dict[str, str],
+    row_index: int,
+    schema: DatasetSchemaConfig,
+    errors: list[str],
+) -> None:
+    """Check that a declared mask path points at a file that exists."""
+    if schema.mask_column is None:
+        return
+
+    raw_path = row.get(schema.mask_column, "").strip()
+    if not raw_path:
+        return
+
+    manifest_dir = str(schema.path.parent)
+    if not Path(resolve_image_path(manifest_dir, raw_path)).exists():
+        errors.append(f"Row {row_index}: mask not found: {raw_path}")
 
 
 def _validate_allowed_value(

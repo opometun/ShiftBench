@@ -13,6 +13,3 @@ def js_distance(a:list, b:list, base:int=2, eps:float=1e-12) -> float:
     a = a / a.sum()
     b = b / b.sum()
     return jensenshannon(a, b, base=base)
-
-
-# TODO: Add FID

@@ -55,10 +55,18 @@ same,test,synthetic,negative,Second item.
 class ImageDatasetValidationTest(unittest.TestCase):
     """Validation must catch broken image paths before the model is loaded."""
 
-    def _schema(self, path: Path) -> DatasetSchemaConfig:
+    def _schema(
+        self,
+        path: Path,
+        mask_column: str | None = None,
+        num_classes: int | None = None,
+    ) -> DatasetSchemaConfig:
+        required = ["sample_id", "split", "source", "label", "image_path"]
+        if mask_column is not None:
+            required.append(mask_column)
         return DatasetSchemaConfig(
             path=path,
-            required_columns=("sample_id", "split", "source", "label", "image_path"),
+            required_columns=tuple(required),
             id_column="sample_id",
             split_column="split",
             source_column="source",
@@ -66,6 +74,8 @@ class ImageDatasetValidationTest(unittest.TestCase):
             allowed_splits=("train",),
             allowed_sources=("real",),
             image_column="image_path",
+            mask_column=mask_column,
+            num_classes=num_classes,
         )
 
     def test_accepts_images_that_exist(self) -> None:
@@ -99,6 +109,45 @@ class ImageDatasetValidationTest(unittest.TestCase):
         self.assertFalse(result.is_valid)
         self.assertIn("Row 3", result.errors[0])
         self.assertIn("gone.png", result.errors[0])
+
+    def test_reports_masks_that_are_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "a.png").write_bytes(b"fake")
+            (root / "a_mask.png").write_bytes(b"fake")
+            manifest = root / "m.csv"
+            manifest.write_text(
+                "sample_id,split,source,label,image_path,seg_path\n"
+                "0,train,real,x,a.png,a_mask.png\n"
+                "1,train,real,x,a.png,gone_mask.png\n",
+                encoding="utf-8",
+            )
+
+            result = validate_csv_dataset(
+                self._schema(manifest, mask_column="seg_path", num_classes=19)
+            )
+
+        self.assertFalse(result.is_valid)
+        self.assertIn("Row 3", result.errors[0])
+        self.assertIn("gone_mask.png", result.errors[0])
+
+    def test_accepts_masks_that_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "a.png").write_bytes(b"fake")
+            (root / "a_mask.png").write_bytes(b"fake")
+            manifest = root / "m.csv"
+            manifest.write_text(
+                "sample_id,split,source,label,image_path,seg_path\n"
+                "0,train,real,x,a.png,a_mask.png\n",
+                encoding="utf-8",
+            )
+
+            result = validate_csv_dataset(
+                self._schema(manifest, mask_column="seg_path", num_classes=19)
+            )
+
+        self.assertTrue(result.is_valid, result.errors)
 
     def test_text_only_dataset_skips_the_image_check(self) -> None:
         config = load_experiment_config(PROJECT_ROOT / "configs" / "smoke.toml")

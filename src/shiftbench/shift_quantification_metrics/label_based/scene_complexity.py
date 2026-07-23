@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from shift_quantification_metrics.distances import js_distance
+from shiftbench.metrics.distances import js_distance
 
 
 def scene_complexity(mask:np.ndarray, num_classes:int) -> int:

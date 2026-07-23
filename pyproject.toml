@@ -23,6 +23,21 @@ features = [
   "transformers>=4.40",
   "pillow>=10.0",
 ]
+# Image- and label-based shift metrics (HSV/LBP histograms need OpenCV/skimage;
+# pillow decodes the manifest-listed images and masks).
+image = [
+  "opencv-python>=4.8",
+  "scikit-image>=0.22",
+  "pillow>=10.0",
+]
+# SADGE additionally needs a vendored MASt3R checkout, not yet in the repo;
+# see docs/integration-plan.md Phase 7.
+sadge = [
+  "opencv-python>=4.8",
+  "torch>=2.2",
+  "transformers>=4.40",
+  "pillow>=10.0",
+]
 
 [project.scripts]
 shiftbench-run = "shiftbench.experiments.run:main"
