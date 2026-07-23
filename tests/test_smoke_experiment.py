@@ -261,6 +261,50 @@ num_classes = 5
         self.assertEqual(shift["encoder"], "dinov2")
         self.assertIn("manifest_a", shift)
 
+    def test_sadge_without_torch_fails_cleanly(self) -> None:
+        # SADGE needs the '[sadge]' extras; without them a run must fail with
+        # a named-dependency ValueError, not an ImportError traceback.
+        try:
+            import torch  # noqa: F401
+
+            self.skipTest("torch installed; the missing-extra path is untestable")
+        except ModuleNotFoundError:
+            pass
+
+        (self.directory / "imgs_a").mkdir()
+        (self.directory / "imgs_b").mkdir()
+        sample = PROJECT_ROOT / "data" / "sample" / "tiny_shiftbench.csv"
+        config_path = self.directory / "sadge.toml"
+        config_path.write_text(
+            f"""
+[experiment]
+name = "sadge"
+seed = 3
+output_root = "runs"
+
+[dataset]
+path = "{sample}"
+required_columns = ["sample_id", "split", "source", "label", "text"]
+id_column = "sample_id"
+split_column = "split"
+source_column = "source"
+label_column = "label"
+text_column = "text"
+allowed_splits = ["train", "validation", "test"]
+allowed_sources = ["real", "synthetic"]
+
+[shift]
+metrics = ["sadge"]
+image_dir_a = "{self.directory}/imgs_a"
+image_dir_b = "{self.directory}/imgs_b"
+""".strip(),
+            encoding="utf-8",
+        )
+
+        with tempfile.TemporaryDirectory() as output_root:
+            with self.assertRaisesRegex(ValueError, r"\[sadge\].*torch"):
+                run_experiment(config_path, Path(output_root))
+
     def test_missing_manifest_fails_the_run_cleanly(self) -> None:
         config_path = self._config()
         (self.directory / "b.csv").unlink()

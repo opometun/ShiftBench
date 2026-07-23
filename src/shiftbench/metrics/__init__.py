@@ -14,7 +14,7 @@ Two layers, per docs/integration-plan.md Phase 0:
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from shiftbench.metrics.distances import js_distance
 from shiftbench.metrics.gaussian import (
@@ -33,6 +33,7 @@ from shiftbench.metrics.histograms import (
     scene_complexity_summary,
     texture_summary,
 )
+from shiftbench.metrics.pairwise import SADGE_PARAMS, sadge_pairwise
 
 __all__ = [
     "CHUNK_SIZE",
@@ -82,12 +83,18 @@ class Metric:
             metrics that cannot summarize one dataset alone.
         compare: (summary_a, summary_b) -> float over loaded summary
             artifacts, or None for pairwise metrics.
+        pairwise: (dir_a, dir_b) -> float for pairwise metrics, None for
+            summarizing ones.
+        params: Fixed settings recorded next to the metric's value in run
+            artifacts.
     """
 
     name: str
     input: str
     summary: str | None
     compare: Callable | None
+    pairwise: Callable | None = None
+    params: dict = field(default_factory=dict)
 
 
 def _frechet_compare(summary_a, summary_b) -> float:
@@ -166,6 +173,10 @@ METRICS: dict[str, Metric] = {
     "scene_complexity_js": Metric(
         name="scene_complexity_js", input="masks", summary="scene_complexity",
         compare=js_compare,
+    ),
+    "sadge": Metric(
+        name="sadge", input="image_dirs", summary=None, compare=None,
+        pairwise=sadge_pairwise, params=SADGE_PARAMS,
     ),
 }
 
