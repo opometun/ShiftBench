@@ -17,7 +17,7 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from shiftbench.shift_quantification_metrics.distances import js_distance
+from shiftbench.metrics.distances import js_distance
 from shiftbench.shift_quantification_metrics.label_based.class_frequency import (
     class_frequency,
     quantify_class_frequency_shift,

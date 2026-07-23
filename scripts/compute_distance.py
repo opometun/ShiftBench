@@ -10,7 +10,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from shiftbench.metrics import METRICS, get_metric  # noqa: E402
-from shiftbench.provenance import require_same_encoder  # noqa: E402
+from shiftbench.provenance import (  # noqa: E402
+    UNKNOWN,
+    describe_summary,
+    require_comparable,
+)
 
 
 def parse_args():
@@ -40,16 +44,24 @@ def main():
     args = parse_args()
     metric = get_metric(args.metric)
 
+    if metric.compare is None:
+        raise ValueError(
+            f"Metric '{metric.name}' is pairwise and does not compare "
+            "precomputed summaries"
+        )
+
     stats_a = np.load(args.stats_a_path)
     stats_b = np.load(args.stats_b_path)
-    require_same_encoder(args.stats_a_path, stats_a, args.stats_b_path, stats_b)
+    require_comparable(args.stats_a_path, stats_a, args.stats_b_path, stats_b)
 
-    distance = metric.compute(
-        stats_a["mu"],
-        stats_a["sigma"],
-        stats_b["mu"],
-        stats_b["sigma"],
-    )
+    kind, _ = describe_summary(stats_a)
+    if kind != UNKNOWN and kind != metric.summary:
+        raise ValueError(
+            f"Metric '{metric.name}' expects '{metric.summary}' summaries, "
+            f"these files hold '{kind}'"
+        )
+
+    distance = metric.compare(stats_a, stats_b)
 
     if args.output_path:
         with open(args.output_path, "w", encoding="utf-8") as file:

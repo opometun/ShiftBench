@@ -72,6 +72,46 @@ def describe(stats: Mapping[str, Any]) -> tuple[str, str]:
     return encoder, model
 
 
+def describe_summary(stats: Mapping[str, Any]) -> tuple[str, str]:
+    """Return the (summary kind, params json) a stats artifact was built with."""
+    kind = str(stats["summary"]) if "summary" in stats else UNKNOWN
+    params = str(stats["params"]) if "params" in stats else UNKNOWN
+    return kind, params
+
+
+def require_comparable(
+    label_a: str,
+    stats_a: Mapping[str, Any],
+    label_b: str,
+    stats_b: Mapping[str, Any],
+) -> None:
+    """Fail if two stats artifacts cannot be meaningfully compared.
+
+    Checks encoder/checkpoint (see require_same_encoder) and, when recorded,
+    the summary kind and its hyperparameters — a color histogram at 32 hue
+    bins is not comparable to one at 16, any more than DINOv2 features are to
+    StreetCLIP's. Artifacts written before summaries existed lack the keys
+    and skip that part of the check.
+
+    Raises:
+        ValueError: If encoders, summary kinds, or params are known and differ.
+    """
+    require_same_encoder(label_a, stats_a, label_b, stats_b)
+
+    kind_a, params_a = describe_summary(stats_a)
+    kind_b, params_b = describe_summary(stats_b)
+    if UNKNOWN in (kind_a, kind_b):
+        return
+
+    if (kind_a, params_a) != (kind_b, params_b):
+        msg = (
+            "Refusing to compare different summaries: "
+            f"{label_a} is {kind_a} with params {params_a}, "
+            f"{label_b} is {kind_b} with params {params_b}."
+        )
+        raise ValueError(msg)
+
+
 def require_same_encoder(
     label_a: str,
     stats_a: Mapping[str, Any],

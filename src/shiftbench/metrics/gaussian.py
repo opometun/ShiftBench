@@ -1,4 +1,4 @@
-"""Distribution-shift metrics over frozen-encoder feature sets.
+"""Gaussian summaries of embedding sets, and the distances between them.
 
 Each dataset is summarized as a Gaussian over its embeddings: a mean vector
 (where the point cloud sits) and a covariance matrix (how it is spread). The
@@ -6,9 +6,6 @@ distances below compare two such summaries.
 """
 
 from __future__ import annotations
-
-from collections.abc import Callable
-from dataclasses import dataclass
 
 import numpy as np
 import scipy.linalg
@@ -94,55 +91,9 @@ def frechet_distance(
     return float(np.sqrt(d2))
 
 
-@dataclass(frozen=True)
-class Metric:
-    """One distance, callable through a signature shared by all of them.
-
-    Attributes:
-        name: Short name used on the command line.
-        uses_covariance: Whether the distance looks at spread at all.
-        compute: Takes (mu_a, sigma_a, mu_b, sigma_b), returns a distance.
-            Metrics that ignore covariance still accept it, so callers do not
-            have to branch on which metric they picked.
-    """
-
-    name: str
-    uses_covariance: bool
-    compute: Callable[[np.ndarray, np.ndarray, np.ndarray, np.ndarray], float]
-
-
-def _centroid_from_stats(
-    mu_a: np.ndarray,
-    sigma_a: np.ndarray,
-    mu_b: np.ndarray,
-    sigma_b: np.ndarray,
-) -> float:
-    """Adapt centroid_distance to the shared four-argument signature."""
-    return centroid_distance(mu_a, mu_b)
-
-
-METRICS: dict[str, Metric] = {
-    "centroid": Metric(
-        name="centroid",
-        uses_covariance=False,
-        compute=_centroid_from_stats,
-    ),
-    "frechet": Metric(
-        name="frechet",
-        uses_covariance=True,
-        compute=frechet_distance,
-    ),
-}
-
-
-def get_metric(name: str) -> Metric:
-    """Look up a distance by name.
-
-    Raises:
-        ValueError: If the name is not a registered metric.
-    """
-    try:
-        return METRICS[name]
-    except KeyError:
-        available = ", ".join(sorted(METRICS))
-        raise ValueError(f"Unknown metric '{name}'. Available: {available}") from None
+def gaussian_summary(embeddings: np.ndarray) -> dict[str, np.ndarray]:
+    """Summarize an embedding set as the {mu, sigma} pair the distances need."""
+    return {
+        "mu": compute_mean(embeddings),
+        "sigma": compute_covariance(embeddings),
+    }

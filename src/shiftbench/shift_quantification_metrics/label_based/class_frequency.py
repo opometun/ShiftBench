@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from shiftbench.shift_quantification_metrics.distances import js_distance
+from shiftbench.metrics.distances import js_distance
 
 
 def class_frequency(mask:np.ndarray, num_classes:int) -> np.ndarray:

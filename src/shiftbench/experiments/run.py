@@ -19,7 +19,12 @@ import numpy as np
 from shiftbench.config import ExperimentConfig, ShiftConfig, load_experiment_config
 from shiftbench.datasets.schema import validate_csv_dataset
 from shiftbench.metrics import get_metric
-from shiftbench.provenance import describe, require_same_encoder
+from shiftbench.provenance import (
+    UNKNOWN,
+    describe,
+    describe_summary,
+    require_comparable,
+)
 
 
 def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
@@ -151,18 +156,23 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
         msg = f"Could not read shift stats: {error}"
         raise ValueError(msg) from error
 
-    require_same_encoder(str(shift.stats_a), stats_a, str(shift.stats_b), stats_b)
+    require_comparable(str(shift.stats_a), stats_a, str(shift.stats_b), stats_b)
     encoder, model = describe(stats_a)
+    kind, _ = describe_summary(stats_a)
 
-    distances = {
-        name: get_metric(name).compute(
-            stats_a["mu"],
-            stats_a["sigma"],
-            stats_b["mu"],
-            stats_b["sigma"],
-        )
-        for name in shift.metrics
-    }
+    distances = {}
+    for name in shift.metrics:
+        metric = get_metric(name)
+        if metric.compare is None:
+            msg = f"Metric '{name}' is pairwise and cannot use precomputed stats"
+            raise ValueError(msg)
+        if kind != UNKNOWN and kind != metric.summary:
+            msg = (
+                f"Metric '{name}' expects '{metric.summary}' summaries, "
+                f"these stats hold '{kind}'"
+            )
+            raise ValueError(msg)
+        distances[name] = metric.compare(stats_a, stats_b)
     return {
         "encoder": encoder,
         "model": model,
