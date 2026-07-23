@@ -226,3 +226,4 @@ results/*
 artifacts/
 !runs/.gitkeep
 !results/.gitkeep
+docs/

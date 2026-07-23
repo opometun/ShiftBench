@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from shiftbench.features import dinov2, streetclip
+from shiftbench.features import dinov2, dinov3, streetclip
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,12 @@ ENCODERS: dict[str, EncoderBackend] = {
         default_model_name=dinov2.DEFAULT_MODEL_NAME,
         load=dinov2.load_frozen_dinov2,
         extract=dinov2.extract_features,
+    ),
+    "dinov3": EncoderBackend(
+        name="dinov3",
+        default_model_name=dinov3.DEFAULT_MODEL_NAME,
+        load=dinov3.load_frozen_dinov3,
+        extract=dinov3.extract_features,
     ),
     "streetclip": EncoderBackend(
         name="streetclip",

@@ -14,10 +14,17 @@ from shiftbench.datasets.manifest import (
     FALLBACK_IMAGE_COLUMNS,
     load_image_paths,
     load_image_paths_from_config,
+    load_mask_paths,
+    load_mask_paths_from_config,
 )
 
 
-def _schema(path: Path, image_column: str | None) -> DatasetSchemaConfig:
+def _schema(
+    path: Path,
+    image_column: str | None,
+    mask_column: str | None = None,
+    num_classes: int | None = None,
+) -> DatasetSchemaConfig:
     return DatasetSchemaConfig(
         path=path,
         required_columns=("sample_id", "split", "source", "label", "text"),
@@ -29,6 +36,8 @@ def _schema(path: Path, image_column: str | None) -> DatasetSchemaConfig:
         allowed_splits=("train",),
         allowed_sources=("real",),
         image_column=image_column,
+        mask_column=mask_column,
+        num_classes=num_classes,
     )
 
 
@@ -181,6 +190,64 @@ class ManifestFromConfigTest(unittest.TestCase):
             load_image_paths_from_config(_schema(manifest, "scene_uri"))
 
         self.assertIn("scene_uri", str(caught.exception))
+
+
+class MaskManifestTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self._directory = tempfile.TemporaryDirectory()
+        self.directory = Path(self._directory.name)
+        self.addCleanup(self._directory.cleanup)
+
+    def _write(self, body: str) -> Path:
+        path = self.directory / "m.csv"
+        path.write_text(body.lstrip(), encoding="utf-8")
+        return path
+
+    def test_explicit_column_resolves_relative_paths(self) -> None:
+        manifest = self._write("id,seg_path\n0,masks/a.png\n1,masks/b.png\n")
+
+        paths = load_mask_paths(str(manifest), "seg_path")
+
+        self.assertEqual(
+            paths,
+            [str(self.directory / "masks" / "a.png"),
+             str(self.directory / "masks" / "b.png")],
+        )
+
+    def test_there_is_no_fallback_guessing_for_masks(self) -> None:
+        # 'mask' style names are never guessed; the column must be named.
+        manifest = self._write("id,mask_path\n0,a.png\n")
+
+        with self.assertRaises(ValueError) as caught:
+            load_mask_paths(str(manifest), "wrong_name")
+
+        self.assertIn("wrong_name", str(caught.exception))
+
+    def test_blank_cell_raises_with_row_number(self) -> None:
+        manifest = self._write("id,seg_path\n0,a.png\n1,\n")
+
+        with self.assertRaises(ValueError) as caught:
+            load_mask_paths(str(manifest), "seg_path")
+
+        self.assertIn("Row 3", str(caught.exception))
+        self.assertIn("mask", str(caught.exception))
+
+    def test_from_config_uses_the_configured_column(self) -> None:
+        manifest = self._write("id,seg_path\n0,a.png\n")
+
+        paths = load_mask_paths_from_config(
+            _schema(manifest, None, mask_column="seg_path", num_classes=19)
+        )
+
+        self.assertEqual(os.path.basename(paths[0]), "a.png")
+
+    def test_from_config_without_mask_column_raises(self) -> None:
+        manifest = self._write("id,seg_path\n0,a.png\n")
+
+        with self.assertRaises(ValueError) as caught:
+            load_mask_paths_from_config(_schema(manifest, None))
+
+        self.assertIn("mask_column", str(caught.exception))
 
 
 if __name__ == "__main__":

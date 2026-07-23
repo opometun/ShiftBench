@@ -1,7 +1,8 @@
 # This file's contents were taken from sadge/metrics/geometry.py of https://github.com/SADGE-metric/sadge-reproduction.git repository  on July 19th, 2026
-# FOLLOWING ADJUSTMENTS WERE MADE BY US: 
+# FOLLOWING ADJUSTMENTS WERE MADE BY US:
 # - removed the alternative geometric inlier-count metrics SuperPoint+LightGlue and LoFTR
 # - adding MAST3R_DIR directly
+# - fail with a clear message when the MASt3R git submodule is not initialized
 
 """Geometric inlier-count metric MASt3R (mutual nearest neighbour matches), 
 which returns the number of inliers after USAC-MAGSAC fundamental-matrix verification. 
@@ -39,7 +40,13 @@ class GeoGapMetric:
     def _load(self) -> None:
         if self._mast3r is not None:
             return
-        # MASt3R is a vendored submodule; expose its package roots before import.
+        if not (MAST3R_DIR / "mast3r" / "model.py").exists():
+            raise RuntimeError(
+                "MASt3R submodule is not initialized; run "
+                "'git submodule update --init --recursive' in the repository "
+                "root, then retry."
+            )
+        # MASt3R is a git submodule; expose its package roots before import.
         if str(MAST3R_DIR) not in sys.path:
             sys.path.insert(0, str(MAST3R_DIR))
         import mast3r.utils.path_to_dust3r  # noqa: F401

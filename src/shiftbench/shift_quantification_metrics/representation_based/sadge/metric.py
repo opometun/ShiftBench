@@ -15,8 +15,8 @@ import torch
 import numpy as np
 from pathlib import Path
 
-from shift_quantification_metrics.representation_based.sadge.metrics.embedding import DinoV3Metric
-from shift_quantification_metrics.representation_based.sadge.metrics.geometry import GeoGapMetric
+from shiftbench.shift_quantification_metrics.representation_based.sadge.metrics.embedding import DinoV3Metric
+from shiftbench.shift_quantification_metrics.representation_based.sadge.metrics.geometry import GeoGapMetric
 
 
 # The best geometric-appearance-metric-pair used by SADGE

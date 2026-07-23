@@ -4,186 +4,175 @@ ShiftBench is an open research benchmark for understanding how the composition o
 
 ## Current Scope
 
-The repository contains two pieces:
-
-1. **A distribution-shift measurement pipeline** (`scripts/` + `src/shiftbench/`):
-   frozen-encoder feature extraction, Gaussian summary statistics, and the
-   centroid and Fréchet distances between two datasets.
-2. **A reproducible experiment scaffold** (`src/shiftbench/experiments/run.py`):
-   config-driven runs that validate a dataset, compute the configured
-   distances, and write structured artifacts.
-
-Feature extraction stays a separate manual step so that running an experiment
-does not require `torch`; a run consumes the statistics it produced.
+- **Distribution-shift metrics** across three families (below), addressable by
+  name through one registry.
+- **Feature extraction** with frozen encoders (DINOv2, DINOv3, StreetCLIP).
+- **A reproducible experiment scaffold**: config-driven runs that validate a
+  dataset, compute the configured distances, and write structured artifacts.
 
 Model training, paper-scale configs, artifact versioning, and figure generation
-are still to come. See [Known Gaps](#known-gaps) for what is deliberately
-unfinished.
+are still to come. See [Known Gaps](#known-gaps).
+
+## The Three Metric Families
+
+Each family is a different lens on how far two datasets are apart:
+
+| family | metrics | reads | measures |
+| --- | --- | --- | --- |
+| representation-based | `centroid`, `frechet` | embeddings | shift in what a pretrained network sees |
+| image-based | `color_js`, `texture_js` | images | shift in raw appearance (HSV, LBP histograms) |
+| label-based | `class_frequency_js`, `class_presence_js`, `scene_complexity_js` | masks | shift in the annotations |
+| pairwise | `sadge` | image directories | fused geometric + appearance similarity |
+
+The first three follow one pattern — *summarize each dataset, then compare the
+two summaries* — with a Gaussian or an averaged histogram as the summary.
+SADGE is the exception: it matches images across the two datasets, cannot
+summarize one dataset alone, and (unlike every distance above) is a
+**similarity — higher means more alike**, which is recorded next to its score.
 
 ## Environment
 
 The project targets Python `3.11.9`.
 
 ```bash
+git clone --recursive <repo>   # --recursive is needed only for SADGE (MASt3R)
 python3.11 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -e .
 ```
 
-`numpy` and `scipy` are required. Feature extraction additionally needs
-`torch`, `transformers`, and `pillow`, kept behind an extra so that comparing
-already-extracted statistics does not pull in a deep learning stack:
+`numpy` and `scipy` are the only required dependencies. Extras per family:
 
-```bash
-python3 -m pip install -e '.[features]'
-```
+| extra | installs | needed for |
+| --- | --- | --- |
+| `.[features]` | torch, transformers, pillow | feature extraction |
+| `.[image]` | opencv-python, scikit-image, pillow | image metrics, decoding files |
+| `.[sadge]` | opencv-python + the torch stack | SADGE (see below) |
+
+SADGE additionally needs the MASt3R **git submodule** (`git submodule update
+--init --recursive` if you didn't clone recursively) and MASt3R's own runtime
+requirements; model weights download from Hugging Face on first use.
 
 The scripts insert `src/` on `sys.path` themselves, so they also run from a
 clone without installing the package.
 
 ## Measuring Distribution Shift
 
-Three steps: embed each dataset, summarize each as a Gaussian, then compare two
-summaries.
+Three steps: get each dataset's raw data into arrays, summarize each dataset,
+compare two summaries.
 
-### 1. Extract features
+### 1. Extract features (representation metrics only)
 
 ```bash
 python3 scripts/extract_features.py real.npy --config configs/real_images.toml
-python3 scripts/extract_features.py synth.npy --manifest data/synthetic.csv
+python3 scripts/extract_features.py synth.npy --manifest data/synthetic.csv --encoder streetclip
 ```
 
-The manifest source is either `--config` (an experiment TOML, which supplies
-both the manifest path and its `image_column`) or `--manifest` (a raw CSV,
-whose image column is guessed). Prefer `--config`.
-
-| flag | default | purpose |
-| --- | --- | --- |
-| `--encoder` | `dinov2` | `dinov2` or `streetclip` |
-| `--model` | the encoder's own default | Hugging Face checkpoint id |
-| `--image-column` | from config, else guessed | manifest column holding image paths |
-
-Alongside `real.npy` this writes `real.npy.json` recording which encoder and
-checkpoint produced it. Keep the two files together.
+`--encoder` is `dinov2` (default), `dinov3`, or `streetclip`; `--model`
+overrides the checkpoint. Alongside `real.npy` this writes `real.npy.json`
+recording the encoder and checkpoint — keep the two files together.
 
 ### 2. Summarize each dataset
 
 ```bash
-python3 scripts/compute_feature_stats.py real.npy real.npz
+python3 scripts/compute_feature_stats.py real.npy real.npz                       # gaussian (default)
+python3 scripts/compute_feature_stats.py real.csv real_color.npz --summary color --image-column image_path
+python3 scripts/compute_feature_stats.py real.csv real_cls.npz --summary class_frequency \
+    --mask-column seg_path --num-classes 19
 ```
 
-Writes a mean vector and covariance matrix, carrying the encoder provenance
-across from the sidecar. The `.npz` is a fixed small size no matter how many
-images went into it, so it is the artifact worth keeping.
+Gaussian summaries read an embeddings `.npy`; histogram summaries read a CSV
+manifest and decode the images or masks it lists (masks may be `.png` or
+`.npy`). Every artifact records its summary kind, hyperparameters, and — for
+embeddings — the encoder.
 
 ### 3. Compare two datasets
 
 ```bash
 python3 scripts/compute_distance.py real.npz synth.npz --metric frechet
-python3 scripts/compute_distance.py real.npz synth.npz --metric centroid -o d.txt
+python3 scripts/compute_distance.py real_cls.npz synth_cls.npz --metric class_frequency_js -o d.txt
 ```
 
-- **`centroid`** — distance between the two means. Cheap, but blind to spread:
-  a generator that collapsed to near-identical outputs can still score ~0.
-- **`frechet`** — the 2-Wasserstein distance between the two Gaussians, so it
-  sees both position and spread. This is the FID formula over the chosen
-  encoder's features rather than Inception's.
-
 `--metric` is required: the output is a bare number that does not say which
-distance it is.
+distance it is. Mismatched artifacts **refuse to compare** — different
+encoders, different checkpoints, different summary kinds, or different
+hyperparameters (a 32-bin color histogram is not comparable to a 16-bin one)
+all fail with an error instead of producing a plausible wrong number.
 
-### Encoders are not interchangeable
+SADGE has no summary artifact and runs only through an experiment (below).
 
-A distance is only meaningful between features from the *same* encoder and
-checkpoint. DINOv2 uses the CLS token unnormalized; StreetCLIP uses the
-projection head and L2-normalizes, putting every point on a unit sphere. The
-numbers are on different scales and are not comparable. `compute_distance.py`
-refuses to compare stats whose recorded provenance disagrees.
-
-## Smoke Experiment
-
-Run the tiny config-driven experiment:
+## Experiments
 
 ```bash
 PYTHONPATH=src python3 -m shiftbench.experiments.run --config configs/smoke.toml
 ```
 
-or:
-
-```bash
-bash scripts/run_smoke_experiment.sh
-```
-
-Each run creates a directory under `runs/` containing:
-
-- `config.toml`: exact config used for the run
-- `config.normalized.json`: resolved config paths
-- `validation.json`: dataset schema validation summary
-- `metrics.json`: dataset counts, plus any configured distances
-- `logs.json` and `logs.txt`: run metadata, including Python version and Git commit
+Each run creates a directory under `runs/` containing `config.toml`,
+`config.normalized.json`, `validation.json`, `metrics.json`, and logs
+(including the git commit).
 
 ### Recording distances in a run
 
-Add an optional `[shift]` table naming two `.npz` stats files from step 2:
+The optional `[shift]` table selects metrics by name and supplies whatever
+inputs those metrics declare — validated at config load, so a bad setup fails
+before any work starts:
 
 ```toml
 [shift]
-stats_a = "../features/real.npz"
+metrics = ["frechet", "color_js", "class_frequency_js", "sadge"]
+stats_a = "../features/real.npz"        # embeddings metrics
 stats_b = "../features/synthetic.npz"
-metrics = ["centroid", "frechet"]
+manifest_a = "../data/real.csv"         # image/mask metrics
+manifest_b = "../data/synthetic.csv"
+image_column = "image_path"
+mask_column = "seg_path"
+num_classes = 19
+image_dir_a = "../data/real_images"     # pairwise metrics (SADGE)
+image_dir_b = "../data/synth_images"
 ```
 
-`metrics.json` then gains a `shift` block holding the distances together with
-the encoder and checkpoint they were computed under:
+`metrics.json` then gains a `shift` block with every distance next to the
+provenance and hyperparameters that produced it:
 
 ```json
 "shift": {
-  "encoder": "dinov2",
-  "model": "facebook/dinov2-base",
-  "stats_a": "/abs/path/real.npz",
-  "stats_b": "/abs/path/synthetic.npz",
-  "distances": {"centroid": 8.51, "frechet": 8.59}
+  "distances": {"frechet": 8.59, "class_frequency_js": 0.59},
+  "encoder": "dinov2", "model": "facebook/dinov2-base",
+  "params": {"class_frequency_js": {"mask_column": "seg_path", "num_classes": 19}}
 }
 ```
-
-Unknown metric names are rejected when the config loads. Comparing stats from
-different encoders fails the run and is recorded in `logs.json`, rather than
-producing a number that looks fine.
 
 ## Dataset Configs
 
 A dataset declares its columns in TOML. `text_column` and `image_column` are
-both optional, but at least one must be set, so an image dataset does not have
-to invent a text column. Any column named this way must also appear in
-`required_columns`. When `image_column` is set, validation checks that every
-referenced image actually exists, resolved relative to the manifest.
-
+both optional but at least one must be set; `mask_column` is supplementary and
+requires `num_classes`, so every label metric records the class count it
+assumed. Validation checks that declared image and mask files actually exist.
 [`configs/smoke.toml`](configs/smoke.toml) is a text-only example.
 
 ## Repository Layout
 
 ```text
-configs/                 Experiment configurations
-data/
-  sample/                Tiny tracked data for tests and smoke runs
-  raw/                   Local raw data, ignored by Git
-  processed/             Local derived data, ignored by Git
-  external/              Local third-party artifacts, ignored by Git
-runs/                    Local run artifacts, ignored by Git
-results/                 Local aggregated results, ignored by Git
-scripts/                 Command-line entry points
+configs/                     Experiment configurations
+data/sample/                 Tiny tracked data for tests and smoke runs
+runs/, results/              Local artifacts, ignored by Git
+scripts/                     Command-line entry points (parsing + I/O only)
 src/shiftbench/
-  config.py              TOML config loading and validation
-  metrics.py             Distances, and the registry naming them
-  provenance.py          Which encoder produced which artifact
-  datasets/              Schema validation and manifest reading
-  features/              Frozen encoders and the registry naming them
-  experiments/           Reproducible run scaffold
-tests/                   Unit and smoke tests
+  config.py                  TOML config loading and validation
+  provenance.py              What produced which artifact, and comparability
+  metrics/                   Metric + Summary registries; gaussian, JS,
+                             histogram, and pairwise implementations
+  datasets/                  Schema validation, manifest reading, file decoding
+  features/                  Frozen encoders (dinov2, dinov3, streetclip) and
+                             their registry
+  experiments/               Reproducible run scaffold
+  shift_quantification_metrics/
+                             Metric family implementations (histograms, SADGE;
+                             SADGE vendors MASt3R as a git submodule)
+tests/                       Unit, characterization, and smoke tests
+docs/integration-plan.md     How the metric families were integrated, and the
+                             decisions taken along the way
 ```
-
-Scripts hold argument parsing and file I/O only; everything testable lives in
-`src/shiftbench/`.
 
 ## Tests
 
@@ -191,28 +180,27 @@ Scripts hold argument parsing and file I/O only; everything testable lives in
 python3 -m unittest discover -s tests
 ```
 
-48 tests, requiring only `numpy` and `scipy`:
-
-- config loading, including dataset modality rules and `[shift]` parsing
-- dataset schema validation, including missing image files
-- manifest reading and image-column resolution
-- the distance metrics and their registry
-- structured run outputs, including recorded distances and encoder mismatch
-
-The encoder backends are not covered, since testing them needs `torch` and a
-model download.
+102 tests requiring only `numpy` and `scipy`; 7 skip without the optional
+extras. They cover config validation (including per-metric `[shift]` rules),
+schema and manifest handling, the metric registries, characterization pins of
+every histogram metric's numbers, equivalence of the summary-artifact path
+with the original implementations, and run artifacts including refusal paths.
+Encoder backends are wiring-tested against stubs; real forward passes need
+`.[features]` and a checkpoint download.
 
 ## Known Gaps
 
-- Feature extraction is not part of a run, so a run records which statistics it
-  compared but cannot itself reproduce them from images.
+- **No real model forward pass has been executed in development.** All three
+  encoders and SADGE are verified at the wiring level only; the first real
+  extraction/SADGE run is still ahead. SADGE's MASt3R runtime requirements
+  (einops etc.) are not covered by the `.[sadge]` extra.
 - `provenance.py` is untested, and unknown provenance warns rather than fails,
   so one unlabeled artifact can still slip through a comparison.
 - Feature provenance is a sidecar file. Move a `.npy` without its `.json` and
   the record is lost.
-- `scripts/extract_features.py --help` requires `torch` to be installed, since
-  the import happens at module load.
-- No committed config demonstrates `image_column`.
+- `scripts/extract_features.py --help` requires `torch`, since the import
+  happens at module load.
+- No committed config demonstrates `image_column` or `mask_column`.
 
 ## Data Policy
 
