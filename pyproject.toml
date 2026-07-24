@@ -30,13 +30,24 @@ image = [
   "scikit-image>=0.22",
   "pillow>=10.0",
 ]
-# SADGE additionally needs a vendored MASt3R checkout, not yet in the repo;
+# SADGE additionally needs a vendored MASt3R checkout, Sadge is a submodule;
 # see docs/integration-plan.md Phase 7.
 sadge = [
   "opencv-python>=4.8",
   "torch>=2.2",
   "transformers>=4.40",
   "pillow>=10.0",
+]
+
+# Downstream segmentation training and inference (SegFormer, DeepLabV3+).
+train = [
+  "torch>=2.2",
+  "torchvision>=0.17",
+  "transformers>=4.40",
+  "pillow>=10.0",
+]
+dev = [
+  "pytest>=8,<10",
 ]
 
 [project.scripts]
