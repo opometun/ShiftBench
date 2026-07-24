@@ -227,3 +227,5 @@ artifacts/
 !runs/.gitkeep
 !results/.gitkeep
 docs/
+benchvenv/
+.DS_Store
