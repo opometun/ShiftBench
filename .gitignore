@@ -218,6 +218,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # ShiftBench local data and experiment artifacts
+data/study/streetViewData/
 data/raw/
 data/processed/
 data/external/

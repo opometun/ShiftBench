@@ -157,10 +157,7 @@ def _validate_image_exists(
     Without this a config validates cleanly and then fails partway through
     feature extraction, after the model has already been loaded.
     """
-    if schema.image_column is None:
-        return
-
-    raw_path = row.get(schema.image_column, "").strip()
+    raw_path = row.get(schema.input_column, "").strip()
     if not raw_path:
         return
 
@@ -176,10 +173,7 @@ def _validate_mask_exists(
     errors: list[str],
 ) -> None:
     """Check that a declared mask path points at a file that exists."""
-    if schema.mask_column is None:
-        return
-
-    raw_path = row.get(schema.mask_column, "").strip()
+    raw_path = row.get(schema.label_column, "").strip()
     if not raw_path:
         return
 

@@ -70,6 +70,7 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
     metrics = {
         "experiment": config.name,
         "seed": config.seed,
+        "train_selection": config.train_selection,
         "dataset_rows": validation.rows,
         "split_counts": dict(validation.split_counts),
         "source_counts": dict(validation.source_counts),

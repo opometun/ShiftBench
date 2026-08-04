@@ -32,6 +32,7 @@ class SmokeExperimentTest(unittest.TestCase):
 
         self.assertEqual(metrics["seed"], 42)
         self.assertEqual(metrics["dataset_rows"], 4)
+        self.assertEqual(metrics["train_selection"], {"real": 1500, "synthetic": 500})
         self.assertTrue(validation["is_valid"])
         self.assertTrue(config_copy_exists)
         self.assertTrue(text_log_exists)
@@ -91,6 +92,7 @@ class ShiftMetricsRunTest(unittest.TestCase):
 name = "shift"
 seed = 7
 output_root = "runs"
+train_selection = {{ "real": 1500, "synthetic": 500 }}
 
 [dataset]
 path = "{sample}"
@@ -99,7 +101,7 @@ id_column = "sample_id"
 split_column = "split"
 source_column = "source"
 label_column = "label"
-text_column = "text"
+input_column = "text"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["real", "synthetic"]
 
@@ -215,6 +217,7 @@ class MixedShiftMetricsRunTest(unittest.TestCase):
 name = "mixed"
 seed = 3
 output_root = "runs"
+train_selection = {{ "real": 1500, "synthetic": 500 }}
 
 [dataset]
 path = "{sample}"
@@ -223,7 +226,7 @@ id_column = "sample_id"
 split_column = "split"
 source_column = "source"
 label_column = "label"
-text_column = "text"
+input_column = "text"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["real", "synthetic"]
 
@@ -281,6 +284,7 @@ num_classes = 5
 name = "sadge"
 seed = 3
 output_root = "runs"
+train_selection = {{ "real": 1500, "synthetic": 500 }}
 
 [dataset]
 path = "{sample}"
@@ -289,7 +293,7 @@ id_column = "sample_id"
 split_column = "split"
 source_column = "source"
 label_column = "label"
-text_column = "text"
+input_column = "text"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["real", "synthetic"]
 

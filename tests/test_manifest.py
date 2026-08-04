@@ -31,12 +31,10 @@ def _schema(
         id_column="sample_id",
         split_column="split",
         source_column="source",
-        label_column="label",
-        text_column="text",
+        label_column=mask_column,
+        input_column=image_column,
         allowed_splits=("train",),
         allowed_sources=("real",),
-        image_column=image_column,
-        mask_column=mask_column,
         num_classes=num_classes,
     )
 

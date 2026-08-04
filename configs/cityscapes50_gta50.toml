@@ -1,0 +1,23 @@
+[experiment]
+name = "cityscapes50_gta50"
+seed = 42
+output_root = "../runs/cityscapes50_gta50"
+train_selection = {cityscapes = 1000, gtaV = 1000}
+
+[dataset]
+path = "../data/study/cityscapes50_gta50.csv"
+required_columns = [
+  "sample_id",
+  "split",
+  "source_dataset",
+  "mask_path",
+  "img_path",
+]
+id_column = "sample_id"
+split_column = "split"
+source_column = "source_dataset"
+label_column = "mask_path"
+input_column = "img_path"
+allowed_splits = ["train", "validation", "test"]
+allowed_sources = ["cityscapes", "gtaV"]
+num_classes = 19

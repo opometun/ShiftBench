@@ -39,6 +39,11 @@ sadge = [
   "pillow>=10.0",
 ]
 
+# Data preparation
+ds_prep = [
+  "pillow>=10.0",
+]
+
 # Downstream segmentation training and inference (SegFormer, DeepLabV3+).
 train = [
   "torch>=2.2",

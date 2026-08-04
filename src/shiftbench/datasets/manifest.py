@@ -11,7 +11,10 @@ import os
 
 from shiftbench.config import DatasetSchemaConfig
 
-FALLBACK_IMAGE_COLUMNS = ("image_path", "file_path", "filepath", "path", "image")
+# Note: Fallbacks are only relevant for non-configured experiments
+# since we strictly require input_column and label_column in configured experiments
+FALLBACK_IMAGE_COLUMNS = ("img_path", "image_path", "image", "input_path", "input")
+FALLBACK_MASK_COLUMNS = ("mask_path", "mask", "label_path", "label")
 
 
 def resolve_image_path(manifest_dir: str, raw_path: str) -> str:
@@ -29,26 +32,24 @@ def resolve_image_path(manifest_dir: str, raw_path: str) -> str:
 def load_image_paths_from_config(schema: DatasetSchemaConfig) -> list[str]:
     """Read image paths using a configured dataset schema.
 
-    This is the path that makes image_column load-bearing: the column named in
+    This is the path that makes input_column load-bearing: the column named in
     the TOML is the column actually read, with no guessing in between.
 
     Raises:
-        ValueError: If the schema declares no image_column and the manifest
+        ValueError: If the schema declares no input_column and the manifest
             has no recognizable one either.
     """
-    return load_image_paths(str(schema.path), schema.image_column)
+    return load_image_paths(str(schema.path), schema.input_column)
 
 
 def load_mask_paths_from_config(schema: DatasetSchemaConfig) -> list[str]:
     """Read semantic-mask paths using a configured dataset schema.
 
     Raises:
-        ValueError: If the schema declares no mask_column.
+        ValueError: If the schema declares no label_column and the manifest
+            has no recognizable one either.
     """
-    if schema.mask_column is None:
-        msg = "Dataset schema declares no mask_column"
-        raise ValueError(msg)
-    return load_mask_paths(str(schema.path), schema.mask_column)
+    return load_mask_paths(str(schema.path), schema.label_column)
 
 
 def load_image_paths(
@@ -78,21 +79,22 @@ def load_image_paths(
 def load_mask_paths(input_manifest: str, mask_column: str) -> list[str]:
     """Read absolute semantic-mask paths from a CSV manifest.
 
-    Unlike images, masks have no fallback guessing: the column must be named
-    explicitly, normally via the config's mask_column.
-
     Args:
         input_manifest: Path to the CSV manifest.
-        mask_column: Column holding mask paths.
+        mask_column: Column holding mask paths. When omitted, falls back to
+            guessing among FALLBACK_MASK_COLUMNS, which is only safe for
+            manifests written outside a configured experiment.
 
     Returns:
         Absolute mask paths, in manifest row order.
 
     Raises:
-        ValueError: If the manifest is empty, the column is absent, or a row
+        ValueError: If the manifest is empty, no mask column is found, or a row
             is missing its path.
     """
-    return _load_column_paths(input_manifest, mask_column, None, "mask")
+    return _load_column_paths(
+        input_manifest, mask_column, FALLBACK_MASK_COLUMNS, "mask"
+    )
 
 
 def _load_column_paths(
