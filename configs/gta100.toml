@@ -1,0 +1,23 @@
+[experiment]
+name = "gta100"
+seed = 42
+output_root = "../runs/gta100"
+train_selection = {gtaV = 2000}
+
+[dataset]
+path = "../data/study/gta100.csv"
+required_columns = [
+  "sample_id",
+  "split",
+  "source_dataset",
+  "mask_path",
+  "img_path",
+]
+id_column = "sample_id"
+split_column = "split"
+source_column = "source_dataset"
+label_column = "mask_path"
+input_column = "img_path"
+allowed_splits = ["train", "validation", "test"]
+allowed_sources = ["cityscapes", "gtaV"]
+num_classes = 19
