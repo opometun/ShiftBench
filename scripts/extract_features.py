@@ -40,7 +40,7 @@ def parse_args():
         "--config",
         help=(
             "Experiment TOML supplying both the manifest path and its "
-            "image_column. Preferred over --manifest."
+            "input_column. Preferred over --manifest."
         ),
     )
     parser.add_argument(
@@ -65,7 +65,7 @@ def parse_args():
         default=None,
         help=(
             "Manifest column holding image paths. Overrides the config's "
-            "image_column. Without either, the column is guessed."
+            "input_column. Without either, the column is guessed."
         ),
     )
     return parser.parse_args()

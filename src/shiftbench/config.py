@@ -16,24 +16,16 @@ class DatasetSchemaConfig:
 
     Attributes:
         path: CSV dataset path.
-        required_columns: Columns that must exist in the CSV file.
-        id_column: Unique row identifier column.
-        split_column: Dataset split column.
-        source_column: Data source column, for example real or synthetic.
-        label_column: Target label column.
-        allowed_splits: Accepted split names.
-        allowed_sources: Accepted data source names.
-        text_column: Input text column, for text datasets.
-        image_column: Image path column, for image datasets.
-        mask_column: Semantic-mask path column, for label-based shift metrics.
-        num_classes: Class count the masks are labeled with. Required whenever
-            mask_column is set, so every label metric records the class count
-            it assumed instead of falling back to a silent default.
-
-    Exactly which of text_column and image_column is set depends on the
-    dataset's modality. At least one must be, but neither is required on its
-    own, so an image-only dataset does not have to invent a text column.
-    mask_column is supplementary, not a modality on its own.
+        required_columns: List of column names that must exist in the CSV file.
+        id_column: Name of column containing unique row identifiers.
+        split_column: Name of column containing dataset split information.
+        source_column: Name of column containing data source information.
+        input_column: Name of column containing the input (or path to input).
+        label_column: Name of column containing the label (or path to label).
+        allowed_splits: List of accepted split names.
+        allowed_sources: List of accepted data source names.
+        num_classes (optional): Class count. Please provide it for classification applications.
+        description_column (optional): Name of column to store additional descriptive information.
     """
 
     path: Path
@@ -41,13 +33,12 @@ class DatasetSchemaConfig:
     id_column: str
     split_column: str
     source_column: str
+    input_column: str
     label_column: str
     allowed_splits: tuple[str, ...]
     allowed_sources: tuple[str, ...]
-    text_column: str | None = None
-    image_column: str | None = None
-    mask_column: str | None = None
     num_classes: int | None = None
+    description_column: str | None = None
 
 
 @dataclass(frozen=True)
@@ -56,18 +47,19 @@ class ShiftConfig:
 
     Attributes:
         metrics: Names of the distances to compute, from shiftbench.metrics.
-        stats_a: First .npz summary file, for embeddings metrics. Statistics
-            are precomputed rather than extracted here so that running an
-            experiment does not require torch.
-        stats_b: Second .npz summary file.
-        manifest_a: First CSV manifest, for image/mask metrics that read the
-            raw data directly.
-        manifest_b: Second CSV manifest.
-        image_column: Manifest column holding image paths, for image metrics.
-        mask_column: Manifest column holding mask paths, for mask metrics.
-        num_classes: Class count of the masks, for mask metrics.
+        stats_a: Path to .npz summary file that stores precomputed statistics of dataset A 
+            for embedding-based shift quantification metrics.
+        stats_b: Path to .npz summary file that stores precomputed statistics of dataset B 
+            for embedding-based shift quantification metrics.
+        manifest_a: Path to CSV manifest of dataset A, for shift quantification metrics 
+            that read the raw data directly.
+        manifest_b: Path to CSV manifest of dataset B, for shift quantification metrics 
+            that read the raw data directly.
+        image_column: Name of manifest column holding image paths, for image-based metrics.
+        mask_column: Name of manifest column holding mask paths, for mask-based metrics.
+        num_classes: Class count of the masks, for mask-based metrics.
         image_dir_a: First image directory, for pairwise metrics (SADGE).
-        image_dir_b: Second image directory.
+        image_dir_b: Second image directory, for pairwise metrics (SADGE).
 
     Which fields must be set follows from the requested metrics and is
     validated at load time, so a run fails at config parse rather than after
@@ -94,13 +86,16 @@ class ExperimentConfig:
         name: Human-readable experiment name used in run folders.
         seed: Random seed for deterministic experiment behavior.
         output_root: Root directory where run artifacts are written.
+        train_selection: Training data composition of data sources 
+            and their number of samples.
         dataset: Dataset schema and location.
-        shift: Distribution-shift comparison to run, if any.
+        shift (optional): Distribution-shift comparison to run, if any.
     """
 
     name: str
     seed: int
     output_root: Path
+    train_selection: dict
     dataset: DatasetSchemaConfig
     shift: ShiftConfig | None = None
 
@@ -133,57 +128,53 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
     Raises:
         ValueError: If required config fields are missing or invalid.
     """
-
+    # Load .toml file
     config_path = path.resolve()
     with config_path.open("rb") as file:
         raw_config = tomllib.load(file)
 
+    # Check whether all arguments are valid
     experiment = _required_table(raw_config, "experiment")
     dataset = _required_table(raw_config, "dataset")
 
     name = _required_str(experiment, "name")
     seed = _required_int(experiment, "seed")
     output_root = _path_from_config(config_path, _required_str(experiment, "output_root"))
+    train_selection = _required_dict(experiment, "train_selection")
 
     required_columns = tuple(_required_list(dataset, "required_columns"))
     id_column = _required_str(dataset, "id_column")
     split_column = _required_str(dataset, "split_column")
     source_column = _required_str(dataset, "source_column")
+    input_column = _required_str(dataset, "input_column")
     label_column = _required_str(dataset, "label_column")
-    text_column = _optional_str(dataset, "text_column")
-    image_column = _optional_str(dataset, "image_column")
-    mask_column = _optional_str(dataset, "mask_column")
     num_classes = _optional_int(dataset, "num_classes")
+    description_column = _optional_str(dataset, "description_column")
     allowed_splits = tuple(_required_list(dataset, "allowed_splits"))
     allowed_sources = tuple(_required_list(dataset, "allowed_sources"))
 
-    if text_column is None and image_column is None:
-        msg = "dataset must set text_column, image_column, or both"
-        raise ValueError(msg)
-    if mask_column is not None and num_classes is None:
-        msg = "Setting mask_column requires num_classes"
-        raise ValueError(msg)
-    if num_classes is not None and mask_column is None:
-        msg = "num_classes is set but mask_column is not"
-        raise ValueError(msg)
+    # Check whether train_selection lists invalid sources
+    invalid_sources = set(train_selection.keys()) - set(allowed_sources)
+    if invalid_sources:
+        raise ValueError(
+            f"train_selection contains unknown sources: {', '.join(invalid_sources)}"
+        )
 
+    # Check whether required_columns contains all schema columns
     schema_columns = {
         id_column,
         split_column,
         source_column,
         label_column,
+        input_column,
     }
-    schema_columns.update(
-        column
-        for column in (text_column, image_column, mask_column)
-        if column is not None
-    )
     missing_schema_columns = schema_columns.difference(required_columns)
     if missing_schema_columns:
         formatted = ", ".join(sorted(missing_schema_columns))
         msg = f"required_columns must include schema columns: {formatted}"
         raise ValueError(msg)
 
+    # Get DatasetSchemaConfig and final ExperimentConfig
     dataset_config = DatasetSchemaConfig(
         path=_path_from_config(config_path, _required_str(dataset, "path")),
         required_columns=required_columns,
@@ -191,17 +182,17 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         split_column=split_column,
         source_column=source_column,
         label_column=label_column,
-        text_column=text_column,
+        input_column=input_column,
         allowed_splits=allowed_splits,
-        allowed_sources=allowed_sources,
-        image_column=image_column,
-        mask_column=mask_column,
+        allowed_sources=allowed_sources, 
         num_classes=num_classes,
+        description_column=description_column,
     )
     return ExperimentConfig(
         name=name,
         seed=seed,
         output_root=output_root,
+        train_selection=train_selection,
         dataset=dataset_config,
         shift=_shift_from_config(config_path, raw_config.get("shift")),
     )
@@ -336,4 +327,16 @@ def _required_list(data: dict[str, Any], key: str) -> list[str]:
     if not all(isinstance(item, str) and item.strip() for item in value):
         msg = f"Field must contain only non-empty strings: {key}"
         raise ValueError(msg)
+    return value
+
+
+def _required_dict(data: dict[str, Any], key: str) -> dict[str, int]:
+    value = data.get(key)
+    if not isinstance(value, dict) or not value:
+        raise ValueError(f"Missing non-empty dict field: {key}")
+    for k, v in value.items():
+        if not isinstance(k, str) or not k.strip():
+            raise ValueError(f"train_selection keys must be non-empty strings: {k}")
+        if not isinstance(v, int) or v <= 0:
+            raise ValueError(f"train_selection values must be positive integers: {k} -> {v}")
     return value

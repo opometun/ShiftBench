@@ -28,7 +28,7 @@ class DatasetSchemaTest(unittest.TestCase):
             data_path = Path(directory) / "duplicate.csv"
             data_path.write_text(
                 """
-sample_id,split,source,label,text
+sample_id,split,source,label,input
 same,train,real,positive,First item.
 same,test,synthetic,negative,Second item.
 """.lstrip(),
@@ -41,7 +41,7 @@ same,test,synthetic,negative,Second item.
                 split_column=config.dataset.split_column,
                 source_column=config.dataset.source_column,
                 label_column=config.dataset.label_column,
-                text_column=config.dataset.text_column,
+                input_column=config.dataset.input_column,
                 allowed_splits=config.dataset.allowed_splits,
                 allowed_sources=config.dataset.allowed_sources,
             )
@@ -58,12 +58,9 @@ class ImageDatasetValidationTest(unittest.TestCase):
     def _schema(
         self,
         path: Path,
-        mask_column: str | None = None,
         num_classes: int | None = None,
     ) -> DatasetSchemaConfig:
         required = ["sample_id", "split", "source", "label", "image_path"]
-        if mask_column is not None:
-            required.append(mask_column)
         return DatasetSchemaConfig(
             path=path,
             required_columns=tuple(required),
@@ -73,8 +70,7 @@ class ImageDatasetValidationTest(unittest.TestCase):
             label_column="label",
             allowed_splits=("train",),
             allowed_sources=("real",),
-            image_column="image_path",
-            mask_column=mask_column,
+            input_column="image_path",
             num_classes=num_classes,
         )
 
@@ -124,7 +120,7 @@ class ImageDatasetValidationTest(unittest.TestCase):
             )
 
             result = validate_csv_dataset(
-                self._schema(manifest, mask_column="seg_path", num_classes=19)
+                self._schema(manifest, num_classes=19)
             )
 
         self.assertFalse(result.is_valid)
@@ -144,17 +140,9 @@ class ImageDatasetValidationTest(unittest.TestCase):
             )
 
             result = validate_csv_dataset(
-                self._schema(manifest, mask_column="seg_path", num_classes=19)
+                self._schema(manifest, num_classes=19)
             )
 
-        self.assertTrue(result.is_valid, result.errors)
-
-    def test_text_only_dataset_skips_the_image_check(self) -> None:
-        config = load_experiment_config(PROJECT_ROOT / "configs" / "smoke.toml")
-
-        result = validate_csv_dataset(config.dataset)
-
-        self.assertIsNone(config.dataset.image_column)
         self.assertTrue(result.is_valid, result.errors)
 
 
