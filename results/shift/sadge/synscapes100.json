@@ -1,0 +1,33 @@
+{
+  "mixture": "synscapes100",
+  "sadge": -0.14025853865062654,
+  "geo_inliers": 287.0574358974359,
+  "app_similarity": 0.36236260066429776,
+  "geo_z": -1.310883634116534,
+  "app_z": -1.4261595377252465,
+  "fusion_multiplier": 0.09834701864725592,
+  "sign_inverted": false,
+  "calibration": {
+    "geo_mean": 7.942,
+    "geo_std": 1.7384,
+    "app_mean": 0.6359,
+    "app_std": 0.1918,
+    "params_abc": [
+      0.0,
+      1.8548,
+      1.3399
+    ],
+    "inlier_count_at_calibration_mean": 2811.980847783232,
+    "inlier_count_where_sign_flips": 252.55061301330994
+  },
+  "elapsed_seconds": 3152.3854854106903,
+  "train_images": 2000,
+  "query_images": 975,
+  "seed": 42,
+  "params": {
+    "K": 10,
+    "appearance_metric": "dinov3_sim",
+    "geometry_metric": "mast3r_inliers",
+    "higher_is_better": true
+  }
+}

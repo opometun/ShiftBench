@@ -219,6 +219,7 @@ __marimo__/
 
 # ShiftBench local data and experiment artifacts
 data/study/streetViewData/
+data/study/streetViewData_materialized/
 data/raw/
 data/processed/
 data/external/
@@ -230,3 +231,16 @@ artifacts/
 docs/
 benchvenv/
 .DS_Store
+
+# macOS AppleDouble sidecars. These appear for every file when the repo lives
+# on a non-HFS volume such as an external drive, and there were 136 of them
+# waiting to be committed before this line existed.
+._*
+
+# HPC training runs (checkpoints, history, SLURM logs)
+output/
+logs/*
+# Keep the directory itself: SLURM opens --output=logs/... BEFORE running the
+# job script, so `mkdir -p logs` inside the script is too late. A missing
+# logs/ makes the job die instantly with no log explaining why.
+!logs/.gitkeep

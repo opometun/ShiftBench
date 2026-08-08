@@ -1,0 +1,33 @@
+{
+  "mixture": "cityscapes25_gta75",
+  "sadge": -0.2265988641139458,
+  "geo_inliers": 321.8625641025641,
+  "app_similarity": 0.40256869952648117,
+  "geo_z": -1.245267640049378,
+  "app_z": -1.2165344133134455,
+  "fusion_multiplier": 0.18626588909783814,
+  "sign_inverted": false,
+  "calibration": {
+    "geo_mean": 7.942,
+    "geo_std": 1.7384,
+    "app_mean": 0.6359,
+    "app_std": 0.1918,
+    "params_abc": [
+      0.0,
+      1.8548,
+      1.3399
+    ],
+    "inlier_count_at_calibration_mean": 2811.980847783232,
+    "inlier_count_where_sign_flips": 252.55061301330994
+  },
+  "elapsed_seconds": 2205.72372341156,
+  "train_images": 2000,
+  "query_images": 975,
+  "seed": 42,
+  "params": {
+    "K": 10,
+    "appearance_metric": "dinov3_sim",
+    "geometry_metric": "mast3r_inliers",
+    "higher_is_better": true
+  }
+}

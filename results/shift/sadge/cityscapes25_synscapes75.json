@@ -1,0 +1,33 @@
+{
+  "mixture": "cityscapes25_synscapes75",
+  "sadge": -0.3553878840582523,
+  "geo_inliers": 390.03076923076924,
+  "app_similarity": 0.4317651043335597,
+  "geo_z": -1.1350746372675957,
+  "app_z": -1.0643112391368108,
+  "fusion_multiplier": 0.33391349352514843,
+  "sign_inverted": false,
+  "calibration": {
+    "geo_mean": 7.942,
+    "geo_std": 1.7384,
+    "app_mean": 0.6359,
+    "app_std": 0.1918,
+    "params_abc": [
+      0.0,
+      1.8548,
+      1.3399
+    ],
+    "inlier_count_at_calibration_mean": 2811.980847783232,
+    "inlier_count_where_sign_flips": 252.55061301330994
+  },
+  "elapsed_seconds": 2120.083405971527,
+  "train_images": 2000,
+  "query_images": 975,
+  "seed": 42,
+  "params": {
+    "K": 10,
+    "appearance_metric": "dinov3_sim",
+    "geometry_metric": "mast3r_inliers",
+    "higher_is_better": true
+  }
+}
