@@ -84,6 +84,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--target",
+        choices=("miou", "ece"),
+        default="miou",
+        help=(
+            "Which downstream quantity the shift metrics are asked to predict. "
+            "'miou' is segmentation accuracy. 'ece' is expected calibration "
+            "error, already recorded for every run and never yet analysed: it "
+            "asks whether shift predicts how badly a model misjudges its own "
+            "confidence, not just how often it is wrong. ECE is an error, so "
+            "the expected signs are reversed relative to mIoU: a distance "
+            "should correlate POSITIVELY with it."
+        ),
+    )
+    parser.add_argument(
         "--seeds",
         nargs="*",
         default=None,
@@ -105,7 +119,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     args = parser.parse_args(argv)
     if args.out is None:
-        args.out = f"results/shift/correlation_{args.model}.json"
+        suffix = "" if args.target == "miou" else f"_{args.target}"
+        args.out = f"results/shift/correlation_{args.model}{suffix}.json"
     return args
 
 
@@ -115,19 +130,23 @@ def run_subdir(model: str, seed: str) -> str:
 
 
 def load_performance_all_seeds(
-    root: Path, mix: str, model: str, source: str, seeds: list[str] | None
+    root: Path, mix: str, model: str, source: str, seeds: list[str] | None,
+    target: str = "miou",
 ) -> list[float]:
     """Every available per-seed score for one mixture, in seed order."""
     values = []
     for seed in (seeds or ["42"]):
-        value = load_performance(root, mix, model, source, run_subdir(model, seed))
+        value = load_performance(
+            root, mix, model, source, run_subdir(model, seed), target
+        )
         if value is not None:
             values.append(value)
     return values
 
 
 def load_performance(
-    root: Path, mix: str, model: str, source: str, subdir: str | None = None
+    root: Path, mix: str, model: str, source: str, subdir: str | None = None,
+    target: str = "miou",
 ) -> float | None:
     subdir = subdir or model
     if source == "test":
@@ -136,7 +155,17 @@ def load_performance(
             return None
         payload = json.loads(path.read_text(encoding="utf-8"))
         metrics = payload.get("metrics")
-        return float(metrics["mIoU"]) if metrics else None
+        if not metrics:
+            return None
+        return float(metrics["ece"] if target == "ece" else metrics["mIoU"])
+
+    if target == "ece":
+        # Per-epoch history records val mIoU but not ECE, so there is nothing
+        # to fall back on here.
+        raise SystemExit(
+            "--target ece requires --performance-source test; the training "
+            "history does not record calibration error."
+        )
 
     path = root / mix / subdir / f"training_history_{model}.json"
     if not path.is_file():
@@ -188,6 +217,7 @@ def compare_pair(
     syn_values: list[float],
     alpha: float = 0.05,
     fallback_threshold: float = TIE_THRESHOLD,
+    lower_is_better: bool = False,
 ) -> tuple[str, dict]:
     """Decide which synthetic source performed better at one matched ratio.
 
@@ -214,9 +244,15 @@ def compare_pair(
     mean_syn = sum(syn_values) / len(syn_values)
     delta = mean_syn - mean_gta
 
+    # With mIoU a positive delta means Synscapes did better. With ECE, which is
+    # an error, the sense reverses.
+    def _winner_from(sign_positive: bool) -> str:
+        favours_syn = (not sign_positive) if lower_is_better else sign_positive
+        return "synscapes" if favours_syn else "gta"
+
     if len(gta_values) < 2 or len(syn_values) < 2:
         winner = ("tie" if abs(delta) < fallback_threshold
-                  else ("synscapes" if delta > 0 else "gta"))
+                  else _winner_from(delta > 0))
         return winner, {
             "test": "fixed_threshold",
             "threshold": fallback_threshold,
@@ -236,7 +272,7 @@ def compare_pair(
         interval = (float("nan"), float("nan"))
 
     significant = float(result.pvalue) < alpha
-    winner = ("synscapes" if delta > 0 else "gta") if significant else "tie"
+    winner = _winner_from(delta > 0) if significant else "tie"
     return winner, {
         "test": "welch_t",
         "delta": delta,
@@ -257,6 +293,7 @@ def within_ratio_analysis(
     tie_threshold: float = TIE_THRESHOLD,
     per_seed: dict[str, list[float]] | None = None,
     alpha: float = 0.05,
+    lower_is_better: bool = False,
 ) -> dict:
     """Score each metric on the comparison the study is actually about.
 
@@ -282,7 +319,8 @@ def within_ratio_analysis(
         gta_values = per_seed.get(gta_mix, [performance[gta_mix]])
         syn_values = per_seed.get(syn_mix, [performance[syn_mix]])
         better, test = compare_pair(
-            gta_values, syn_values, alpha=alpha, fallback_threshold=tie_threshold
+            gta_values, syn_values, alpha=alpha, fallback_threshold=tie_threshold,
+            lower_is_better=lower_is_better,
         )
         pairs_used.append({
             "ratio": label,
@@ -339,12 +377,13 @@ def within_ratio_analysis(
             "tie_threshold": tie_threshold}
 
 
-def print_within_ratio(within: dict) -> None:
+def print_within_ratio(within: dict, target: str = "miou") -> None:
     pairs = within["pairs"]
     print("\n\n=== within-ratio test: which synthetic source is closer? ===")
     print("Holds synthetic fraction fixed, so the shared monotonic trend that")
     print("inflates the global correlation cannot contribute.\n")
-    print("ground truth (test mIoU):")
+    label = "test ECE, lower is better" if target == "ece" else "test mIoU"
+    print(f"ground truth ({label}):")
     for p in pairs:
         t = p.get("test", {})
         if t.get("test") == "welch_t":
@@ -384,7 +423,8 @@ def print_within_ratio(within: dict) -> None:
                  if entry["scored"] else "n/a")
         print(f"{entry['label']:26s}{cells}   {score}")
     print("\ny = ranked the sources correctly, N = ranked them backwards,")
-    print("- = not scored, the mIoU difference was not significant.")
+    print(f"- = not scored, the {'ECE' if target == 'ece' else 'mIoU'} "
+          "difference was not significant.")
     if any_unavailable:
         print("? = the metric has no value for one mixture in that pair, so it")
         print("    could not be scored (distinct from a statistical tie).")
@@ -407,7 +447,8 @@ def main(argv: list[str] | None = None) -> int:
     missing: list[str] = []
     for mix in distances:
         values = load_performance_all_seeds(
-            root, mix, args.model, args.performance_source, args.seeds
+            root, mix, args.model, args.performance_source, args.seeds,
+            args.target,
         )
         if not values:
             missing.append(mix)
@@ -429,6 +470,8 @@ def main(argv: list[str] | None = None) -> int:
     mixes = sorted(performance)
     miou = [performance[m] for m in mixes]
 
+    lower_is_better = args.target == "ece"
+
     metric_names = sorted({k for m in mixes for k in distances[m]})
     rows = []
     for metric in metric_names:
@@ -440,7 +483,12 @@ def main(argv: list[str] | None = None) -> int:
         pearson = stats.pearsonr(values, miou)
         # A distance should anti-correlate with mIoU; a similarity should
         # correlate. Flip distances so bigger 'predictive' = better predictor.
+        # A distance should anti-correlate with mIoU and a similarity should
+        # correlate with it. ECE is an error rather than a score, so both
+        # expectations invert.
         expected_sign = 1.0 if metric in SIMILARITY_METRICS else -1.0
+        if lower_is_better:
+            expected_sign = -expected_sign
         rows.append({
             "metric": metric,
             "label": FRIENDLY_NAMES.get(metric, metric),
@@ -454,8 +502,9 @@ def main(argv: list[str] | None = None) -> int:
 
     rows.sort(key=lambda r: r["predictive"], reverse=True)
 
-    print(f"n = {len(mixes)} mixtures | performance = {args.performance_source} "
-          f"mIoU | model = {args.model}\n")
+    label = "ECE (lower is better)" if lower_is_better else "mIoU"
+    print(f"n = {len(mixes)} mixtures | target = {args.performance_source} "
+          f"{label} | model = {args.model}\n")
     print(f"{'metric':26s} {'kind':11s} {'spearman':>9s} {'p':>7s} "
           f"{'pearson':>8s} {'predictive':>11s}")
     print("-" * 78)
@@ -472,8 +521,9 @@ def main(argv: list[str] | None = None) -> int:
     threshold, tie_info = measure_tie_threshold(per_seed)
     counts = sorted({len(v) for v in per_seed.values()})
     if tie_info["source"] == "measured":
+        unit = "ECE" if lower_is_better else "mIoU"
         print(f"\nSeeds per mixture: {counts}. Observed per-mixture std "
-              f"{tie_info['pooled_std']:.4f} mIoU (pooled).")
+              f"{tie_info['pooled_std']:.4f} {unit} (pooled).")
         print("Matched-ratio pairs are decided by a Welch t-test on the per-seed")
         print("values rather than a fixed threshold, so 'tie' means the")
         print("difference is not resolvable at this sample size.")
@@ -485,13 +535,15 @@ def main(argv: list[str] | None = None) -> int:
     within = within_ratio_analysis(
         distances, performance, metric_names,
         tie_threshold=threshold, per_seed=per_seed,
+        lower_is_better=lower_is_better,
     )
-    print_within_ratio(within)
+    print_within_ratio(within, target=args.target)
 
     payload = {
         "n": len(mixes),
         "model": args.model,
         "performance_source": args.performance_source,
+        "target": args.target,
         "mixtures": mixes,
         "performance": performance,
         "performance_per_seed": per_seed,

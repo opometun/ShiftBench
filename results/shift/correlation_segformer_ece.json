@@ -2,7 +2,7 @@
   "n": 9,
   "model": "segformer",
   "performance_source": "test",
-  "target": "miou",
+  "target": "ece",
   "mixtures": [
     "cityscapes100",
     "cityscapes25_gta75",
@@ -15,61 +15,61 @@
     "synscapes100"
   ],
   "performance": {
-    "cityscapes100": 0.7271120289209426,
-    "cityscapes75_gta25": 0.7176446393308318,
-    "cityscapes50_gta50": 0.7100722160992331,
-    "cityscapes25_gta75": 0.676053897981869,
-    "gta100": 0.41424774200655806,
-    "cityscapes75_synscapes25": 0.7274250945666804,
-    "cityscapes50_synscapes50": 0.7147515025218117,
-    "cityscapes25_synscapes75": 0.6836761507463475,
-    "synscapes100": 0.5109684155254164
+    "cityscapes100": 0.011932055478403716,
+    "cityscapes75_gta25": 0.012210173853184169,
+    "cityscapes50_gta50": 0.014461101439323254,
+    "cityscapes25_gta75": 0.015319951069946122,
+    "gta100": 0.05385246708711505,
+    "cityscapes75_synscapes25": 0.01265812789053184,
+    "cityscapes50_synscapes50": 0.014164409922560862,
+    "cityscapes25_synscapes75": 0.016691014851651958,
+    "synscapes100": 0.0416105282137777
   },
   "performance_per_seed": {
     "cityscapes100": [
-      0.7258374180026411,
-      0.727320111197734,
-      0.728178557562453
+      0.011981969664783765,
+      0.011956960233254599,
+      0.011857236537172782
     ],
     "cityscapes75_gta25": [
-      0.7145737265317913,
-      0.7180744873585946,
-      0.7202857041021096
+      0.012836588408138859,
+      0.012011578286890815,
+      0.011782354864522832
     ],
     "cityscapes50_gta50": [
-      0.7106663855675186,
-      0.7083738726827186,
-      0.7111763900474625
+      0.014760631489671789,
+      0.013729092172024015,
+      0.014893580656273954
     ],
     "cityscapes25_gta75": [
-      0.6797462173885405,
-      0.6644197156931362,
-      0.6839957608639304
+      0.01554318853369834,
+      0.014111066816491095,
+      0.016305597859648923
     ],
     "gta100": [
-      0.41736399805682084,
-      0.425228781367962,
-      0.40015044659489135
+      0.06136979616926394,
+      0.04897287930067516,
+      0.051214725791406054
     ],
     "cityscapes75_synscapes25": [
-      0.7264476723053016,
-      0.7275453864764237,
-      0.7282822249183158
+      0.012623050873191401,
+      0.012972576557658396,
+      0.012378756240745716
     ],
     "cityscapes50_synscapes50": [
-      0.7097960387241986,
-      0.7151549980362132,
-      0.7193034708050234
+      0.013370254366536272,
+      0.01463346590930479,
+      0.014489509491841525
     ],
     "cityscapes25_synscapes75": [
-      0.6833277388749923,
-      0.675180622774757,
-      0.6925200905892929
+      0.016512914566447382,
+      0.01698948657839716,
+      0.016570643410111337
     ],
     "synscapes100": [
-      0.5006354733839025,
-      0.518387618896281,
-      0.5138821542960655
+      0.03943304311486853,
+      0.044663644928158275,
+      0.04073489659830628
     ]
   },
   "seeds_requested": [
@@ -79,8 +79,8 @@
   ],
   "tie_threshold": {
     "source": "measured",
-    "value": 0.011756166467964247,
-    "pooled_std": 0.005878083233982124,
+    "value": 0.00398695516888576,
+    "pooled_std": 0.00199347758444288,
     "seeds_per_mixture": {
       "cityscapes100": 3,
       "cityscapes75_gta25": 3,
@@ -93,138 +93,138 @@
       "synscapes100": 3
     },
     "per_mixture_std": {
-      "cityscapes100": 0.0009670254340209114,
-      "cityscapes75_gta25": 0.0023516304891405895,
-      "cityscapes50_gta50": 0.0012188256404437534,
-      "cityscapes25_gta75": 0.00840754831814468,
-      "gta100": 0.010472631238157568,
-      "cityscapes75_synscapes25": 0.0007537676167721811,
-      "cityscapes50_synscapes50": 0.0038918652482223177,
-      "cityscapes25_synscapes75": 0.007083093916592629,
-      "synscapes100": 0.007534457414255917
+      "cityscapes100": 5.3881186522083804e-05,
+      "cityscapes75_gta25": 0.00045271936880355565,
+      "cityscapes50_gta50": 0.000520446632412346,
+      "cityscapes25_gta75": 0.0009097134526002272,
+      "gta100": 0.005393770871353466,
+      "cityscapes75_synscapes25": 0.0002436916631780072,
+      "cityscapes50_synscapes50": 0.0005646197232980556,
+      "cityscapes25_synscapes75": 0.00021236318512929837,
+      "synscapes100": 0.002223337862585186
     },
     "assumed_fallback": 0.005
   },
   "correlations": [
     {
+      "metric": "class_presence_js",
+      "label": "class presence JS",
+      "kind": "distance",
+      "raw_spearman": 0.9666666666666667,
+      "spearman_p": 2.1550312748357717e-05,
+      "raw_pearson": 0.7229337863729164,
+      "pearson_p": 0.02775987653108384,
+      "predictive": 0.9666666666666667
+    },
+    {
       "metric": "sadge_appearance",
       "label": "SADGE app. DINOv3 (sim)",
       "kind": "similarity",
-      "raw_spearman": 0.9833333333333333,
-      "spearman_p": 1.936196303745927e-06,
-      "raw_pearson": 0.9484871741551659,
-      "pearson_p": 9.711525063194769e-05,
-      "predictive": 0.9833333333333333
+      "raw_spearman": -0.9666666666666667,
+      "spearman_p": 2.1550312748357717e-05,
+      "raw_pearson": -0.9314097008986721,
+      "pearson_p": 0.00026009625002678554,
+      "predictive": 0.9666666666666667
     },
     {
       "metric": "sadge_geometry",
       "label": "SADGE geom. MASt3R (sim)",
       "kind": "similarity",
-      "raw_spearman": 0.9833333333333333,
-      "spearman_p": 1.936196303745927e-06,
-      "raw_pearson": 0.8865295370053656,
-      "pearson_p": 0.0014478289731555522,
-      "predictive": 0.9833333333333333
+      "raw_spearman": -0.9666666666666667,
+      "spearman_p": 2.1550312748357717e-05,
+      "raw_pearson": -0.8573907819754645,
+      "pearson_p": 0.0031278911883736863,
+      "predictive": 0.9666666666666667
     },
     {
       "metric": "class_frequency_js",
       "label": "class frequency JS",
       "kind": "distance",
-      "raw_spearman": -0.9666666666666667,
-      "spearman_p": 2.1550312748357717e-05,
-      "raw_pearson": -0.8290598180834818,
-      "pearson_p": 0.005728217300599086,
-      "predictive": 0.9666666666666667
+      "raw_spearman": 0.9333333333333332,
+      "spearman_p": 0.00023589981215941651,
+      "raw_pearson": 0.7922294527864968,
+      "pearson_p": 0.010912749999419342,
+      "predictive": 0.9333333333333332
     },
     {
       "metric": "centroid_streetclip",
       "label": "centroid (StreetCLIP)",
       "kind": "distance",
-      "raw_spearman": -0.9500000000000001,
-      "spearman_p": 8.762523965086185e-05,
-      "raw_pearson": -0.8232586780195058,
-      "pearson_p": 0.00639936996504977,
-      "predictive": 0.9500000000000001
-    },
-    {
-      "metric": "class_presence_js",
-      "label": "class presence JS",
-      "kind": "distance",
-      "raw_spearman": -0.9,
+      "raw_spearman": 0.9,
       "spearman_p": 0.0009430623223403288,
-      "raw_pearson": -0.7394073408769555,
-      "pearson_p": 0.02279980253859667,
+      "raw_pearson": 0.7831126119359055,
+      "pearson_p": 0.012561648537923556,
       "predictive": 0.9
-    },
-    {
-      "metric": "texture_js",
-      "label": "LBP texture JS",
-      "kind": "distance",
-      "raw_spearman": -0.9,
-      "spearman_p": 0.0009430623223403288,
-      "raw_pearson": -0.7089979513284823,
-      "pearson_p": 0.032468985366340394,
-      "predictive": 0.9
-    },
-    {
-      "metric": "centroid_dinov2",
-      "label": "centroid (DINOv2)",
-      "kind": "distance",
-      "raw_spearman": -0.8833333333333333,
-      "spearman_p": 0.0015905004234978695,
-      "raw_pearson": -0.7506737076261548,
-      "pearson_p": 0.019768868639635038,
-      "predictive": 0.8833333333333333
-    },
-    {
-      "metric": "frechet_dinov2",
-      "label": "FID (DINOv2)",
-      "kind": "distance",
-      "raw_spearman": -0.8833333333333333,
-      "spearman_p": 0.0015905004234978695,
-      "raw_pearson": -0.7260365637158093,
-      "pearson_p": 0.026776327421763065,
-      "predictive": 0.8833333333333333
-    },
-    {
-      "metric": "frechet_streetclip",
-      "label": "FCD (StreetCLIP)",
-      "kind": "distance",
-      "raw_spearman": -0.8833333333333333,
-      "spearman_p": 0.0015905004234978695,
-      "raw_pearson": -0.7387170804840988,
-      "pearson_p": 0.02299486493062005,
-      "predictive": 0.8833333333333333
-    },
-    {
-      "metric": "color_js",
-      "label": "colour histogram JS",
-      "kind": "distance",
-      "raw_spearman": -0.8333333333333333,
-      "spearman_p": 0.005265691029161747,
-      "raw_pearson": -0.7083524125309304,
-      "pearson_p": 0.0326988886065534,
-      "predictive": 0.8333333333333333
     },
     {
       "metric": "scene_complexity_js",
       "label": "scene complexity JS",
       "kind": "distance",
-      "raw_spearman": -0.7333333333333334,
+      "raw_spearman": 0.8666666666666667,
+      "spearman_p": 0.002495398285990204,
+      "raw_pearson": 0.6022852688018003,
+      "pearson_p": 0.08610547472673545,
+      "predictive": 0.8666666666666667
+    },
+    {
+      "metric": "texture_js",
+      "label": "LBP texture JS",
+      "kind": "distance",
+      "raw_spearman": 0.8499999999999999,
+      "spearman_p": 0.0037047773275858125,
+      "raw_pearson": 0.6662556190767334,
+      "pearson_p": 0.05006010573614823,
+      "predictive": 0.8499999999999999
+    },
+    {
+      "metric": "centroid_dinov2",
+      "label": "centroid (DINOv2)",
+      "kind": "distance",
+      "raw_spearman": 0.8166666666666667,
+      "spearman_p": 0.0072247852463587885,
+      "raw_pearson": 0.706252381103859,
+      "pearson_p": 0.03345412261003273,
+      "predictive": 0.8166666666666667
+    },
+    {
+      "metric": "frechet_dinov2",
+      "label": "FID (DINOv2)",
+      "kind": "distance",
+      "raw_spearman": 0.8166666666666667,
+      "spearman_p": 0.0072247852463587885,
+      "raw_pearson": 0.681404160450471,
+      "pearson_p": 0.0432626487863005,
+      "predictive": 0.8166666666666667
+    },
+    {
+      "metric": "frechet_streetclip",
+      "label": "FCD (StreetCLIP)",
+      "kind": "distance",
+      "raw_spearman": 0.8166666666666667,
+      "spearman_p": 0.0072247852463587885,
+      "raw_pearson": 0.6956563536581676,
+      "pearson_p": 0.03743782046590954,
+      "predictive": 0.8166666666666667
+    },
+    {
+      "metric": "color_js",
+      "label": "colour histogram JS",
+      "kind": "distance",
+      "raw_spearman": 0.7333333333333334,
       "spearman_p": 0.024554150071469705,
-      "raw_pearson": -0.6010182035705389,
-      "pearson_p": 0.08694475454260893,
+      "raw_pearson": 0.6637830248894785,
+      "pearson_p": 0.05123036449439828,
       "predictive": 0.7333333333333334
     },
     {
       "metric": "sadge",
       "label": "SADGE fused (similarity)",
       "kind": "similarity",
-      "raw_spearman": -0.9666666666666667,
-      "spearman_p": 2.1550312748357717e-05,
-      "raw_pearson": -0.9115636144037915,
-      "pearson_p": 0.0006205852367795399,
-      "predictive": -0.9666666666666667
+      "raw_spearman": 0.9333333333333332,
+      "spearman_p": 0.00023589981215941651,
+      "raw_pearson": 0.8995757821901513,
+      "pearson_p": 0.0009567296402560776,
+      "predictive": -0.9333333333333332
     }
   ],
   "within_ratio": {
@@ -233,22 +233,22 @@
         "ratio": "25%",
         "gta_mixture": "cityscapes75_gta25",
         "synscapes_mixture": "cityscapes75_synscapes25",
-        "gta_miou": 0.7176446393308318,
-        "synscapes_miou": 0.7274250945666804,
-        "miou_delta": 0.009780455235848584,
-        "better": "synscapes",
+        "gta_miou": 0.012210173853184169,
+        "synscapes_miou": 0.01265812789053184,
+        "miou_delta": 0.0004479540373476705,
+        "better": "tie",
         "test": {
           "test": "welch_t",
-          "delta": 0.009780455235848584,
+          "delta": 0.0004479540373476705,
           "ci95": [
-            0.0033617913458478628,
-            0.016199119125849305
+            -0.0006944065238548602,
+            0.0015903145985502012
           ],
-          "t": 5.60103840452496,
-          "p": 0.019743544200525074,
-          "df": 2.4066648748082904,
+          "t": 1.2321586708576353,
+          "p": 0.30386915164873823,
+          "df": 3.069231993936142,
           "alpha": 0.05,
-          "significant": true,
+          "significant": false,
           "n_gta": 3,
           "n_syn": 3
         }
@@ -257,20 +257,20 @@
         "ratio": "50%",
         "gta_mixture": "cityscapes50_gta50",
         "synscapes_mixture": "cityscapes50_synscapes50",
-        "gta_miou": 0.7100722160992331,
-        "synscapes_miou": 0.7147515025218117,
-        "miou_delta": 0.0046792864225786435,
+        "gta_miou": 0.014461101439323254,
+        "synscapes_miou": 0.014164409922560862,
+        "miou_delta": -0.00029669151676239153,
         "better": "tie",
         "test": {
           "test": "welch_t",
-          "delta": 0.0046792864225786435,
+          "delta": -0.00029669151676239153,
           "ci95": [
-            -0.005981505437497779,
-            0.015340078282655066
+            -0.0018081893256341637,
+            0.0012148062921093807
           ],
-          "t": 1.6226334218982645,
-          "p": 0.22568477753680213,
-          "df": 2.388570656131123,
+          "t": -0.5464107626217259,
+          "p": 0.6140139924125178,
+          "df": 3.9737442421569558,
           "alpha": 0.05,
           "significant": false,
           "n_gta": 3,
@@ -281,20 +281,20 @@
         "ratio": "75%",
         "gta_mixture": "cityscapes25_gta75",
         "synscapes_mixture": "cityscapes25_synscapes75",
-        "gta_miou": 0.676053897981869,
-        "synscapes_miou": 0.6836761507463475,
-        "miou_delta": 0.0076222527644784765,
+        "gta_miou": 0.015319951069946122,
+        "synscapes_miou": 0.016691014851651958,
+        "miou_delta": 0.001371063781705836,
         "better": "tie",
         "test": {
           "test": "welch_t",
-          "delta": 0.0076222527644784765,
+          "delta": 0.001371063781705836,
           "ci95": [
-            -0.014208189842512126,
-            0.02945269537146908
+            -0.001220141427862333,
+            0.003962268991274005
           ],
-          "t": 0.9805331503397545,
-          "p": 0.3838255160540363,
-          "df": 3.887955660693413,
+          "t": 2.0756110256093168,
+          "p": 0.16095730911272238,
+          "df": 2.2173308842841704,
           "alpha": 0.05,
           "significant": false,
           "n_gta": 3,
@@ -305,22 +305,22 @@
         "ratio": "100%",
         "gta_mixture": "gta100",
         "synscapes_mixture": "synscapes100",
-        "gta_miou": 0.41424774200655806,
-        "synscapes_miou": 0.5109684155254164,
-        "miou_delta": 0.09672067351885832,
-        "better": "synscapes",
+        "gta_miou": 0.05385246708711505,
+        "synscapes_miou": 0.0416105282137777,
+        "miou_delta": -0.012241938873337355,
+        "better": "tie",
         "test": {
           "test": "welch_t",
-          "delta": 0.09672067351885832,
+          "delta": -0.012241938873337355,
           "ci95": [
-            0.07035028480395761,
-            0.12309106223375904
+            -0.026370734954082282,
+            0.0018868572074075725
           ],
-          "t": 10.602301932167945,
-          "p": 0.0007313204438389191,
-          "df": 3.632919601366291,
+          "t": -2.967535861403212,
+          "p": 0.06873242931236083,
+          "df": 2.660579793350183,
           "alpha": 0.05,
-          "significant": true,
+          "significant": false,
           "n_gta": 3,
           "n_syn": 3
         }
@@ -329,15 +329,15 @@
     "metrics": {
       "centroid_dinov2": {
         "label": "centroid (DINOv2)",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -354,22 +354,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "centroid_streetclip": {
         "label": "centroid (StreetCLIP)",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -386,22 +386,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "class_frequency_js": {
         "label": "class frequency JS",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -418,22 +418,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "class_presence_js": {
         "label": "class presence JS",
         "correct": 0,
-        "scored": 2,
-        "accuracy": 0.0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "gta",
-            "actual": "synscapes",
-            "correct": false
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -450,22 +450,22 @@
           {
             "ratio": "100%",
             "predicted": "gta",
-            "actual": "synscapes",
-            "correct": false
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "color_js": {
         "label": "colour histogram JS",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -482,22 +482,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "frechet_dinov2": {
         "label": "FID (DINOv2)",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -514,22 +514,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "frechet_streetclip": {
         "label": "FCD (StreetCLIP)",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -546,22 +546,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "sadge": {
         "label": "SADGE fused (similarity)",
         "correct": 0,
-        "scored": 2,
-        "accuracy": 0.0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "gta",
-            "actual": "synscapes",
-            "correct": false
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -578,22 +578,22 @@
           {
             "ratio": "100%",
             "predicted": "gta",
-            "actual": "synscapes",
-            "correct": false
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "sadge_appearance": {
         "label": "SADGE app. DINOv3 (sim)",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -610,22 +610,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "sadge_geometry": {
         "label": "SADGE geom. MASt3R (sim)",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -642,22 +642,22 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "scene_complexity_js": {
         "label": "scene complexity JS",
         "correct": 0,
-        "scored": 2,
-        "accuracy": 0.0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "gta",
-            "actual": "synscapes",
-            "correct": false
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -674,22 +674,22 @@
           {
             "ratio": "100%",
             "predicted": "gta",
-            "actual": "synscapes",
-            "correct": false
+            "actual": "tie",
+            "correct": null
           }
         ]
       },
       "texture_js": {
         "label": "LBP texture JS",
-        "correct": 2,
-        "scored": 2,
-        "accuracy": 1.0,
+        "correct": 0,
+        "scored": 0,
+        "accuracy": null,
         "calls": [
           {
             "ratio": "25%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           },
           {
             "ratio": "50%",
@@ -706,12 +706,12 @@
           {
             "ratio": "100%",
             "predicted": "synscapes",
-            "actual": "synscapes",
-            "correct": true
+            "actual": "tie",
+            "correct": null
           }
         ]
       }
     },
-    "tie_threshold": 0.011756166467964247
+    "tie_threshold": 0.00398695516888576
   }
 }
