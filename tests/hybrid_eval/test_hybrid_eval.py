@@ -62,6 +62,31 @@ def test_joint_transform_preserves_integer_mask_labels():
     assert set(mask_tensor.unique().tolist()) == {0, 1, 255}
 
 
+def test_masks_are_remapped_from_label_ids_to_train_ids():
+    # The study's masks are stored as raw Cityscapes labelIds (0-33). Without
+    # remapping, CrossEntropyLoss(num_classes=19) hard-fails on any pixel
+    # labelled 19-33, so this guards the whole training pipeline.
+    image = Image.fromarray(np.full((2, 4, 3), 127, dtype=np.uint8))
+    # 7=road->0, 8=sidewalk->1, 26=car->13, 33=bicycle->18,
+    # 0=unlabeled->255, 34=out-of-scheme->255
+    mask = Image.fromarray(np.array([[7, 8, 26, 33], [0, 34, 7, 8]], dtype=np.uint8))
+
+    transform = JointTransform(image_size=(2, 4), crop_size=None, is_train=False)
+    _, mask_tensor = transform(image, mask)
+
+    assert mask_tensor.tolist() == [[0, 1, 13, 18], [255, 255, 0, 1]]
+    valid = mask_tensor[mask_tensor != 255]
+    assert int(valid.max()) <= 18
+
+    # Opting out must leave the raw labelIds untouched -- remapping twice would
+    # corrupt them (trainId 0 would become 255).
+    raw_transform = JointTransform(
+        image_size=(2, 4), crop_size=None, is_train=False, remap_label_ids=False
+    )
+    _, raw_mask = raw_transform(image, mask)
+    assert raw_mask.tolist() == [[7, 8, 26, 33], [0, 34, 7, 8]]
+
+
 def test_training_transform_pads_scaled_masks_with_ignore_label():
     image = Image.fromarray(np.full((4, 4, 3), 127, dtype=np.uint8))
     mask = Image.fromarray(np.ones((4, 4), dtype=np.uint8))
