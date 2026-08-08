@@ -152,6 +152,13 @@ id,image_path
             [f"img{i}.png" for i in range(10)],
         )
 
+    def test_windows_backslash_paths_resolve(self) -> None:
+        manifest = self._write("win.csv", "id,image_path\n0,img\\a.png\n")
+
+        paths = load_image_paths(str(manifest))
+
+        self.assertEqual(paths[0], str(self.directory / "img" / "a.png"))
+
 
 class ManifestFromConfigTest(unittest.TestCase):
     def setUp(self) -> None:

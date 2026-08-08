@@ -25,15 +25,21 @@ features = [
 ]
 # Image- and label-based shift metrics (HSV/LBP histograms need OpenCV/skimage;
 # pillow decodes the manifest-listed images and masks).
+#
+# opencv-python-headless, not opencv-python: the GUI build links libGL.so.1,
+# which is absent on headless HPC compute nodes and fails at import with
+# "ImportError: libGL.so.1: cannot open shared object file". The headless
+# wheel exposes the identical cv2 module minus the window/GUI functions, and
+# this project only uses cvtColor, split, and findFundamentalMat.
 image = [
-  "opencv-python>=4.8",
+  "opencv-python-headless>=4.8",
   "scikit-image>=0.22",
   "pillow>=10.0",
 ]
 # SADGE additionally needs a vendored MASt3R checkout, Sadge is a submodule;
 # see docs/integration-plan.md Phase 7.
 sadge = [
-  "opencv-python>=4.8",
+  "opencv-python-headless>=4.8",
   "torch>=2.2",
   "transformers>=4.40",
   "pillow>=10.0",

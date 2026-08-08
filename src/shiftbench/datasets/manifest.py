@@ -22,8 +22,14 @@ def resolve_image_path(manifest_dir: str, raw_path: str) -> str:
 
     Shared with schema validation so that what validation checks for is
     exactly what extraction later opens.
+
+    Manifest cells may use either '/' or '\\' as a separator (the tracked
+    study CSVs were generated on Windows), so backslashes are normalized to
+    the platform separator before joining. This assumes paths never contain
+    a literal backslash in a filename, which holds for this project.
     """
-    image_path = os.path.expanduser(raw_path.strip())
+    normalized = raw_path.strip().replace("\\", os.sep)
+    image_path = os.path.expanduser(normalized)
     if not os.path.isabs(image_path):
         image_path = os.path.join(manifest_dir, image_path)
     return image_path
