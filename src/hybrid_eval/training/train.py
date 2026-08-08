@@ -272,6 +272,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--max-iterations", type=int, help="Optional fixed optimizer-step budget"
     )
+    parser.add_argument(
+        "--early-stopping-patience",
+        type=int,
+        default=0,
+        help=(
+            "Stop training if val_loss has not improved for this many epochs. "
+            "0 disables early stopping."
+        ),
+    )
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument(
         "--lr", type=float, help="Legacy shortcut that sets both learning rates"
@@ -281,12 +290,43 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--scheduler", choices=("poly", "none"), default="poly")
     parser.add_argument("--poly-power", type=float, default=0.9)
+    parser.add_argument(
+        "--warmup-steps",
+        type=int,
+        default=0,
+        help=(
+            "Linear LR warmup steps before poly decay begins. "
+            "Only applies when --scheduler poly. 0 disables warmup."
+        ),
+    )
     parser.add_argument("--image-height", type=int, default=512)
     parser.add_argument("--image-width", type=int, default=1024)
-    parser.add_argument("--crop-size", type=int, default=512)
+    parser.add_argument(
+        "--crop-size",
+        type=int,
+        default=512,
+        help="Random-crop side length during training. 0 disables cropping.",
+    )
     parser.add_argument("--scale-min", type=float, default=0.5)
     parser.add_argument("--scale-max", type=float, default=2.0)
     parser.add_argument("--no-photometric-distortion", action="store_true")
+    parser.add_argument(
+        "--no-hflip",
+        action="store_true",
+        help=(
+            "Disable the random horizontal flip applied during training. "
+            "Needed for protocols that specify no data augmentation."
+        ),
+    )
+    parser.add_argument(
+        "--no-label-remap",
+        action="store_true",
+        help=(
+            "Skip the Cityscapes labelId -> trainId mask remapping. Use only "
+            "if masks already hold trainIds (0-18 plus 255); remapping twice "
+            "corrupts them."
+        ),
+    )
     parser.add_argument("--num-classes", type=int, default=19)
     parser.add_argument(
         "--class-weights", help="Comma-separated positive weights, one per class"
@@ -316,13 +356,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "batch_size",
         "image_height",
         "image_width",
-        "crop_size",
         "num_classes",
     ):
         if getattr(args, name) <= 0:
             parser.error(f"--{name.replace('_', '-')} must be positive")
+    if args.crop_size < 0:
+        parser.error("--crop-size cannot be negative (0 disables cropping)")
     if args.num_workers < 0:
         parser.error("--num-workers cannot be negative")
+    if args.warmup_steps < 0:
+        parser.error("--warmup-steps cannot be negative")
+    if args.early_stopping_patience < 0:
+        parser.error("--early-stopping-patience cannot be negative")
     for name in ("lr", "backbone_lr", "head_lr", "weight_decay", "poly_power"):
         value = getattr(args, name)
         if value is not None and value <= 0:
@@ -349,21 +394,29 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Using device: {device}")
 
     image_size = (args.image_height, args.image_width)
+    crop_size = args.crop_size if args.crop_size > 0 else None
     train_dataset = SimpleSegmentationDataset(
         args.train_img_dir,
         args.train_mask_dir,
         JointTransform(
             image_size=image_size,
-            crop_size=args.crop_size,
+            crop_size=crop_size,
             is_train=True,
             scale_range=(args.scale_min, args.scale_max),
             photometric_distortion=not args.no_photometric_distortion,
+            horizontal_flip=not args.no_hflip,
+            remap_label_ids=not args.no_label_remap,
         ),
     )
     val_dataset = SimpleSegmentationDataset(
         args.val_img_dir,
         args.val_mask_dir,
-        JointTransform(image_size=image_size, crop_size=None, is_train=False),
+        JointTransform(
+            image_size=image_size,
+            crop_size=None,
+            is_train=False,
+            remap_label_ids=not args.no_label_remap,
+        ),
     )
     generator = torch.Generator().manual_seed(args.seed)
     loader_options = {
@@ -415,15 +468,32 @@ def main(argv: list[str] | None = None) -> int:
     )
     total_iterations = args.max_iterations or args.epochs * len(train_loader)
     planned_epochs = math.ceil(total_iterations / len(train_loader))
-    scheduler = (
-        torch.optim.lr_scheduler.PolynomialLR(
+    if args.scheduler == "poly":
+        # Warmup and decay are both counted in optimizer steps, consistent with
+        # total_iterations/max_iterations elsewhere in this script.
+        warmup_steps = min(args.warmup_steps, max(total_iterations - 1, 0))
+        poly_steps = max(total_iterations - warmup_steps, 1)
+        poly_scheduler = torch.optim.lr_scheduler.PolynomialLR(
             optimizer,
-            total_iters=total_iterations,
+            total_iters=poly_steps,
             power=args.poly_power,
         )
-        if args.scheduler == "poly"
-        else None
-    )
+        if warmup_steps > 0:
+            warmup_scheduler = torch.optim.lr_scheduler.LinearLR(
+                optimizer,
+                start_factor=1e-3,
+                end_factor=1.0,
+                total_iters=warmup_steps,
+            )
+            scheduler = torch.optim.lr_scheduler.SequentialLR(
+                optimizer,
+                schedulers=[warmup_scheduler, poly_scheduler],
+                milestones=[warmup_steps],
+            )
+        else:
+            scheduler = poly_scheduler
+    else:
+        scheduler = None
     class_weights = parse_class_weights(args.class_weights, args.num_classes)
     criterion = nn.CrossEntropyLoss(
         weight=class_weights.to(device) if class_weights is not None else None,
@@ -446,6 +516,20 @@ def main(argv: list[str] | None = None) -> int:
         best_miou = float(resume_payload.get("best_miou", -1.0))
         history = _load_history(history_path)
         print(f"Resuming after epoch {start_epoch - 1}")
+
+    # Early stopping tracks val_loss independently of the mIoU-based checkpoint
+    # selection above; both are derived from the same persisted history so a
+    # resumed run picks the streak back up rather than resetting patience.
+    if history:
+        history_losses = [float(entry["val_loss"]) for entry in history]
+        best_epoch_index = min(
+            range(len(history_losses)), key=history_losses.__getitem__
+        )
+        best_val_loss = history_losses[best_epoch_index]
+        epochs_without_improvement = len(history_losses) - 1 - best_epoch_index
+    else:
+        best_val_loss = float("inf")
+        epochs_without_improvement = 0
 
     if global_step >= total_iterations or start_epoch > planned_epochs:
         raise ValueError("Checkpoint already reached the requested training budget")
@@ -480,6 +564,12 @@ def main(argv: list[str] | None = None) -> int:
         current_miou = float(val_metrics["mIoU"])
         improved = current_miou > best_miou
         best_miou = max(best_miou, current_miou)
+        current_val_loss = float(val_metrics["loss"])
+        if current_val_loss < best_val_loss:
+            best_val_loss = current_val_loss
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement += 1
         checkpoint_args = vars(args).copy()
         checkpoint_args.update(
             {
@@ -524,6 +614,16 @@ def main(argv: list[str] | None = None) -> int:
             f"train loss {train_loss:.4f} | "
             f"val loss {val_metrics['loss']:.4f} | mIoU {current_miou:.4f} | ECE {val_metrics['ece']:.4f}"
         )
+        if (
+            args.early_stopping_patience > 0
+            and epochs_without_improvement >= args.early_stopping_patience
+        ):
+            print(
+                f"Early stopping: val_loss has not improved for "
+                f"{epochs_without_improvement} epoch(s) "
+                f"(patience={args.early_stopping_patience})"
+            )
+            break
     print(f"Training complete. Best validation mIoU: {best_miou:.4f}")
     return 0
 
