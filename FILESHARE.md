@@ -1,7 +1,7 @@
-# Large artifacts on the university file share
+# Large artifacts on Google Drive
 
 The repository holds the code and the result JSONs. Anything too large for
-GitHub lives on the share, laid out to mirror the repository so it can be
+GitHub lives on Google Drive, laid out to mirror the repository so it can be
 copied straight back over a fresh clone.
 
 ## What is there
