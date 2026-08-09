@@ -9,6 +9,8 @@ copied straight back over a fresh clone.
 ```
 checkpoints/<mixture>/<model>[_seed<N>]/best_model_<model>.pth   8.8 GB, 54 files
 predictions/<mixture>/<model>[_seed<N>]/test_eval/masks/*.png    6.5 GB, 52,650 files
+run_json/<mixture>/<model>[_seed<N>]/...                          29 MB, 108 files
+shift_json/correlation_*.json, sadge/*.json                      1.9 MB, 13 files
 features/<dataset>_<encoder>.npy                                 115 MB, 20 files
 summaries/<dataset>_<summary>.npz                                 99 MB, 70 files
 logs/                                                             18 MB
@@ -23,6 +25,14 @@ about 40 GPU hours.
 held-out real test images, 975 PNGs per run. Included so qualitative analysis
 needs neither a GPU nor the 16 GB of source images: where one mixture fails and
 another does not, which classes get confused, per-image error breakdowns.
+
+`run_json/` holds each run's `training_history_<model>.json` and its
+`test_eval/summary.json`, the latter carrying mIoU, ECE, prediction entropy and
+per-class IoU. `shift_json/` holds the four correlation outputs and the nine
+per-mixture SADGE results.
+
+Only `results/shift/distances.json` stays in the repository, since it is the
+one artifact someone evaluating a new shift metric would compare against.
 
 `features/` are the frozen DINOv2 and StreetCLIP embeddings behind the FID,
 FCD and centroid metrics. Reproducible, but the encoder passes take a few GPU
@@ -55,15 +65,18 @@ git clone <repo> && cd ShiftBench
 git submodule update --init --recursive        # only needed for SADGE
 rsync -av <share>/checkpoints/  output/
 rsync -av <share>/predictions/  output/
+rsync -av <share>/run_json/     output/
+rsync -av <share>/shift_json/   results/shift/
 rsync -av <share>/features/     results/shift/features/
 rsync -av <share>/summaries/    results/shift/summaries/
 ```
 
-`checkpoints/` and `predictions/` both merge into `output/`, since they follow
-the same `<mixture>/<model>/` layout.
+`checkpoints/`, `predictions/` and `run_json/` all merge into `output/`, since
+they follow the same `<mixture>/<model>/` layout. `shift_json/` merges into
+`results/shift/` alongside the tracked `distances.json`.
 
 The source images are only needed to retrain or to recompute the shift metrics
-from scratch, and they are on Silvie's share drive. Without them you can still
-read every result, inspect the predicted masks, and re-run
-`scripts/analyze_correlation.py`, which reproduces every number in the paper
-from the committed JSONs alone.
+from scratch, and they are on Silvie's share drive. Without them, `run_json/`
+and `shift_json/` are enough to re-run `scripts/analyze_correlation.py` and
+reproduce every number in the paper, and `predictions/` is enough to inspect
+what the models actually output.
