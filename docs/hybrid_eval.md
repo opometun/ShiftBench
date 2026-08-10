@@ -101,7 +101,54 @@ python -m hybrid_eval.training.train \
   --output-dir output/deeplabv3plus
 ```
 
-Use `--no-pretrained` for a fully offline random initialization. Other useful controls include `--backbone-lr`, `--head-lr`, `--class-weights`, `--scale-min`, `--scale-max`, `--crop-size`, `--device`, and `--seed`. Run `python -m hybrid_eval.training.train --help` for the complete interface.
+Use `--no-pretrained` for a fully offline random initialization. Other useful controls include `--backbone-lr`, `--head-lr`, `--class-weights`, `--scale-min`, `--scale-max`, `--crop-size`, `--warmup-steps`, `--early-stopping-patience`, `--device`, and `--seed`. Run `python -m hybrid_eval.training.train --help` for the complete interface.
+
+### Study run: fixed resolution, no augmentation
+
+The hybrid-dataset study trains at Synscapes' native 1440×720 resolution with no
+resizing/cropping augmentation (Cityscapes and GTA-V are conformed to this size
+during data prep instead), and uses linear LR warmup plus early stopping on
+`val_loss`:
+
+```bash
+python -m hybrid_eval.training.train \
+  --model segformer \
+  --train-img-dir data/train/images \
+  --train-mask-dir data/train/masks \
+  --val-img-dir data/val/images \
+  --val-mask-dir data/val/masks \
+  --num-classes 19 \
+  --image-height 720 \
+  --image-width 1440 \
+  --crop-size 0 \
+  --scale-min 1.0 \
+  --scale-max 1.0 \
+  --no-photometric-distortion \
+  --no-hflip \
+  --epochs 35 \
+  --warmup-steps 1000 \
+  --early-stopping-patience 5 \
+  --output-dir output/segformer
+```
+
+`--crop-size 0` disables the random crop entirely (images pass through at the
+declared `--image-height`/`--image-width`); `--scale-min 1.0 --scale-max 1.0`
+disables the random resize-scale jitter; `--no-hflip` disables the random
+horizontal flip. Together with `--no-photometric-distortion` these four turn
+off every augmentation the training transform applies, which is what the
+study's "no input modification" protocol requires. All four default to
+augmentation *enabled*, so they must be passed explicitly.
+
+SegFormer additionally sets `hidden_dropout_prob=0.1` (see
+`models/segformer.py`); HuggingFace ships this at `0.0`, so it is applied in
+code rather than via a flag. It offsets some of the regularization lost by
+disabling augmentation.
+
+`--early-stopping-patience` stops the run once `val_loss` has gone this many
+epochs without improving, independent of `best_model_<model>.pth`, which is
+still selected by highest `val_mIoU` (see below) — the two serve different
+purposes: mIoU decides which checkpoint to keep, val_loss decides when to stop
+looking for a better one.
 
 Training produces:
 

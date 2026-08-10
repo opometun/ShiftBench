@@ -10,7 +10,13 @@ def class_presence_per_image(mask:np.ndarray, num_classes:int) -> np.ndarray:
     Compute a binary presence vector for a single mask.
     1 if class appears in the image, else 0.
     """
-    counts = np.bincount(mask.ravel(), minlength=num_classes)
+    # Exclude ignore/void (255 after the trainId remap) and any out-of-range
+    # label. Without this the vector is 256 long whenever a mask contains void
+    # and 19 long when it does not, which breaks the np.vstack below, and void
+    # itself would be recorded as a present "class" in every image that has any.
+    labels = mask.ravel()
+    labels = labels[labels < num_classes]
+    counts = np.bincount(labels, minlength=num_classes)
     return (counts > 0).astype(np.float64)
 
 

@@ -71,6 +71,24 @@ def extract_features(
     inputs = inputs.to(device)
     with torch.inference_mode():
         features = model.get_image_features(**inputs)
+
+        # transformers 4.x returned the projected embedding tensor directly
+        # from get_image_features; 5.x returns a BaseModelOutputWithPooling,
+        # and calling .norm() on it raises AttributeError.
+        #
+        # Rather than guess which field of that object holds the embedding,
+        # rebuild it from CLIP's documented architecture: pool the vision
+        # tower, then apply the projection head. That is exactly what
+        # get_image_features does internally, so both library versions yield
+        # identical vectors instead of quietly different ones.
+        #
+        # (Do not reuse the 5.x object's pooler_output here -- it is already
+        # projected to projection_dim, so feeding it through visual_projection
+        # again fails with a 768-vs-1024 shape mismatch.)
+        if not isinstance(features, torch.Tensor):
+            vision_outputs = model.vision_model(**inputs)
+            features = model.visual_projection(vision_outputs.pooler_output)
+
     if normalize:
         features = features / features.norm(dim=-1, keepdim=True)
     return features

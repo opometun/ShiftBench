@@ -211,3 +211,21 @@ LFS, Hugging Face Datasets, or an archived release with checksums.
 
 Paper-critical results should always be reproducible from committed configs and
 documented commands.
+
+## Study artifacts
+
+`results/shift/distances.json` holds the shift scores for all nine mixtures
+across twelve metrics, and is the file to compare a new metric against.
+
+Everything else the study produced is on Google Drive: the 54 trained
+checkpoints, their predicted masks on the test split, per-run training
+histories and test summaries, encoder embeddings, and the correlation outputs.
+`FILESHARE.md` describes the layout and how to merge it back over a clone.
+Contact the maintainers for access.
+
+Evaluating a new shift metric does not require retraining. The per-mixture mIoU
+and ECE our models achieved are in `shift_json/correlation_*.json` on the
+Drive, so a new metric can be correlated against the same downstream numbers we
+used.
+
+`REPRODUCE.md` lists every command that produced these results, in order.
