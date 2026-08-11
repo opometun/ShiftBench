@@ -1,20 +1,24 @@
 # Large artifacts on Google Drive
 
-The repository holds the code and the result JSONs. Anything too large for
-GitHub lives on Google Drive, laid out to mirror the repository so it can be
-copied straight back over a fresh clone.
+The repository holds the code and the result JSONs. Study artifacts and
+anything too large for GitHub lives on an external storage, laid out to mirror 
+the repository so it can be copied straight back over a fresh clone.
 
 ## What is there
 
 ```
+shift_manifests/<dataset>.csv                                    2.3 MB  10 files
 checkpoints/<mixture>/<model>[_seed<N>]/best_model_<model>.pth   8.8 GB, 54 files
 predictions/<mixture>/<model>[_seed<N>]/test_eval/masks/*.png    6.5 GB, 52,650 files
 run_json/<mixture>/<model>[_seed<N>]/...                          29 MB, 108 files
 shift_json/correlation_*.json, sadge/*.json                      1.9 MB, 13 files
 features/<dataset>_<encoder>.npy                                 115 MB, 20 files
 summaries/<dataset>_<summary>.npz                                 99 MB, 70 files
-logs/                                                             18 MB
+logs/                                                             18 MB  173 files
 ```
+
+`shift_manifests/` are the split-separated dataset manifests created for the 
+study's shift quantification. They are only required for exact study replication. 
 
 `checkpoints/` are the trained models, one per mixture, architecture and seed.
 Nine mixtures times two architectures times three seeds. These are the only
@@ -55,20 +59,21 @@ the two; `training_history_<model>.json` already records per-epoch validation
 metrics if that is what you want to look at. `inference.py` loads
 `best_model_*.pth`.
 
-**The source images (16 GB), `data/study/streetViewData/`.** Already on Silvie's
-share drive.
+**The source images (16 GB), `data/study/streetViewData/`.** On a private 
+share drive since dataset licenses prohibit dataset replication.
 
 ## Rebuilding a working copy
 
 ```bash
 git clone <repo> && cd ShiftBench
-git submodule update --init --recursive        # only needed for SADGE
-rsync -av <share>/checkpoints/  output/
-rsync -av <share>/predictions/  output/
-rsync -av <share>/run_json/     output/
-rsync -av <share>/shift_json/   results/shift/
-rsync -av <share>/features/     results/shift/features/
-rsync -av <share>/summaries/    results/shift/summaries/
+git submodule update --init --recursive   # only needed for SADGE
+rsync -av <share>/shift_manifests/*.csv   data/study/
+rsync -av <share>/checkpoints/            output/
+rsync -av <share>/predictions/            output/
+rsync -av <share>/run_json/               output/
+rsync -av <share>/shift_json/             results/shift/
+rsync -av <share>/features/               results/shift/features/
+rsync -av <share>/summaries/              results/shift/summaries/
 ```
 
 `checkpoints/`, `predictions/` and `run_json/` all merge into `output/`, since
@@ -76,7 +81,8 @@ they follow the same `<mixture>/<model>/` layout. `shift_json/` merges into
 `results/shift/` alongside the tracked `distances.json`.
 
 The source images are only needed to retrain or to recompute the shift metrics
-from scratch, and they are on Silvie's share drive. Without them, `run_json/`
-and `shift_json/` are enough to re-run `scripts/analyze_correlation.py` and
-reproduce every number in the paper, and `predictions/` is enough to inspect
-what the models actually output.
+from scratch. If needed, you must download them from their official providers
+and prepare them as described in [`data/README.md`](data/README.md). 
+Without them, `run_json/` and `shift_json/` are enough to re-run 
+`scripts/analyze_correlation.py` and reproduce every number in the paper, 
+and `predictions/` is enough to inspect what the models actually output.
