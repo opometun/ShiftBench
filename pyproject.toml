@@ -20,6 +20,7 @@ dependencies = [
 [project.optional-dependencies]
 features = [
   "torch>=2.2",
+  "torchvision>=0.17",
   "transformers>=4.40",
   "pillow>=10.0",
 ]
@@ -36,8 +37,7 @@ image = [
   "scikit-image>=0.22",
   "pillow>=10.0",
 ]
-# SADGE additionally needs a vendored MASt3R checkout, Sadge is a submodule;
-# see docs/integration-plan.md Phase 7.
+# SADGE additionally needs a vendored MASt3R checkout, Sadge is a submodule
 sadge = [
   "opencv-python-headless>=4.8",
   "torch>=2.2",
