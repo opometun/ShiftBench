@@ -252,7 +252,7 @@ Encoder backends are wiring-tested against stubs; real forward passes need
 - currently only argument-driven model training and inference (might want to switch to config-driven in future)
 - figure generation still missing
 - we did not test running SADGE via config yet 
-- run() experiment-related smoke tests currently fail
+- `load_masks` (see [src/shiftbench/datasets/loaders.py`](src/shiftbench/datasets/loaders.py)) has Cityscapes LUT as default transform. Hence, every component that relies on `load_masks`, including [`scripts/compute_feature_stats.py`](scripts/compute_feature_stats.py), [`src/shiftbench/experiments/run.py`](src/shiftbench/experiments/run.py), and some tests, implicilty uses that mask transform. Swapping in a different LUT (or None at all) therefore requires touching several places in the codebase rather than adjusting a single configuration entry.
 
 ## Data Policy
 

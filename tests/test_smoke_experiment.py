@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 import numpy as np
@@ -92,22 +92,22 @@ class ShiftMetricsRunTest(unittest.TestCase):
 name = "shift"
 seed = 7
 output_root = "runs"
-train_selection = {{ "real": 1500, "synthetic": 500 }}
+train_selection = {{ real = 1500, synthetic = 500 }}
 
 [dataset]
-path = "{sample}"
-required_columns = ["sample_id", "split", "source", "label", "text"]
+path = "{sample.as_posix()}"
+required_columns = ["sample_id", "split", "source", "label", "input"]
 id_column = "sample_id"
 split_column = "split"
 source_column = "source"
 label_column = "label"
-input_column = "text"
+input_column = "input"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["real", "synthetic"]
 
 [shift]
-stats_a = "{stats_a}"
-stats_b = "{stats_b}"
+stats_a = "{self.directory.as_posix()}/a.npz"
+stats_b = "{self.directory.as_posix()}/b.npz"
 metrics = [{metrics}]
 """.strip(),
             encoding="utf-8",
@@ -185,10 +185,11 @@ class MixedShiftMetricsRunTest(unittest.TestCase):
         self.directory = Path(self._directory.name)
         self.addCleanup(self._directory.cleanup)
 
-        rng = np.random.default_rng(30)
         # Gaussian stats artifacts.
-        for name, shift in [("a", 0.0), ("b", 2.0)]:
-            features = (rng.normal(0.0, 1.0, (150, 8)) + shift).astype(np.float32)
+        rng_stats_a = np.random.default_rng(100)
+        rng_stats_b = np.random.default_rng(200)
+        for name, shift, rng_local in [("a", 0.0, rng_stats_a), ("b", 2.0, rng_stats_b)]:
+            features = (rng_local.normal(0.0, 1.0, (150, 8)) + shift).astype(np.float32)
             np.savez(
                 self.directory / f"{name}.npz",
                 mu=compute_mean(features),
@@ -196,20 +197,9 @@ class MixedShiftMetricsRunTest(unittest.TestCase):
                 encoder="dinov2",
                 model="m",
             )
-        # Mask manifests pointing at .npy masks (numpy-only, no pillow).
-        for tag, high in [("a", 5), ("b", 2)]:
-            mask_dir = self.directory / f"masks_{tag}"
-            mask_dir.mkdir()
-            rows = ["sample_id,seg_path"]
-            for index in range(3):
-                np.save(mask_dir / f"{index}.npy", rng.integers(0, high, (6, 6)))
-                rows.append(f"{index},masks_{tag}/{index}.npy")
-            (self.directory / f"{tag}.csv").write_text(
-                "\n".join(rows) + "\n", encoding="utf-8"
-            )
 
     def _config(self) -> Path:
-        sample = PROJECT_ROOT / "data" / "sample" / "tiny_shiftbench.csv"
+        sample = (PROJECT_ROOT / "data" / "sample" / "tiny_shiftbench.csv").as_posix()
         config_path = self.directory / "mixed.toml"
         config_path.write_text(
             f"""
@@ -217,27 +207,30 @@ class MixedShiftMetricsRunTest(unittest.TestCase):
 name = "mixed"
 seed = 3
 output_root = "runs"
-train_selection = {{ "real": 1500, "synthetic": 500 }}
+train_selection = {{ real = 1500, synthetic = 500 }}
 
 [dataset]
 path = "{sample}"
-required_columns = ["sample_id", "split", "source", "label", "text"]
+required_columns = ["sample_id", "split", "source", "label", "input"]
 id_column = "sample_id"
 split_column = "split"
 source_column = "source"
 label_column = "label"
-input_column = "text"
+input_column = "input"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["real", "synthetic"]
 
 [shift]
 metrics = ["frechet", "class_frequency_js", "scene_complexity_js"]
-stats_a = "{self.directory}/a.npz"
-stats_b = "{self.directory}/b.npz"
-manifest_a = "{self.directory}/a.csv"
-manifest_b = "{self.directory}/b.csv"
-mask_column = "seg_path"
+stats_a = "{(self.directory / "a.npz").as_posix()}"
+stats_b = "{(self.directory / "b.npz").as_posix()}"
+manifest_a = "{sample}"
+manifest_b = "{sample}"
 num_classes = 5
+image_column = "input"
+mask_column = "label"
+split_a = "train"
+split_b = "test"
 """.strip(),
             encoding="utf-8",
         )
@@ -253,12 +246,13 @@ num_classes = 5
             sorted(shift["distances"]),
             ["class_frequency_js", "frechet", "scene_complexity_js"],
         )
+
         for value in shift["distances"].values():
             self.assertGreater(value, 0.0)
         # Hyperparameters recorded next to the numbers they shaped.
         self.assertEqual(shift["params"]["class_frequency_js"]["num_classes"], 5)
         self.assertEqual(
-            shift["params"]["class_frequency_js"]["mask_column"], "seg_path"
+            shift["params"]["class_frequency_js"]["mask_column"], "label"
         )
         # Provenance for both input kinds.
         self.assertEqual(shift["encoder"], "dinov2")
@@ -274,8 +268,6 @@ num_classes = 5
         except ModuleNotFoundError:
             pass
 
-        (self.directory / "imgs_a").mkdir()
-        (self.directory / "imgs_b").mkdir()
         sample = PROJECT_ROOT / "data" / "sample" / "tiny_shiftbench.csv"
         config_path = self.directory / "sadge.toml"
         config_path.write_text(
@@ -284,23 +276,23 @@ num_classes = 5
 name = "sadge"
 seed = 3
 output_root = "runs"
-train_selection = {{ "real": 1500, "synthetic": 500 }}
+train_selection = {{ real = 1500, synthetic = 500 }}
 
 [dataset]
 path = "{sample}"
-required_columns = ["sample_id", "split", "source", "label", "text"]
+required_columns = ["sample_id", "split", "source", "label", "input"]
 id_column = "sample_id"
 split_column = "split"
 source_column = "source"
 label_column = "label"
-input_column = "text"
+input_column = "input"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["real", "synthetic"]
 
 [shift]
 metrics = ["sadge"]
-image_dir_a = "{self.directory}/imgs_a"
-image_dir_b = "{self.directory}/imgs_b"
+manifest_a = "{PROJECT_ROOT}/data/sample/tiny_shiftbench.csv"
+manifest_b = "{PROJECT_ROOT}/data/sample/tiny_shiftbench.csv"
 """.strip(),
             encoding="utf-8",
         )
@@ -311,11 +303,21 @@ image_dir_b = "{self.directory}/imgs_b"
 
     def test_missing_manifest_fails_the_run_cleanly(self) -> None:
         config_path = self._config()
-        (self.directory / "b.csv").unlink()
+        sample = (PROJECT_ROOT / "data" / "sample" / "tiny_shiftbench.csv").as_posix()
+        missing = (self.directory / "does_not_exist.csv").as_posix()
+        # Overwrite manifest_b with a non‑existent path
+        bad_config = self.directory / "bad.toml"
+        bad_config.write_text(
+            config_path.read_text().replace(
+                f'manifest_b = "{sample}"',
+                f'manifest_b = "{missing}"',
+            ),
+            encoding="utf-8",
+        )
 
         with tempfile.TemporaryDirectory() as output_root:
             with self.assertRaisesRegex(ValueError, "Could not read shift manifest"):
-                run_experiment(config_path, Path(output_root))
+                run_experiment(bad_config, Path(output_root))
 
 
 if __name__ == "__main__":

@@ -97,14 +97,11 @@ class ClassFrequencyTest(unittest.TestCase):
 
         self.assertAlmostEqual(class_frequency(mask, num_classes=5).sum(), 1.0)
 
-    def test_out_of_range_ids_grow_the_vector(self) -> None:
-        # Pinned quirk: an id >= num_classes silently lengthens the output
-        # (np.bincount minlength is a floor, not a cap), which would crash the
-        # vstack in quantify_* on mixed datasets. Phase 5 should decide whether
-        # to clip, error, or keep this.
+    def test_out_of_range_ids_are_cut(self) -> None:
         mask = np.array([[0, 5]])
-
-        self.assertEqual(class_frequency(mask, num_classes=3).shape, (6,))
+        freq = class_frequency(mask, num_classes=3)
+        self.assertEqual(freq.shape, (3,))
+        np.testing.assert_array_equal(freq, np.array([1.0, 0.0, 0.0]))
 
     def test_identical_datasets_shift_zero(self) -> None:
         masks = [np.array([[0, 1], [2, 2]]), np.array([[1, 1], [0, 2]])]

@@ -1,5 +1,5 @@
 sample_id,split,source,label,input
-real-train-001,train,real,positive,The baseline real example is useful.
-real-validation-001,validation,real,negative,The validation item exposes a mismatch.
-synthetic-train-001,train,synthetic,positive,A generated sample follows the target format.
-synthetic-test-001,test,synthetic,negative,A synthetic test item checks held-out behavior.
+real-train-001,train,real,fake_0_mask.png,fake_0.png
+real-validation-001,validation,real,fake_1_mask.png,fake_1.png
+synthetic-train-001,train,synthetic,fake_2_mask.png,fake_2.png
+synthetic-test-001,test,synthetic,fake_3_mask.png,fake_3.png
