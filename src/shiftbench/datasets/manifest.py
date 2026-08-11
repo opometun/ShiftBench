@@ -35,7 +35,10 @@ def resolve_image_path(manifest_dir: str, raw_path: str) -> str:
     return image_path
 
 
-def load_image_paths_from_config(schema: DatasetSchemaConfig) -> list[str]:
+def load_image_paths_from_config(
+    schema: DatasetSchemaConfig,
+    split: str | None = None,
+) -> list[str]:
     """Read image paths using a configured dataset schema.
 
     This is the path that makes input_column load-bearing: the column named in
@@ -45,22 +48,27 @@ def load_image_paths_from_config(schema: DatasetSchemaConfig) -> list[str]:
         ValueError: If the schema declares no input_column and the manifest
             has no recognizable one either.
     """
-    return load_image_paths(str(schema.path), schema.input_column)
+    return load_image_paths(str(schema.path), schema.input_column, split, schema.split_column)
 
 
-def load_mask_paths_from_config(schema: DatasetSchemaConfig) -> list[str]:
+def load_mask_paths_from_config(
+    schema: DatasetSchemaConfig,
+    split: str | None = None,
+) -> list[str]:
     """Read semantic-mask paths using a configured dataset schema.
 
     Raises:
         ValueError: If the schema declares no label_column and the manifest
             has no recognizable one either.
     """
-    return load_mask_paths(str(schema.path), schema.label_column)
+    return load_mask_paths(str(schema.path), schema.label_column, split, schema.split_column)
 
 
 def load_image_paths(
     input_manifest: str,
     image_column: str | None = None,
+    split: str | None = None,
+    split_column: str = "split",
 ) -> list[str]:
     """Read absolute image paths from a CSV manifest.
 
@@ -69,6 +77,8 @@ def load_image_paths(
         image_column: Column holding image paths. When omitted, falls back to
             guessing among FALLBACK_IMAGE_COLUMNS, which is only safe for
             manifests written outside a configured experiment.
+        split: If not None, only paths for this split are loaded.
+        split_column: Column holding split information.
 
     Returns:
         Absolute image paths, in manifest row order.
@@ -78,11 +88,16 @@ def load_image_paths(
             row is missing its path.
     """
     return _load_column_paths(
-        input_manifest, image_column, FALLBACK_IMAGE_COLUMNS, "image"
+        input_manifest, image_column, FALLBACK_IMAGE_COLUMNS, "image", split, split_column
     )
 
 
-def load_mask_paths(input_manifest: str, mask_column: str) -> list[str]:
+def load_mask_paths(
+    input_manifest: str, 
+    mask_column: str,
+    split: str | None = None,
+    split_column: str = "split",
+) -> list[str]:
     """Read absolute semantic-mask paths from a CSV manifest.
 
     Args:
@@ -90,6 +105,8 @@ def load_mask_paths(input_manifest: str, mask_column: str) -> list[str]:
         mask_column: Column holding mask paths. When omitted, falls back to
             guessing among FALLBACK_MASK_COLUMNS, which is only safe for
             manifests written outside a configured experiment.
+        split: If not None, only paths for this split are loaded.
+        split_column: Column holding split information.
 
     Returns:
         Absolute mask paths, in manifest row order.
@@ -99,7 +116,7 @@ def load_mask_paths(input_manifest: str, mask_column: str) -> list[str]:
             is missing its path.
     """
     return _load_column_paths(
-        input_manifest, mask_column, FALLBACK_MASK_COLUMNS, "mask"
+        input_manifest, mask_column, FALLBACK_MASK_COLUMNS, "mask", split, split_column
     )
 
 
@@ -108,6 +125,8 @@ def _load_column_paths(
     column: str | None,
     fallback_columns: tuple[str, ...] | None,
     kind: str,
+    split: str | None = None,
+    split_column: str = "split",
 ) -> list[str]:
     manifest_path = os.path.abspath(os.path.expanduser(input_manifest))
     manifest_dir = os.path.dirname(manifest_path)
@@ -123,12 +142,25 @@ def _load_column_paths(
             header, column, fallback_columns, input_manifest, kind
         )
 
+        if split is not None:
+            if not split_column:
+                raise ValueError("split_column must be provided when split filtering is used")
+            split_index = _resolve_column(
+                header, split_column, None, input_manifest, "split",
+            )
+
         paths = []
         for row_number, row in enumerate(reader, start=2):
+            # If split filtering is requested
+            if (split is not None) and (row[split_index] != split):
+                continue
+            # Get path
             if column_index >= len(row) or not row[column_index].strip():
                 raise ValueError(f"Row {row_number}: missing {kind} path")
             paths.append(resolve_image_path(manifest_dir, row[column_index]))
 
+        if not paths:
+            raise ValueError(f"No rows matched the request in manifest '{input_manifest}'.")
     return paths
 
 

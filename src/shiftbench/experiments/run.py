@@ -10,11 +10,11 @@ from shutil import copy2
 from typing import Any
 import json
 import platform
+import numpy as np
 import random
 import subprocess
 import sys
-
-import numpy as np
+import torch
 
 from shiftbench.config import ExperimentConfig, ShiftConfig, load_experiment_config
 from shiftbench.datasets.schema import validate_csv_dataset
@@ -45,14 +45,21 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
         ValueError: If dataset validation fails.
     """
 
+    # Load config and safe a copy of it in this run's folder
     config = load_experiment_config(config_path)
     if output_root is not None:
         config = replace(config, output_root=output_root.resolve())
 
     random.seed(config.seed)
+    np.random.seed(config.seed)
+    torch.manual_seed(config.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(config.seed)
+
     run_dir = _create_run_dir(config)
     copy2(config_path, run_dir / "config.toml")
 
+    # Validate CSV manifest and safe validation in this run's folder
     validation = validate_csv_dataset(config.dataset)
     _write_json(run_dir / "validation.json", validation.to_jsonable())
 
@@ -77,9 +84,10 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
         "label_counts": dict(validation.label_counts),
     }
 
+    # Compute the shift scores
     if config.shift is not None:
         try:
-            metrics["shift"] = _compute_shift_metrics(config.shift)
+            metrics["shift"] = _compute_shift_metrics(config.shift, run_dir)
         except ValueError as error:
             _write_log(
                 run_dir,
@@ -98,7 +106,7 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
 def main(argv: list[str] | None = None) -> int:
     """Run the ShiftBench experiment CLI.
 
-    Args:
+    Args: 
         argv: Optional command-line arguments. Defaults to ``sys.argv``.
 
     Returns:
@@ -136,7 +144,7 @@ def _parse_args(argv: list[str] | None) -> Namespace:
     return parser.parse_args(argv)
 
 
-def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
+def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path) -> dict[str, Any]:
     """Compare two datasets with the configured metrics.
 
     Metrics are grouped by the input they declare, each input is materialized
@@ -145,6 +153,7 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
 
     Args:
         shift: Input sources and the distances to compute.
+        run_dir: Path to folder to store run results.
 
     Returns:
         The distances plus what produced them.
@@ -153,7 +162,10 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
         ValueError: If an input is unreadable, the stats artifacts are not
             comparable, or a requested metric cannot run from these inputs.
     """
+    summary_dir = run_dir / "summaries"
+    summary_dir.mkdir(parents=True, exist_ok=True)
 
+    # Get the distance measure for each metric requested
     grouped: dict[str, list[Metric]] = {}
     for name in shift.metrics:
         metric = get_metric(name)
@@ -161,6 +173,7 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
 
     report: dict[str, Any] = {"distances": {}, "params": {}}
 
+    # Measure shift for selected embedding-based metrics
     if "embeddings" in grouped:
         try:
             stats_a = np.load(shift.stats_a)
@@ -187,17 +200,27 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
                 SUMMARIES[metric.summary].default_params
             )
 
-    if "images" in grouped or "masks" in grouped:
+    if "images" in grouped or "masks" in grouped or "image_dirs" in grouped:
         report["manifest_a"] = str(shift.manifest_a)
         report["manifest_b"] = str(shift.manifest_b)
+        report["split_a"] = shift.split_a
+        report["split_b"] = shift.split_b
 
     if "images" in grouped:
         images_a, images_b = _load_shift_images(shift)
         for metric in grouped["images"]:
             summary = SUMMARIES[metric.summary]
-            report["distances"][metric.name] = metric.compare(
-                summary.make(images_a), summary.make(images_b)
-            )
+
+            # compute dataset histograms
+            stats_a = summary.make(images_a)
+            stats_b = summary.make(images_b)
+
+            # save histograms
+            np.savez(summary_dir / f"{metric.name}_a_summary.npz", **stats_a)
+            np.savez(summary_dir / f"{metric.name}_b_summary.npz", **stats_b)
+
+            # compute distance between histograms
+            report["distances"][metric.name] = metric.compare(stats_a, stats_b)
             report["params"][metric.name] = {
                 **summary.default_params,
                 "image_column": shift.image_column,
@@ -207,10 +230,17 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
         masks_a, masks_b = _load_shift_masks(shift)
         for metric in grouped["masks"]:
             summary = SUMMARIES[metric.summary]
-            report["distances"][metric.name] = metric.compare(
-                summary.make(masks_a, num_classes=shift.num_classes),
-                summary.make(masks_b, num_classes=shift.num_classes),
-            )
+
+            # compute dataset histograms
+            stats_a = summary.make(masks_a, num_classes=shift.num_classes)
+            stats_b = summary.make(masks_b, num_classes=shift.num_classes)
+
+            # save histograms
+            np.savez(summary_dir / f"{metric.name}_a_summary.npz", **stats_a)
+            np.savez(summary_dir / f"{metric.name}_b_summary.npz", **stats_b)
+
+            # compute distance between histograms
+            report["distances"][metric.name] = metric.compare(stats_a, stats_b)
             report["params"][metric.name] = {
                 **summary.default_params,
                 "mask_column": shift.mask_column,
@@ -218,13 +248,10 @@ def _compute_shift_metrics(shift: ShiftConfig) -> dict[str, Any]:
             }
 
     if "image_dirs" in grouped:
-        report["image_dir_a"] = str(shift.image_dir_a)
-        report["image_dir_b"] = str(shift.image_dir_b)
+        image_paths_a, image_paths_b = _load_sadge_image_paths(shift)
         for metric in grouped["image_dirs"]:
             try:
-                value = metric.pairwise(
-                    str(shift.image_dir_a), str(shift.image_dir_b)
-                )
+                value = metric.pairwise(image_paths_a, image_paths_b)
             except ModuleNotFoundError as error:
                 msg = (
                     f"Metric '{metric.name}' needs the '[sadge]' extras "
@@ -247,10 +274,10 @@ def _load_shift_images(shift: ShiftConfig) -> tuple[list, list]:
     try:
         return (
             loaders.load_rgb_images(
-                load_image_paths(str(shift.manifest_a), shift.image_column)
+                load_image_paths(str(shift.manifest_a), shift.image_column, shift.split_a)
             ),
             loaders.load_rgb_images(
-                load_image_paths(str(shift.manifest_b), shift.image_column)
+                load_image_paths(str(shift.manifest_b), shift.image_column, shift.split_b)
             ),
         )
     except OSError as error:
@@ -265,15 +292,30 @@ def _load_shift_masks(shift: ShiftConfig) -> tuple[list, list]:
     try:
         return (
             loaders.load_masks(
-                load_mask_paths(str(shift.manifest_a), shift.mask_column)
+                load_mask_paths(str(shift.manifest_a), shift.mask_column, shift.split_a)
             ),
             loaders.load_masks(
-                load_mask_paths(str(shift.manifest_b), shift.mask_column)
+                load_mask_paths(str(shift.manifest_b), shift.mask_column, shift.split_b)
             ),
         )
     except OSError as error:
         msg = f"Could not read shift manifest data: {error}"
         raise ValueError(msg) from error
+
+
+def _load_sadge_image_paths(shift: ShiftConfig) -> tuple[list[str], list[str]]:
+    from shiftbench.datasets.manifest import load_image_paths
+    image_paths_a = load_image_paths(
+        str(shift.manifest_a),
+        shift.image_column,
+        shift.split_a,
+    )
+    image_paths_b = load_image_paths(
+        str(shift.manifest_b),
+        shift.image_column,
+        shift.split_b,
+    )
+    return image_paths_a, image_paths_b
 
 
 def _import_loaders():

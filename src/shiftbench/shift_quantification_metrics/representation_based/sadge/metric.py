@@ -2,7 +2,8 @@
 # FOLLOWING ADJUSTMENTS WERE MADE BY US: 
 # - removed config_path
 # - hard-coded the officially fitted SADGE parameters (a, b, c, geo_mean, geo_std, app_mean, app_std)
-# - added METRICS, BEST_FN, set_seed, build_query_candidates, run_metrics, and quantify_benchmark_shift for SADGE score computation
+# - added METRICS, BEST_FN, set_seed, build_query_candidates, and run_metrics
+# - added option to process directory or list of paths via _normalize_to_paths()
 
 """The SADGE fusion class.
 
@@ -33,6 +34,8 @@ BEST_FN = {
 }
 
 
+# set_seed is only required for replicating our study (scripts/run_sadge.py)
+# not used when running SADGE via an experiment config (src/shiftbench/experiments/run.py)
 def set_seed(seed:int=42) -> None:
     """Set seeds for reproducibility."""
     random.seed(seed)
@@ -72,11 +75,28 @@ class SADGE:
         return float(a * geo_z + b * app_z + c * geo_z * app_z)
 
 
-def build_query_candidates(train_ds_dir:Path, inference_ds_dir:Path, K:int) -> list[tuple[Path, list[Path]]]:
+def _normalize_to_paths(x):
+    """Accept either a directory Path or a list of paths."""
+
+    # Case 1: folder directory containing all images
+    if isinstance(x, (str, Path)) and Path(x).is_dir():
+        return sorted(
+            [p for p in Path(x).iterdir()
+             if p.is_file() and p.suffix.lower() == ".png"]
+        )
+
+    # Case 2: list of all img file paths
+    if isinstance(x, (list, tuple)):
+        return [Path(p) for p in x if Path(p).is_file()]
+
+    raise TypeError(f"Unsupported input type for image paths: {type(x)}")
+
+
+def build_query_candidates(train_input, inference_input, K:int) -> list[tuple[Path, list[Path]]]:
     """Select K train dataset images randomly for each inference dataset image."""
     # Collect all image paths
-    train_img_paths = sorted([p for p in train_ds_dir.iterdir() if p.is_file() and p.suffix.lower() == ".png"])
-    inference_img_paths  = sorted([p for p in inference_ds_dir.iterdir() if p.is_file() and p.suffix.lower() == ".png"])
+    train_img_paths = _normalize_to_paths(train_input)
+    inference_img_paths = _normalize_to_paths(inference_input)
 
     query_candidates = []
 
@@ -93,6 +113,8 @@ def build_query_candidates(train_ds_dir:Path, inference_ds_dir:Path, K:int) -> l
     return query_candidates
 
 
+# run_metrics is called from either run_sadge.py (study replication)
+# or from pairwise.py -> quantify_benchmark_shift() (run SADGE via experiment config)
 def run_metrics(query_candidates:list, device:torch.device) -> tuple[float, float]:
     """Get the dataset-level metric scores."""
     results = {}
@@ -121,11 +143,3 @@ def run_metrics(query_candidates:list, device:torch.device) -> tuple[float, floa
     G = results["geo_inliers"]
     A = results["dinov3_sim"]
     return G, A
-
-
-def quantify_benchmark_shift(train_ds_dir:Path, inference_ds_dir:Path, device:torch.device) -> float:
-    """Compute SADGE-based distribution shift between two datasets."""
-    query_candidates = build_query_candidates(train_ds_dir, inference_ds_dir, K=10)
-    G, A = run_metrics(query_candidates, device)
-    sadge = SADGE()
-    return sadge(G, A)

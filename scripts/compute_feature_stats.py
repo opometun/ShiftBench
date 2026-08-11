@@ -9,6 +9,7 @@ compare later instead of yielding a plausible wrong number.
 import argparse
 import json
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -49,12 +50,12 @@ def parse_args():
     parser.add_argument(
         "--image-column",
         default=None,
-        help="image summaries: manifest column holding image paths.",
+        help="image summaries: manifest column holding image paths. If omitted, defaults to guessing.",
     )
     parser.add_argument(
         "--mask-column",
         default=None,
-        help="mask summaries: manifest column holding mask paths (required).",
+        help="mask summaries: manifest column holding mask paths. If omitted, defaults to guessing.",
     )
     parser.add_argument(
         "--num-classes",
@@ -62,11 +63,34 @@ def parse_args():
         default=None,
         help="mask summaries: class count the masks are labeled with (required).",
     )
+    parser.add_argument(
+        "--split", 
+        default=None,
+        help=(
+            "image/mask summaries only: Dataset split for which to extract images/masks. "
+            "If omitted, all rows of the manifest will be considered. "
+            "If provided, manifest column for splits is assumed to be named 'split'."
+        ),
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+
+    if args.output_path is not None:
+        output_path = Path(args.output_path)
+        if output_path.suffix != ".npz":
+            output_path = output_path.with_suffix(".npz")
+        if output_path.exists():
+            warnings.warn(
+                f"Output file already exists and will be overwritten: {output_path}",
+                category=UserWarning,
+            )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+    else: 
+        output_path = None
+
     summary = get_summary(args.summary)
     params = dict(summary.default_params)
 
@@ -82,17 +106,19 @@ def main():
             )
         embeddings = np.load(args.input_path, mmap_mode="r")
         data = summary.make(embeddings)
+
     elif summary.input == "images":
         from shiftbench.datasets.loaders import load_rgb_images
         from shiftbench.datasets.manifest import load_image_paths
 
         encoder = model = "n/a"
-        images = load_rgb_images(load_image_paths(args.input_path, args.image_column))
+        images = load_rgb_images(load_image_paths(args.input_path, args.image_column, split=args.split))
         data = summary.make(images)
-    else:  # masks
-        if args.mask_column is None or args.num_classes is None:
+    
+    elif summary.input == "masks":
+        if args.num_classes is None:
             raise ValueError(
-                f"summary '{summary.name}' needs --mask-column and --num-classes"
+                f"summary '{summary.name}' needs --num-classes"
             )
 
         from shiftbench.datasets.loaders import load_masks
@@ -100,18 +126,21 @@ def main():
 
         encoder = model = "n/a"
         params["num_classes"] = args.num_classes
-        masks = load_masks(load_mask_paths(args.input_path, args.mask_column))
+        masks = load_masks(load_mask_paths(args.input_path, args.mask_column, split=args.split))
         data = summary.make(masks, num_classes=args.num_classes)
 
+    else:
+        raise ValueError(f"Unknown summary.input: {summary.input}")
+
     np.savez(
-        args.output_path,
+        output_path,
         **data,
         encoder=encoder,
         model=model,
         summary=summary.name,
         params=json.dumps(params, sort_keys=True),
     )
-    print(f"{args.output_path} <- {summary.name} summary ({encoder} {model})")
+    print(f"{output_path} <- {summary.name} summary ({encoder} {model})")
 
 
 if __name__ == "__main__":

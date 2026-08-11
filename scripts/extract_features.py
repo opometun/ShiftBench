@@ -1,6 +1,7 @@
 """Extract frozen-encoder image features from a manifest."""
 import argparse
 import sys
+import warnings
 from dataclasses import replace
 from pathlib import Path
 
@@ -68,23 +69,61 @@ def parse_args():
             "input_column. Without either, the column is guessed."
         ),
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--split", 
+        default=None,
+        help=(
+            "Dataset split to extract features for. "
+            "If omitted, all rows of the manifest will be considered."
+        ),
+    )
+    args = parser.parse_args()
+    
+    if (args.config is not None) and (args.split is not None):
+        config = load_experiment_config(Path(args.config))
+        allowed = config.dataset.allowed_splits
+        if args.split not in allowed:
+            raise ValueError(
+                f"Invalid split '{args.split}'. Allowed: {allowed}"
+            )
+    return args
 
 
-def resolve_image_paths(args):
+def resolve_image_paths(args) -> list[str]:
     """Read image paths from whichever source the caller specified."""
+    # Read paths directly from manifest
     if args.config is None:
-        return load_image_paths(args.manifest, args.image_column)
-
-    config = load_experiment_config(Path(args.config))
-    schema = config.dataset
-    if args.image_column is not None:
-        schema = replace(schema, image_column=args.image_column)
-    return load_image_paths_from_config(schema)
+        paths = load_image_paths(
+            input_manifest = args.manifest, 
+            image_column = args.image_column, 
+            split = args.split,
+        )
+    # Read paths via config information
+    else:
+        config = load_experiment_config(Path(args.config))
+        schema = config.dataset
+        if args.image_column is not None:
+            schema = replace(schema, image_column=args.image_column)
+        paths = load_image_paths_from_config(schema, split=args.split)
+    return paths
 
 
 def main():
     args = parse_args()
+
+    if args.output_path is not None:
+        features_path = Path(args.output_path)
+        if features_path.suffix != ".npy":
+            features_path = features_path.with_suffix(".npy")
+        if features_path.exists():
+            warnings.warn(
+                f"Output file already exists and will be overwritten: {features_path}",
+                category=UserWarning,
+            )
+        features_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        features_path = None
+    
     encoder = get_encoder(args.encoder)
     model_name = args.model or encoder.default_model_name
 
@@ -103,11 +142,9 @@ def main():
         feature_batches.append(batch_features.to("cpu"))
 
     features = torch.cat(feature_batches, dim=0).numpy()
-    # np.save appends .npy itself, so resolve the real name the sidecar pairs with.
-    features_path = args.output_path
-    if not features_path.endswith(".npy"):
-        features_path = f"{features_path}.npy"
+    # save the embedding in a .npy file
     np.save(features_path, features)
+    # save the meta data (encoder, model) in a .json file (extended from .npy file)
     sidecar = write_feature_provenance(features_path, encoder.name, model_name)
     print(f"{features.shape} features from {encoder.name} ({model_name})")
     print(f"provenance written to {sidecar}")
