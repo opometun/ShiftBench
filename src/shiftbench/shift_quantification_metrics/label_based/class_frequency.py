@@ -14,21 +14,8 @@ def class_frequency(mask:np.ndarray, num_classes:int) -> np.ndarray:
     
     Returns a probability distribution of shape (num_classes,).
     """
-    # Drop ignore/void pixels and any out-of-range label before counting.
-    #
-    # Masks arrive already remapped to trainIds, so void is 255. Passing that
-    # to np.bincount returns a 256-long array whenever a mask contains any void
-    # pixel, while a mask with none returns a 19-long one -- so np.vstack over
-    # a dataset raises "array dimensions must match". Synscapes triggers this
-    # because some of its masks are void-free; Cityscapes and GTA-V never are.
-    #
-    # Excluding void also fixes a quieter correctness problem: counted as a
-    # class, void would be normalised into the distribution, and it accounts
-    # for ~14% of Cityscapes pixels versus ~0.2% of Synscapes. The resulting
-    # "class frequency shift" would then largely measure how much void each
-    # dataset has rather than how its classes are distributed.
     labels = mask.ravel()
-    labels = labels[labels < num_classes]
+    labels = labels[labels < num_classes]   # exclude to-be-ignored and out-of-range classes
     hist = np.bincount(labels, minlength=num_classes).astype(np.float64)
 
     # Normalize to probability distribution
