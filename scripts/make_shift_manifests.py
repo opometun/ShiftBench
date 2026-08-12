@@ -1,7 +1,7 @@
 """Emit split-filtered manifests for shift quantification.
 
 The study CSVs in data/study/ hold every split at once (2,000 train rows plus
-500 validation and 975 test rows). The metric pipeline does not filter by
+500 validation and 975 test rows). The study replication metric pipeline does not filter by
 split -- shiftbench.datasets.manifest.load_image_paths reads every row it is
 given -- so pointing a metric at cityscapes100.csv would summarise a 3,475-row
 mixture rather than the 2,000-image training set.

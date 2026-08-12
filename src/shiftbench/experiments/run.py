@@ -87,7 +87,7 @@ def run_experiment(config_path: Path, output_root: Path | None = None) -> Path:
     # Compute the shift scores
     if config.shift is not None:
         try:
-            metrics["shift"] = _compute_shift_metrics(config.shift, run_dir)
+            metrics["shift"] = _compute_shift_metrics(config.shift, run_dir, split_column=config.dataset.split_column)
         except ValueError as error:
             _write_log(
                 run_dir,
@@ -144,7 +144,7 @@ def _parse_args(argv: list[str] | None) -> Namespace:
     return parser.parse_args(argv)
 
 
-def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path) -> dict[str, Any]:
+def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path, split_column:str) -> dict[str, Any]:
     """Compare two datasets with the configured metrics.
 
     Metrics are grouped by the input they declare, each input is materialized
@@ -154,6 +154,7 @@ def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path) -> dict[str, Any]:
     Args:
         shift: Input sources and the distances to compute.
         run_dir: Path to folder to store run results.
+        split_column: Name of the manifest column holding split information.
 
     Returns:
         The distances plus what produced them.
@@ -207,7 +208,7 @@ def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path) -> dict[str, Any]:
         report["split_b"] = shift.split_b
 
     if "images" in grouped:
-        images_a, images_b = _load_shift_images(shift)
+        images_a, images_b = _load_shift_images(shift, split_column)
         for metric in grouped["images"]:
             summary = SUMMARIES[metric.summary]
 
@@ -227,7 +228,7 @@ def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path) -> dict[str, Any]:
             }
 
     if "masks" in grouped:
-        masks_a, masks_b = _load_shift_masks(shift)
+        masks_a, masks_b = _load_shift_masks(shift, split_column)
         for metric in grouped["masks"]:
             summary = SUMMARIES[metric.summary]
 
@@ -267,17 +268,17 @@ def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path) -> dict[str, Any]:
     return report
 
 
-def _load_shift_images(shift: ShiftConfig) -> tuple[list, list]:
+def _load_shift_images(shift: ShiftConfig, split_column: str) -> tuple[list, list]:
     from shiftbench.datasets.manifest import load_image_paths
 
     loaders = _import_loaders()
     try:
         return (
             loaders.load_rgb_images(
-                load_image_paths(str(shift.manifest_a), shift.image_column, shift.split_a)
+                load_image_paths(str(shift.manifest_a), shift.image_column, shift.split_a, split_column)
             ),
             loaders.load_rgb_images(
-                load_image_paths(str(shift.manifest_b), shift.image_column, shift.split_b)
+                load_image_paths(str(shift.manifest_b), shift.image_column, shift.split_b, split_column)
             ),
         )
     except OSError as error:
@@ -285,17 +286,17 @@ def _load_shift_images(shift: ShiftConfig) -> tuple[list, list]:
         raise ValueError(msg) from error
 
 
-def _load_shift_masks(shift: ShiftConfig) -> tuple[list, list]:
+def _load_shift_masks(shift: ShiftConfig, split_column:str) -> tuple[list, list]:
     from shiftbench.datasets.manifest import load_mask_paths
 
     loaders = _import_loaders()
     try:
         return (
             loaders.load_masks(
-                load_mask_paths(str(shift.manifest_a), shift.mask_column, shift.split_a)
+                load_mask_paths(str(shift.manifest_a), shift.mask_column, shift.split_a, split_column)
             ),
             loaders.load_masks(
-                load_mask_paths(str(shift.manifest_b), shift.mask_column, shift.split_b)
+                load_mask_paths(str(shift.manifest_b), shift.mask_column, shift.split_b, split_column)
             ),
         )
     except OSError as error:
@@ -303,17 +304,19 @@ def _load_shift_masks(shift: ShiftConfig) -> tuple[list, list]:
         raise ValueError(msg) from error
 
 
-def _load_sadge_image_paths(shift: ShiftConfig) -> tuple[list[str], list[str]]:
+def _load_sadge_image_paths(shift: ShiftConfig, split_column:str) -> tuple[list[str], list[str]]:
     from shiftbench.datasets.manifest import load_image_paths
     image_paths_a = load_image_paths(
         str(shift.manifest_a),
         shift.image_column,
         shift.split_a,
+        split_column,
     )
     image_paths_b = load_image_paths(
         str(shift.manifest_b),
         shift.image_column,
         shift.split_b,
+        split_column,
     )
     return image_paths_a, image_paths_b
 

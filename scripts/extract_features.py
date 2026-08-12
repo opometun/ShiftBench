@@ -104,7 +104,7 @@ def resolve_image_paths(args) -> list[str]:
         schema = config.dataset
         if args.image_column is not None:
             schema = replace(schema, image_column=args.image_column)
-        paths = load_image_paths_from_config(schema, split=args.split)
+        paths = load_image_paths_from_config(schema, split=args.split, split_column=schema.split_column)
     return paths
 
 
