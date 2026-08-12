@@ -1,6 +1,5 @@
 """Assemble full datasets."""
 
-import csv
 import numpy as np
 
 from shiftbench.config import ExperimentConfig
@@ -14,30 +13,34 @@ from shiftbench.datasets.manifest import (
 )
 
 
-def load_datasets_by_split(config:ExperimentConfig) -> dict[str, list[tuple[np.ndarray, np.ndarray]]]:
-    """Load the datasets according to splits.
-    
-    Returns a dictionary containing a list of (img, mask) tuples for each split.
-    """
+def load_datasets_by_split(
+    config: ExperimentConfig,
+    splits_to_load: list[str] | None = None,
+) -> dict[str, list[tuple[np.ndarray, np.ndarray]]]:
+    """Load datasets grouped by split, decoding only what is needed.
+
+    Returns a dictionary containing a list of (img, mask) tuples for each split requested.
+    """ 
     schema = config.dataset
 
-    # Load all image and mask paths
-    img_paths = load_image_paths_from_config(schema)
-    mask_paths = load_mask_paths_from_config(schema)
+    if splits_to_load is None:
+        splits_to_load = schema.allowed_splits
 
-    # Decode images and masks
-    images = load_rgb_images(paths=img_paths)
-    masks  = load_masks(paths=mask_paths)
+    invalid = set(splits_to_load) - set(schema.allowed_splits)
+    if invalid:
+        raise ValueError(
+            f"Invalid splits requested: {invalid}. "
+            f"Allowed: {schema.allowed_splits}"
+        )
+    
+    splits = {}
+    for split in splits_to_load:
+        img_paths  = load_image_paths_from_config(schema, split=split)
+        mask_paths = load_mask_paths_from_config(schema, split=split)
 
-    # Split by train/val/test
-    with schema.path.open(newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
+        images = load_rgb_images(paths=img_paths)
+        masks  = load_masks(paths=mask_paths)
 
-    split_column = schema.split_column
-    splits = {split: [] for split in schema.allowed_splits}
-
-    for row, img, mask in zip(rows, images, masks):
-        split = row[split_column]
-        splits[split].append((img, mask))
+        splits[split] = list(zip(images, masks))
 
     return splits
