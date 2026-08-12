@@ -164,7 +164,10 @@ The shift scores ("distances") and hyperparameter settings that produced them ca
 }
 ```
 
-NOTE: Our predefined experiment configs in [`configs/](configs/) do not include `sadge` in the Shift configuration's `metrics` list, because it demands GPU. If you want to run SADGE this way, you must add it to the list and ensure that all requirements are satisfied.
+NOTE: Our predefined experiment configs in [`configs/](configs/) do not include `sadge` in the Shift configuration's `metrics` list, because it demands GPU and special authentification. If you want to run SADGE this way, you must add it to the list and ensure that all requirements are satisfied:
+- create a HuggingFace account and an access token with read permission
+- request access to `facebook/dinov3-vitl16-pretrain-lvd1689m`
+- log into HuggingFace via terminal `hf auth login` and use your access token
 
 ## Dataset Configs
 

@@ -249,7 +249,7 @@ def _compute_shift_metrics(shift: ShiftConfig, run_dir:Path, split_column:str) -
             }
 
     if "image_dirs" in grouped:
-        image_paths_a, image_paths_b = _load_sadge_image_paths(shift)
+        image_paths_a, image_paths_b = _load_sadge_image_paths(shift, split_column)
         for metric in grouped["image_dirs"]:
             try:
                 value = metric.pairwise(image_paths_a, image_paths_b)
