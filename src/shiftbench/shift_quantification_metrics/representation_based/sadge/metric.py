@@ -75,8 +75,8 @@ class SADGE:
         return float(a * geo_z + b * app_z + c * geo_z * app_z)
 
 
-def _normalize_to_paths(x):
-    """Accept either a directory Path or a list of paths."""
+def _normalize_to_paths(x) -> list[Path]:
+    """Accept either an image folder directory or a list of paths."""
 
     # Case 1: folder directory containing all images
     if isinstance(x, (str, Path)) and Path(x).is_dir():
@@ -87,7 +87,13 @@ def _normalize_to_paths(x):
 
     # Case 2: list of all img file paths
     if isinstance(x, (list, tuple)):
-        return [Path(p) for p in x if Path(p).is_file()]
+        paths = [Path(p) for p in x]
+        missing = [p for p in paths if not p.is_file()]
+        if missing:
+            raise FileNotFoundError(
+                f"Missing files in manifest: {missing}"
+            )
+        return paths
 
     raise TypeError(f"Unsupported input type for image paths: {type(x)}")
 
