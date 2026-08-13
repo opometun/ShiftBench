@@ -277,12 +277,6 @@ def _shift_from_config(
             "split_b is ignored because metrics require no manifest_b",
             category=UserWarning,
         )
-    if ((shift.split_a is not None) or (shift.split_b is not None)) \
-            and (dataset_split_column != "split"):
-        raise ValueError(
-            f"shift.split_a/split_b assume a manifest split column named 'split', "
-            f"but the dataset schema defines split_column='{dataset_split_column}'."
-        )
 
     return shift
 
