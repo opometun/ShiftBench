@@ -32,7 +32,7 @@ def load_rgb_images(paths: list[str]) -> list[np.ndarray]:
 # https://github.com/mcordts/cityscapesScripts/blob/master/cityscapesscripts/helpers/labels.py
 ID_TO_TRAINID = {                                             # CATEGORY
     0: 255, 1: 255, 2: 255, 3: 255, 4: 255, 5: 255, 6: 255,   # void
-    7: 0,   8: 1,                                             # flat
+    7: 0, 8: 1,                                               # flat
     9: 255, 10: 255,                                          # flat
     11: 2, 12: 3, 13: 4,                                      # construction
     14: 255, 15: 255, 16: 255,                                # construction
@@ -47,22 +47,35 @@ ID_TO_TRAINID = {                                             # CATEGORY
     -1: 255,                                                  # vehicle
 }
 
-# Build LUT once
+# Build Lookup Table once
 LUT = np.full(256, 255, dtype=np.uint8)
 for id_, trainId in ID_TO_TRAINID.items():
     LUT[id_] = trainId
 
 
-def load_masks(paths: list[str]) -> list[np.ndarray]:
+def load_masks(paths: list[str], remap: dict[int, int] | np.ndarray | None = LUT) -> list[np.ndarray]:
     """Decode semantic masks as (H, W) integer class-id arrays.
 
     .npy masks load directly; anything else is decoded with pillow.
+
+    If `remap` is provided, apply the mapping (e.g., Cityscapes id→trainId). \\
+    If `remap` is None, return the raw mask values unchanged.
 
     Raises:
         ValueError: If a mask decodes to more than one channel — an RGB file
             in the mask column would otherwise flow into np.bincount and
             produce a wrong distribution instead of an error.
     """
+    # Prepare Lookup Table (if remapping is enabled)
+    lut = None
+    if remap is not None:
+        if isinstance(remap, dict):
+            lut = np.full(256, 255, dtype=np.uint8)
+            for id_, trainId in remap.items():
+                lut[id_] = trainId
+        else:
+            lut = remap  # already a LUT array
+
     masks = []
     for path in paths:
 
@@ -70,7 +83,6 @@ def load_masks(paths: list[str]) -> list[np.ndarray]:
             mask = np.load(path)
         else:
             from PIL import Image
-
             with Image.open(path) as mask_image:
                 mask = np.array(mask_image)
 
@@ -79,9 +91,10 @@ def load_masks(paths: list[str]) -> list[np.ndarray]:
 
         mask = mask.astype(np.uint8, copy=False)
 
-        # Apply Cityscapes id → trainId mapping
-        train_mask = LUT[mask]
+        # Optional remapping
+        if lut is not None:
+            mask = lut[mask]
     
-        masks.append(train_mask)
+        masks.append(mask)
 
     return masks

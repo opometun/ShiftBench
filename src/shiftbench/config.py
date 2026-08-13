@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 import tomllib
+import warnings
 
 from shiftbench.metrics import METRICS
 
@@ -47,19 +48,24 @@ class ShiftConfig:
 
     Attributes:
         metrics: Names of the distances to compute, from shiftbench.metrics.
-        stats_a: Path to .npz summary file that stores precomputed statistics of dataset A 
-            for embedding-based shift quantification metrics.
-        stats_b: Path to .npz summary file that stores precomputed statistics of dataset B 
-            for embedding-based shift quantification metrics.
-        manifest_a: Path to CSV manifest of dataset A, for shift quantification metrics 
-            that read the raw data directly.
-        manifest_b: Path to CSV manifest of dataset B, for shift quantification metrics 
-            that read the raw data directly.
-        image_column: Name of manifest column holding image paths, for image-based metrics.
-        mask_column: Name of manifest column holding mask paths, for mask-based metrics.
-        num_classes: Class count of the masks, for mask-based metrics.
-        image_dir_a: First image directory, for pairwise metrics (SADGE).
-        image_dir_b: Second image directory, for pairwise metrics (SADGE).
+        stats_a (optional): Path to .npz summary file that stores precomputed statistics 
+            of dataset A. Required for embedding-based metrics.
+        stats_b (optional): Path to .npz summary file that stores precomputed statistics 
+            of dataset B. Required for embedding-based metrics.
+        manifest_a (optional): Path to CSV manifest of dataset A.
+            Required for image- or mask-based metrics.
+        manifest_b (optional): Path to CSV manifest of dataset B.
+            Required for image- or mask-based metrics.
+        split_a (optional): The split of selected data samples from dataset A.
+            If not provided, then all data samples will be considered.
+        split_b (optional): The split of selected data samples from dataset B.
+            If not provided, then all data samples will be considered.
+        image_column (optional): Name of manifest column holding image paths.
+            Required for image-based metrics.
+        mask_column (optional): Name of manifest column holding mask paths.
+            Required for mask-based metrics.
+        num_classes (optional): Class count of the masks.
+            Required for mask-based metrics.
 
     Which fields must be set follows from the requested metrics and is
     validated at load time, so a run fails at config parse rather than after
@@ -71,11 +77,11 @@ class ShiftConfig:
     stats_b: Path | None = None
     manifest_a: Path | None = None
     manifest_b: Path | None = None
+    split_a: str | None = None
+    split_b: str | None = None
     image_column: str | None = None
     mask_column: str | None = None
     num_classes: int | None = None
-    image_dir_a: Path | None = None
-    image_dir_b: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -108,7 +114,6 @@ class ExperimentConfig:
         if self.shift is not None:
             path_keys = (
                 "stats_a", "stats_b", "manifest_a", "manifest_b",
-                "image_dir_a", "image_dir_b",
             )
             for key in path_keys:
                 value = getattr(self.shift, key)
@@ -194,13 +199,14 @@ def load_experiment_config(path: Path) -> ExperimentConfig:
         output_root=output_root,
         train_selection=train_selection,
         dataset=dataset_config,
-        shift=_shift_from_config(config_path, raw_config.get("shift")),
+        shift=_shift_from_config(config_path, raw_config.get("shift"), split_column),
     )
 
 
 def _shift_from_config(
     config_path: Path,
     raw_shift: Any,
+    dataset_split_column: str,
 ) -> ShiftConfig | None:
     """Parse the optional [shift] table.
 
@@ -231,11 +237,11 @@ def _shift_from_config(
         stats_b=optional_path("stats_b"),
         manifest_a=optional_path("manifest_a"),
         manifest_b=optional_path("manifest_b"),
+        split_a=_optional_str(raw_shift, "split_a"),
+        split_b=_optional_str(raw_shift, "split_b"),
         image_column=_optional_str(raw_shift, "image_column"),
         mask_column=_optional_str(raw_shift, "mask_column"),
         num_classes=_optional_int(raw_shift, "num_classes"),
-        image_dir_a=optional_path("image_dir_a"),
-        image_dir_b=optional_path("image_dir_b"),
     )
 
     if (shift.stats_a is None) != (shift.stats_b is None):
@@ -244,26 +250,33 @@ def _shift_from_config(
     if (shift.manifest_a is None) != (shift.manifest_b is None):
         msg = "manifest_a and manifest_b must be set together"
         raise ValueError(msg)
-    if (shift.image_dir_a is None) != (shift.image_dir_b is None):
-        msg = "image_dir_a and image_dir_b must be set together"
-        raise ValueError(msg)
 
     for name in metrics:
         metric = METRICS[name]
-        if metric.summary is None and shift.image_dir_a is None:
-            msg = f"Metric '{name}' needs image_dir_a and image_dir_b"
-            raise ValueError(msg)
-        if metric.input == "embeddings" and shift.stats_a is None:
-            msg = f"Metric '{name}' needs stats_a and stats_b"
-            raise ValueError(msg)
-        if metric.input in ("images", "masks") and shift.manifest_a is None:
-            msg = f"Metric '{name}' needs manifest_a and manifest_b"
-            raise ValueError(msg)
+        if metric.input == "embeddings":
+            if (shift.stats_a is None) or (shift.stats_b is None):
+                msg = f"Metric '{name}' needs stats_a and stats_b"
+                raise ValueError(msg)
+        if metric.input in ("images", "masks", "image_dirs"): 
+            if (shift.manifest_a is None) or (shift.manifest_b is None):
+                msg = f"Metric '{name}' needs manifest_a and manifest_b"
+                raise ValueError(msg)
         if metric.input == "masks" and (
             shift.mask_column is None or shift.num_classes is None
         ):
             msg = f"Metric '{name}' needs mask_column and num_classes"
             raise ValueError(msg)
+
+    if (shift.split_a is not None) and (shift.manifest_a is None):
+        warnings.warn(
+            "split_a is ignored because metrics require no manifest_a",
+            category=UserWarning,
+        )
+    if (shift.split_b is not None) and (shift.manifest_b is None):
+        warnings.warn(
+            "split_b is ignored because metrics require no manifest_b",
+            category=UserWarning,
+        )
 
     return shift
 

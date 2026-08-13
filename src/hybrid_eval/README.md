@@ -1,8 +1,6 @@
 # Segmentation Models for Hybrid Datasets
 
-[![Open the smoke test in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Sigurius23/Segmentation-Models/blob/main/notebooks/hybrid_eval_colab_smoke_test.ipynb)
-
-An end-to-end semantic-segmentation baseline package for studying hybrid real and synthetic urban-scene datasets. It provides the two project architectures, a shared training protocol, resumable checkpoints, standalone inference, and streaming downstream metrics.
+`hybrid_eval`is an end-to-end semantic-segmentation baseline package for studying hybrid real and synthetic urban-scene datasets. It provides the two project architectures, a shared training protocol, resumable checkpoints, standalone inference, and streaming downstream metrics.
 
 ## Included models
 
@@ -24,52 +22,13 @@ No model loader uses Cityscapes-fine-tuned weights. This avoids leaking target-d
 - Streaming mIoU, expected calibration error (ECE), and predictive entropy
 - CPU, CUDA, and Apple MPS execution
 
-## Repository structure
-
-```text
-hybrid_eval/
-├── models/             # SegFormer-B2 and DeepLabV3(+)
-├── training/           # data, metrics, checkpoints, and training CLI
-└── inference.py        # checkpoint-driven inference CLI
-notebooks/
-└── hybrid_eval_colab_smoke_test.ipynb
-tests/
-└── test_hybrid_eval.py
-```
-
 ## Installation
 
-Python 3.10 or newer is recommended.
+To run `hybrid_eval` components, please install the extras `[train]` and `[dev]`. 
 
 ```bash
-git clone https://github.com/Sigurius23/Segmentation-Models.git
-cd Segmentation-Models
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements-ml.txt
+pip install .[train, dev]
 ```
-
-The requirements file pins the reference local ML stack. The Colab notebook keeps Colab's preinstalled compatible PyTorch/TorchVision pair and installs only missing packages.
-
-## Dataset layout
-
-Training and validation images must have corresponding integer-label masks. A mask may use the same filename as its image, or a `.png` file with the same stem. Label `255` is treated as ignored.
-
-```text
-data/
-├── train/
-│   ├── images/
-│   └── masks/
-├── val/
-│   ├── images/
-│   └── masks/
-└── test/
-    ├── images/
-    └── masks/          # optional during inference
-```
-
-Each mask must be a single-channel image containing one class ID per pixel.
 
 ## Train
 
@@ -103,9 +62,9 @@ python -m hybrid_eval.training.train \
 
 Use `--no-pretrained` for a fully offline random initialization. Other useful controls include `--backbone-lr`, `--head-lr`, `--class-weights`, `--scale-min`, `--scale-max`, `--crop-size`, `--warmup-steps`, `--early-stopping-patience`, `--device`, and `--seed`. Run `python -m hybrid_eval.training.train --help` for the complete interface.
 
-### Study run: fixed resolution, no augmentation
+### Study replication: fixed resolution, no augmentation
 
-The hybrid-dataset study trains at Synscapes' native 1440×720 resolution with no
+Our study trains at Synscapes' native 1440×720 resolution with no
 resizing/cropping augmentation (Cityscapes and GTA-V are conformed to this size
 during data prep instead), and uses linear LR warmup plus early stopping on
 `val_loss`:
@@ -172,7 +131,7 @@ The command writes predicted PNG masks plus `summary.json`. When `--mask-dir` is
 
 ## Colab smoke test
 
-Open [`notebooks/hybrid_eval_colab_smoke_test.ipynb`](notebooks/hybrid_eval_colab_smoke_test.ipynb) or use the badge at the top of this page. The notebook:
+Open [`notebooks/hybrid_eval_colab_smoke_test.ipynb`](notebooks/hybrid_eval_colab_smoke_test.ipynb). The notebook:
 
 1. Builds a fixed-size hybrid proxy with real-like and synthetic-like urban scenes.
 2. Trains both required models with identical data and hyperparameters.
@@ -180,8 +139,6 @@ Open [`notebooks/hybrid_eval_colab_smoke_test.ipynb`](notebooks/hybrid_eval_cola
 4. Compares validation/test mIoU, ECE, and predictive entropy.
 5. Visualizes the domain gap and model predictions.
 6. Runs the focused regression suite.
-
-It is an engineering smoke test, not a scientific benchmark. The final study must replace the proxy data with the selected real and synthetic datasets, hold total training size constant while sweeping mixture ratios, calculate the planned pre-training shift metrics, and relate those metrics to downstream real-domain performance.
 
 ## Tests
 

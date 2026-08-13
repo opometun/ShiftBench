@@ -83,8 +83,8 @@ class Metric:
             metrics that cannot summarize one dataset alone.
         compare: (summary_a, summary_b) -> float over loaded summary
             artifacts, or None for pairwise metrics.
-        pairwise: (dir_a, dir_b) -> float for pairwise metrics, None for
-            summarizing ones.
+        pairwise: (list_of_dirs_a, list_of_dirs_b) -> float for pairwise metrics, 
+            None for summarizing ones.
         params: Fixed settings recorded next to the metric's value in run
             artifacts.
     """

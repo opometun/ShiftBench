@@ -1,13 +1,18 @@
 # Data Layout
 ShiftBench keeps large or generated data out of Git.
 
-- `sample/`: tiny tracked datasets used for tests and smoke runs.
-- `study/`: tracked datasets used for experiments in the street view image segementation study.
+- `sample/`: tiny tracked dataset manifests used for tests and smoke runs.
+- `study/`: tracked dataset manifests used for experiments in our street view image segementation study.
 - `study/streetViewData/`: local downloaded source data, ignored by Git.
 
 
 # Preparation
 To replicate our study, you need to prepare the data.
+
+Training and validation images must have corresponding integer-label masks. <br>
+To quantify the shift between the train and test data with a label-based metric, also test images must have corresponding integer-label masks. <br>
+A mask may use the same filename as its image. Label `255` is treated as ignored. <br>
+Each mask must be a single-channel image containing one class ID per pixel. <br>
 
 ### Step 1: Download raw data
 #### Cityscapes
@@ -51,39 +56,40 @@ For the exact overview, please check out the `./study/gta100.csv` file, which in
 ### Step 2: Store data samples in required folder structure
 We used a specific folder structure in our study. Please structure your data accordingly if you want to replicate our study, and put the `streetViewData` folder under `data/study/` in your local repository.
 
-```
+
+```text
 streetViewData/
-    train/
-        cityscapes/
-	        img/           # the 2,000 Cityscapes train input samples
-                mask/          # the 2,000 Cityscapes train segmentation mask
-        synscapes/
-	        img/           # the 2,000 Synscapes train input samples
-                mask/          # the 2,000 Synscapes train segmentation mask
-        gtaV/
-	        img/           # the 2,000 GTA-V train input samples
-                mask/          # the 2,000 GTA-V train segmentation mask
-    validation/
-        cityscapes/
-	        img/           # the 500 Cityscapes validation input samples
-                mask/          # the 500 Cityscapes validation segmentation masks
-    test/
-        cityscapes/
-	        img/           # the 975 Cityscapes test input samples
-                mask/          # the 975 Cityscapes test segmentation masks
+├── train/
+│   ├── cityscapes/
+│   │   ├── img/        The 2,000 Cityscapes train input samples
+│   │   └── mask/       The 2,000 Cityscapes train segmentation mask
+│   ├── synscapes/
+│   │   ├── img/        The 2,000 Synscapes train input samples
+│   │   └── mask/       The 2,000 Synscapes train segmentation mask
+│   └── gtaV/
+│       ├── img/        The 2,000 GTA-V train input samples
+│       └── mask/       The 2,000 GTA-V train segmentation mask
+├── validation/
+│   └── cityscapes/
+│       ├── img/        The 500 Cityscapes validation input samples
+│       └── mask/       The 500 Cityscapes validation segmentation masks
+└── test/
+    └── cityscapes/
+        ├── img/        The 975 Cityscapes test input samples
+        └── mask/       The 975 Cityscapes test segmentation masks
 ```
 
 ### Step 3 (optional): Create the dataset CSVs
-We provided our CSV files for each experiment's dataset in `./study/`. In case you want to recreate them or vary the randomly selected samples in each hybrid configuration, you can run the following commands from the `data/study/` folder:
-- **100% Cityscapes training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes100.toml" --ds-root-path "./streetViewData"`
-- **75% Cityscapes + 25% Synscapes training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes75_synscapes25.toml" --ds-root-path "./streetViewData"`
-- **50% Cityscapes + 50% Synscapes training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes50_synscapes50.toml" --ds-root-path "./streetViewData"`
-- **25% Cityscapes + 75% Synscapes training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes25_synscapes75.toml" --ds-root-path "./streetViewData"`
-- **100% Synscapes training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/synscapes100.toml" --ds-root-path "./streetViewData"`
-- **75% Cityscapes + 25% GTA-V training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes75_gta25.toml" --ds-root-path "./streetViewData"`
-- **50% Cityscapes + 50% GTA-V training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes50_gta50.toml" --ds-root-path "./streetViewData"`
-- **25% Cityscapes + 75% GTA-V training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes25_gta75.toml" --ds-root-path "./streetViewData"`
-- **100% GTA-V training dataset**: `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/gta100.toml" --ds-root-path "./streetViewData"`
+We provided our CSV files for each experiment's dataset in `./study/`. In case you want to recreate them or vary the randomly selected samples (change seed in config) in each hybrid configuration, you can run the following commands from the `data/study/` folder:
+- **100% Cityscapes training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes100.toml" --ds-root-path "./streetViewData"`
+- **75% Cityscapes + 25% Synscapes training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes75_synscapes25.toml" --ds-root-path "./streetViewData"`
+- **50% Cityscapes + 50% Synscapes training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes50_synscapes50.toml" --ds-root-path "./streetViewData"`
+- **25% Cityscapes + 75% Synscapes training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes25_synscapes75.toml" --ds-root-path "./streetViewData"`
+- **100% Synscapes training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/synscapes100.toml" --ds-root-path "./streetViewData"`
+- **75% Cityscapes + 25% GTA-V training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes75_gta25.toml" --ds-root-path "./streetViewData"`
+- **50% Cityscapes + 50% GTA-V training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes50_gta50.toml" --ds-root-path "./streetViewData"`
+- **25% Cityscapes + 75% GTA-V training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/cityscapes25_gta75.toml" --ds-root-path "./streetViewData"`
+- **100% GTA-V training dataset**: <br> `python ..\..\scripts\rebuild_streetview_dataset_csv.py --experiment-path "../../configs/gta100.toml" --ds-root-path "./streetViewData"`
 
 ### Step 4: Resize data samples to uniform resolution
 We used a uniform resolution of (1440 x 720) to cancel out the potential impact of resolution on the shift and model performance. Hence, we downscaled Cityscapes images, and downscaled + center cropped GTA-V images. <br>

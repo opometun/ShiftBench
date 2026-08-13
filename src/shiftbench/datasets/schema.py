@@ -101,6 +101,7 @@ def validate_csv_dataset(schema: DatasetSchemaConfig) -> DatasetValidationResult
                 allowed_values=schema.allowed_sources,
                 errors=errors,
             )
+            # schema must contain images for both input and label columns for shift quantification!
             _validate_image_exists(row, row_index, schema, errors)
             _validate_mask_exists(row, row_index, schema, errors)
 

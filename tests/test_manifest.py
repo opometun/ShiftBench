@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[1] 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from shiftbench.config import DatasetSchemaConfig
@@ -252,7 +252,7 @@ class MaskManifestTest(unittest.TestCase):
         with self.assertRaises(ValueError) as caught:
             load_mask_paths_from_config(_schema(manifest, None))
 
-        self.assertIn("mask_column", str(caught.exception))
+        self.assertIn("Input manifest must contain an mask path column", str(caught.exception))
 
 
 if __name__ == "__main__":

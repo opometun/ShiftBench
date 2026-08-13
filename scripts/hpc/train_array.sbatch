@@ -148,9 +148,9 @@ echo "seed=${SEED}  output=${OUTPUT_DIR}"
 # --- Per-model hyperparameters ---------------------------------------------
 # Shared study recipe: fixed Synscapes-native 1440x720, with ALL augmentation
 # disabled -- --crop-size 0, --scale-min/max 1.0, --no-photometric-distortion,
-# and --no-hflip (see docs/hybrid_eval.md "Study run" section). 35 epochs with
-# early stopping on val_loss (patience 5) and linear warmup (1000 steps) into
-# the existing poly decay.
+# and --no-hflip (see src/hybrid_eval/README.md "Study replication" section). 
+# 35 epochs with early stopping on val_loss (patience 5) and linear warmup 
+# (1000 steps) into the existing poly decay.
 #
 # --no-hflip matches the team's stated "no input modification" protocol. Drop
 # that one flag if you decide the mild regularization from random mirroring is

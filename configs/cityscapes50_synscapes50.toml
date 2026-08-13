@@ -21,3 +21,15 @@ input_column = "img_path"
 allowed_splits = ["train", "validation", "test"]
 allowed_sources = ["cityscapes", "synscapes"]
 num_classes = 19
+
+[shift]
+metrics = ["color_js", "texture_js", "class_frequency_js", "class_presence_js", "scene_complexity_js", "frechet"]
+image_column = "img_path"
+mask_column = "mask_path"
+num_classes = 19
+manifest_a = "../data/study/cityscapes50_synscapes50.csv"
+split_a = "train"
+stats_a = "../runs/cityscapes50_synscapes50/frechet_dinov2/train_feature_stats.npz"
+manifest_b = "../data/study/cityscapes50_synscapes50.csv"
+split_b = "test"
+stats_b = "../runs/cityscapes50_synscapes50/frechet_dinov2/test_feature_stats.npz"

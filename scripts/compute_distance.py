@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -35,13 +36,27 @@ def parse_args():
     parser.add_argument(
         "-o",
         "--output-path",
-        help="Path to write the computed distance. Defaults to stdout.",
+        help="Path to .txt file to write the computed distance. Defaults to stdout.",
     )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+
+    if args.output_path is not None:
+        output_path = Path(args.output_path)
+        if output_path.suffix != ".txt":
+            output_path = output_path.with_suffix(".txt")
+        if output_path.exists():
+            warnings.warn(
+                f"Output file already exists and will be overwritten: {output_path}",
+                category=UserWarning,
+            )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        output_path = None
+    
     metric = get_metric(args.metric)
 
     if metric.compare is None:
@@ -63,8 +78,8 @@ def main():
 
     distance = metric.compare(stats_a, stats_b)
 
-    if args.output_path:
-        with open(args.output_path, "w", encoding="utf-8") as file:
+    if output_path:
+        with open(output_path, "w", encoding="utf-8") as file:
             file.write(f"{distance}\n")
     else:
         print(distance)

@@ -23,7 +23,7 @@ except ModuleNotFoundError:
     HAS_PIL = False
 
 if HAS_PIL:
-    from shiftbench.datasets.loaders import load_masks, load_rgb_images
+    from shiftbench.datasets.loaders import load_masks, load_rgb_images 
 
 
 class NpyMaskLoaderTest(unittest.TestCase):
@@ -41,7 +41,7 @@ class NpyMaskLoaderTest(unittest.TestCase):
         mask = np.array([[0, 1], [2, 2]], dtype=np.uint8)
         np.save(path, mask)
 
-        masks = load_masks([str(path)])
+        masks = load_masks([str(path)], remap=None)
 
         self.assertTrue(np.issubdtype(masks[0].dtype, np.integer))
         np.testing.assert_array_equal(masks[0], mask)
@@ -53,7 +53,34 @@ class NpyMaskLoaderTest(unittest.TestCase):
         np.save(path, np.zeros((2, 2, 3)))
 
         with self.assertRaisesRegex(ValueError, "single-channel"):
-            load_masks([str(path)])
+            load_masks([str(path)], remap=None)
+
+    def test_custom_lut_remapping(self):
+        from shiftbench.datasets.loaders import load_masks
+
+        path = self.directory / "mask.png"
+        raw_mask = np.array([[0, 1], [2, 3]], dtype=np.uint8)
+        Image.fromarray(raw_mask, mode="L").save(path)
+        custom_lut = np.arange(256, dtype=np.uint8)
+        custom_lut[0] = 10
+        custom_lut[1] = 11
+        custom_lut[2] = 12
+        custom_lut[3] = 13
+        masks = load_masks([str(path)], remap=custom_lut)
+
+        expected = np.array([[10, 11], [12, 13]], dtype=np.uint8)
+        np.testing.assert_array_equal(masks[0], expected)
+
+    def test_default_cityscapes_lut_remapping(self):
+        from shiftbench.datasets.loaders import load_masks
+
+        path = self.directory / "mask.png"
+        raw_mask = np.array([[7, 8], [11, 12]], dtype=np.uint8)
+        Image.fromarray(raw_mask, mode="L").save(path)
+        masks = load_masks([str(path)])
+
+        expected = np.array([[0, 1], [2, 3]], dtype=np.uint8)
+        np.testing.assert_array_equal(masks[0], expected)
 
 
 @unittest.skipUnless(HAS_PIL, "requires pillow")
@@ -77,7 +104,7 @@ class LoadersTest(unittest.TestCase):
         mask = np.array([[0, 1], [2, 2]], dtype=np.uint8)
         Image.fromarray(mask, mode="L").save(path)
 
-        masks = load_masks([str(path)])
+        masks = load_masks([str(path)], remap=None)
 
         self.assertEqual(masks[0].shape, (2, 2))
         self.assertTrue(np.issubdtype(masks[0].dtype, np.integer))
@@ -88,7 +115,7 @@ class LoadersTest(unittest.TestCase):
         Image.fromarray(np.zeros((2, 2, 3), dtype=np.uint8), mode="RGB").save(path)
 
         with self.assertRaises(ValueError) as caught:
-            load_masks([str(path)])
+            load_masks([str(path)], remap=None)
 
         self.assertIn("single-channel", str(caught.exception))
 

@@ -7,13 +7,8 @@ from shiftbench.metrics.distances import js_distance
 
 def scene_complexity(mask:np.ndarray, num_classes:int) -> int:
     """Count how many distinct classes appear in a single semantic mask."""
-    # Exclude ignore/void (255 after the trainId remap) and out-of-range labels.
-    # Counting void as a distinct class adds +1 to every image that contains any
-    # -- which is all of Cityscapes and GTA-V but almost none of Synscapes -- so
-    # the complexity distributions would differ by a constant offset that has
-    # nothing to do with how many real classes the scenes contain.
     labels = mask.ravel()
-    labels = labels[labels < num_classes]
+    labels = labels[labels < num_classes]   # exclude to-be-ignored and out-of-range classes
     counts = np.bincount(labels, minlength=num_classes)
     return int((counts > 0).sum())
 
