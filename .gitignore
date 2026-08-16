@@ -244,3 +244,15 @@ logs/*
 # job script, so `mkdir -p logs` inside the script is too late. A missing
 # logs/ makes the job die instantly with no log explaining why.
 !logs/.gitkeep
+
+# LaTeX 
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdf

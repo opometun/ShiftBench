@@ -229,6 +229,7 @@ src/
     ├── config.py                        TOML config loading and validation
     └── provenance.py                    What produced which artifact, and comparability
 tests/                                   Unit, characterization, and smoke tests
+paper/                                   Scientific paper (IEEE format)
 ```
 
 ## Tests
