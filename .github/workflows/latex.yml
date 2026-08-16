@@ -2,13 +2,10 @@ name: Build LaTeX document
 
 on:
   push:
+    branches:
+      - main
     paths:
-      - 'paper/**/*.tex'
-      - 'paper/**/*.bib'
-      - 'paper/**/*.sty'
-      - 'paper/**/*.cls'
-      - 'paper/**/*.png'
-      - 'paper/**/*.jpg'
+      - 'paper/**'
 
 jobs:
   build:
