@@ -9,7 +9,7 @@ ShiftBench is an open research benchmark for understanding how the composition o
 - **Feature extraction** with frozen encoders (DINOv2, DINOv3, StreetCLIP).
 - **A reproducible experiment scaffold**: config-driven runs that validate a
   dataset, compute the configured distances, and write structured artifacts.
-- **Image segmentation** using pretrained models (DeepLabV3, DeepLabV3+, SegFormer), 
+- **Image segmentation** using pretrained models (DeepLabV3(+), SegFormer), 
   along with argument‑driven training and inference on custom datasets.
 - **Paper-scale configs** for all experiments conducted in our study.
 - **Correlation analysis** between quantified shift and downstream model performance.
@@ -85,7 +85,7 @@ By default, feature extraction is applied to all samples in the manifest.
 To apply feature extraction to only a certain split, specify the `--split` argument.
 Be aware that when providing no config, the split column must be named `split` in the manifest.
 
-Running the script `extract_features.py` returns a .npy file storing the extracted features 
+Running the script [`extract_features.py`](scripts/extract_features.py) returns a .npy file storing the extracted features 
 and a .json file storing the information of the embedding model that was used for feature extraction.
 
 
@@ -105,7 +105,7 @@ By default, all images/masks are loaded in histogram summaries.
 To consider only a certain split, specify the `--split` argument.
 Be aware that the split column must be named `split` in the manifest.
 
-Running the script `compute_feature_stats.py` returns a .npz file storing the summary (e.g. for `gaussian` it is mu and sigma).
+Running the script [`compute_feature_stats.py`](scripts/compute_feature_stats.py) returns a .npz file storing the summary (e.g. for `gaussian` it is mu and sigma).
 
 ### 3. Compare two datasets
 
@@ -119,13 +119,13 @@ encoders, different checkpoints, different summary kinds, or different
 hyperparameters (a 32-bin color histogram is not comparable to a 16-bin one)
 all fail with an error instead of producing a plausible wrong number.
 
-Running the script `compute_distance.py` returns a .txt file storing the shift score (typically a float).
+Running the script [`compute_distance.py`](scripts/compute_distance.py) returns a .txt file storing the shift score (typically a float).
 
 SADGE has no summary artifact and runs only through an experiment (below).
 
 ## Experiments
 
-For computing the *shift quantification of **multiple selected** metrics* between two datasets, we suggest running an experiment. This avoids needing to manually conduct the scripts `extract_features.py` (only for representation-based metrics), `compute_feature_stats.py`, and `compute_distance.py` for each metric.
+For computing the *shift quantification of **multiple selected** metrics* between two datasets, we suggest running an experiment. This avoids needing to manually conduct the scripts [`extract_features.py`](scripts/extract_features.py) (only for representation-based metrics), [`compute_feature_stats.py`](scripts/compute_feature_stats.py), and [`compute_distance.py`](scripts/compute_distance.py) for each metric.
 
 To conduct this experiment, a `ShiftConfig` needs to be added to the experiment configuration file (the `.toml` file defined in `./configs/`).
 It selects metrics by name and supplies whatever inputs those metrics declare. It is validated at config load, so a bad setup fails before any work starts:
@@ -144,7 +144,7 @@ num_classes = 19
 
 Optional arguments `split_a` and `split_b` allow to consider only a specific split of the manifests.
 
-If you want to apply representation-based metrics, then you need to precompute the summaries for both datasets (path to summaries need to be stored in the config's `stats_a` and `stats_b`). To precompute the summaries, `extract_features.py` (to get the embeddings) and `comput_feature_stats.py` (to compute mu and sigma) need to be run for each representation-based metric and dataset involved in requested shift quantification. Precomputation is enforced here because embedding summaries are expensive to compute.
+If you want to apply representation-based metrics, then you need to precompute the summaries for both datasets (path to summaries need to be stored in the config's `stats_a` and `stats_b`). To precompute the summaries, [`extract_features.py`](scripts/extract_features.py) (to get the embeddings) and [`compute_feature_stats.py`](scripts/compute_feature_stats.py) (to compute mu and sigma) need to be run for each representation-based metric and dataset involved in requested shift quantification. Precomputation is enforced here because embedding summaries are expensive to compute.
 
 ```bash
 PYTHONPATH=src python3 -m shiftbench.experiments.run --config "configs/cityscapes100.toml"
@@ -164,7 +164,7 @@ The shift scores ("distances") and hyperparameter settings that produced them ca
 }
 ```
 
-NOTE: Our predefined experiment configs in [`configs/](configs/) do not include `sadge` in the Shift configuration's `metrics` list, because it demands GPU and special authentification. If you want to run SADGE this way, you must add it to the list and ensure that all requirements are satisfied:
+  NOTE: Our predefined experiment configs in [`configs/`](configs/) do not include `sadge` in the Shift configuration's `metrics` list, because it demands GPU and special authentification. If you want to run SADGE this way, you must add it to the list and ensure that all requirements are satisfied:
 - create a HuggingFace account and an access token with read permission
 - request access to `facebook/dinov3-vitl16-pretrain-lvd1689m`
 - log into HuggingFace via terminal `hf auth login` and use your access token
@@ -184,19 +184,19 @@ This repository only provides the implementation of a few selected segmentation 
 Model training and inference expect directory paths that contain all and only the images or masks of a single split (train, val, or test). However, our raw dataset `streetViewData` is organized by source (see [`data/README.md`](data/README.md)). <br>
 Most experiment training datasets are a hybrid mix of two sources. Because these samples are spread across multiple source folders, there exists no directory that contains exactly the train images for a given configuration. <br>
 Validation and test splits do not have this problem, since they consist solely of Cityscapes and already live in single‑source folders. <br>
-To prepare the train split, [`scripts/materialize_train_split.py`](scripts/materialize_train_split.py) reads the unified manifest, filters rows belonging to the train split, resolves image and mask paths, and materializes them into temporary directories `<output>/img/` and `<output>/mask/`. <br>
-These temporary directories contain exactly the train samples for the chosen configuration and can be passed directly to the training script ([`src/hybrid_eval/training/train.py`](src/hybrid_eval/training/train.py)). <br>
-At inference ([`src/hybrid_eval/inference.py](src/hybrid_eval/inference.py)), the trained checkpoint is loaded and used to generate predictions on the test split.
+To prepare the train split, [`materialize_train_split.py`](scripts/materialize_train_split.py) reads the unified manifest, filters rows belonging to the train split, resolves image and mask paths, and materializes them into temporary directories `<output>/img/` and `<output>/mask/`. <br>
+These temporary directories contain exactly the train samples for the chosen configuration and can be passed directly to the training script ([`train.py`](src/hybrid_eval/training/train.py)). <br>
+At inference ([`inference.py`](src/hybrid_eval/inference.py)), the trained checkpoint is loaded and used to generate predictions on the test split.
 
 ## Shift quantification and correlation analyis (study replicability)
 
-Individual manifests were created for each relevant split using [`scripts/make_shift_manifests.py`](scripts/make_shift_manifests.py), because at the time of coducting the experiments, shift quantification always considered the entire manifest. With the introduction of `split_a` and `split_b`, this separated manifest creation isn't necessary anymore for shift quantification. <br>
-Our study used [`scripts/run_shift_metrics.py`](scripts/run_shift_metrics.py) to compute the shift scores of each dataset configuration. However, the shift scores can also be computed in the usual way described above. <br>
-The SADGE metric is considered separately by running [`scripts/run_sadge.py`](scripts/run_sadge.py) in a controlled per-mixture manner, and then merging the per-mixture SADGE scores using [`scripts/merge_sadge.py`](scripts/merge_sadge.py).
+Individual manifests were created for each relevant split using [`make_shift_manifests.py`](scripts/make_shift_manifests.py), because at the time of coducting the experiments, shift quantification always considered the entire manifest. With the introduction of `split_a` and `split_b`, this separated manifest creation isn't necessary anymore for shift quantification. <br>
+Our study used [`run_shift_metrics.py`](scripts/run_shift_metrics.py) to compute the shift scores of each dataset configuration. However, the shift scores can also be computed in the usual way described above. <br>
+The SADGE metric is considered separately by running [`run_sadge.py`](scripts/run_sadge.py) in a controlled per-mixture manner, and then merging the per-mixture SADGE scores using [`merge_sadge.py`](scripts/merge_sadge.py).
 
-Correlation analysis was conducted in [`scripts/analyze_correlation.py`](scripts/analyze_correlation.py).
+Correlation analysis was conducted in [`analyze_correlation.py`](scripts/analyze_correlation.py).
 
-For more detailed insights, see ['REPRODUCE.md`](REPRODUCE.md).
+For more detailed insights, see [`REPRODUCE.md`](REPRODUCE.md).
 
 ## Repository Layout
 
@@ -229,6 +229,7 @@ src/
     ├── config.py                        TOML config loading and validation
     └── provenance.py                    What produced which artifact, and comparability
 tests/                                   Unit, characterization, and smoke tests
+paper/                                   Scientific paper (IEEE format)
 ```
 
 ## Tests
@@ -247,26 +248,19 @@ Encoder backends are wiring-tested against stubs; real forward passes need
 
 ## Known Gaps
 
-- no unit tests for `prepare.py` 
-- `provenance.py` is untested, and unknown provenance warns rather than fails,
+- no unit tests for [`prepare.py`](src/shiftbench/datasets/prepare.py) 
+- [`provenance.py`](src/shiftbench/provenance.py) is untested, and unknown provenance warns rather than fails,
   so one unlabeled artifact can still slip through a comparison.
 - Feature provenance is a sidecar file. Move a `.npy` without its `.json` and
   the record is lost.
 - currently only argument-driven model training and inference (might want to switch to config-driven in future)
 - figure generation still missing
 - we did not test running SADGE via config yet 
-- `load_masks` (see [src/shiftbench/datasets/loaders.py`](src/shiftbench/datasets/loaders.py)) has Cityscapes LUT as default transform. Hence, every component that relies on `load_masks`, including [`scripts/compute_feature_stats.py`](scripts/compute_feature_stats.py), [`src/shiftbench/experiments/run.py`](src/shiftbench/experiments/run.py), and some tests, implicilty uses that mask transform. Swapping in a different LUT (or None at all) therefore requires touching several places in the codebase rather than adjusting a single configuration entry.
+- `load_masks` (see [`loaders.py`](src/shiftbench/datasets/loaders.py)) has Cityscapes LUT as default transform. Hence, every component that relies on `load_masks`, including [`compute_feature_stats.py`](scripts/compute_feature_stats.py), [`run.py`](src/shiftbench/experiments/run.py), and some tests, implicilty uses that mask transform. Swapping in a different LUT (or None at all) therefore requires touching several places in the codebase rather than adjusting a single configuration entry.
 
 ## Data Policy
 
 Always review the LICENSE terms of any dataset you use. The datasets employed in our study (Cityscapes, Synscapes, and GTA-V) cannot be redistributed under the terms set by their original creators. Hence, for replicating our experiments, please download the data from their original sources and prepare it as described in [`data/README.md`](data/README.md). 
-
-Large source datasets, generated datasets, model outputs, and paper artifacts belong in ignored local
-directories until the project chooses a versioning mechanism such as DVC, Git
-LFS, Hugging Face Datasets, or an archived release with checksums.
-
-Paper-critical results should always be reproducible from committed configs and
-documented commands.
 
 ## Study artifacts
 
@@ -285,4 +279,4 @@ and ECE our models achieved are in `shift_json/correlation_*.json` on the
 Drive, so a new metric can be correlated against the same downstream numbers we
 used.
 
-`REPRODUCE.md` lists every command that produced these results, in order.
+[`REPRODUCE.md`](REPRODUCE.md) lists every command that produced these results, in order.
