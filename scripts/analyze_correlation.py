@@ -51,6 +51,17 @@ MATCHED_PAIRS = [
 # run-to-run variation, so scoring metrics on it would be noise.
 TIE_THRESHOLD = 0.005
 
+# Synthetic proportion of each mixture, known from the recipe. Used as the
+# baseline predictor: if a metric cannot beat simply counting synthetic images,
+# it has not been shown to contribute anything beyond dataset composition.
+SYNTHETIC_FRACTION = {
+    "cityscapes100": 0,
+    "cityscapes75_gta25": 25, "cityscapes75_synscapes25": 25,
+    "cityscapes50_gta50": 50, "cityscapes50_synscapes50": 50,
+    "cityscapes25_gta75": 75, "cityscapes25_synscapes75": 75,
+    "gta100": 100, "synscapes100": 100,
+}
+
 FRIENDLY_NAMES = {
     "frechet_dinov2": "FID (DINOv2)",
     "frechet_streetclip": "FCD (StreetCLIP)",
@@ -95,6 +106,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "confidence, not just how often it is wrong. ECE is an error, so "
             "the expected signs are reversed relative to mIoU: a distance "
             "should correlate POSITIVELY with it."
+        ),
+    )
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.05,
+        help=(
+            "Significance level for the matched-ratio tests and for the "
+            "Holm-adjusted correlation p-values."
         ),
     )
     parser.add_argument(
@@ -221,12 +241,17 @@ def compare_pair(
 ) -> tuple[str, dict]:
     """Decide which synthetic source performed better at one matched ratio.
 
-    With repeat seeds this is a Welch two-sample t-test on the per-seed mIoU
-    values, which is the right treatment: the two mixtures are independent
-    training runs, and Welch does not assume their variances match. Seeds are
-    NOT treated as paired -- seed 42 for GTA-V and seed 42 for Synscapes share
-    an initialisation but see different data, so the pairing carries little
-    information and would cost degrees of freedom.
+    With repeat seeds the primary test is a Welch two-sample t-test on the
+    per-seed values, which does not assume the two mixtures have matching
+    variances.
+
+    Seed k for GTA-V and seed k for Synscapes are not fully independent:
+    seed_everything() fixes decoder initialisation and the DataLoader
+    generator, so both runs start from the same RNG state and differ only in
+    the data they see. That partial pairing makes a paired test defensible, so
+    it is computed and reported alongside rather than dismissed. Welch remains
+    primary because the pairing is only partial, and the paired result is there
+    to show whether the verdict depends on that choice.
 
     A difference that is not significant at alpha is reported as a tie: it
     cannot be distinguished from run-to-run noise, so no metric can be scored
@@ -273,7 +298,7 @@ def compare_pair(
 
     significant = float(result.pvalue) < alpha
     winner = _winner_from(delta > 0) if significant else "tie"
-    return winner, {
+    payload = {
         "test": "welch_t",
         "delta": delta,
         "ci95": list(interval),
@@ -284,6 +309,26 @@ def compare_pair(
         "significant": bool(significant),
         "n_gta": len(gta_values), "n_syn": len(syn_values),
     }
+
+    # Sensitivity analysis. Runs sharing a seed index also share controlled
+    # randomness: seed_everything() fixes decoder initialisation and the
+    # DataLoader generator, so seed k for one mixture and seed k for the other
+    # start from the same RNG state. That makes a paired test defensible even
+    # though the two mixtures are different datasets. Welch stays primary
+    # because the pairing is only partial (the data itself differs); this is
+    # reported alongside so a reader can see whether the verdict depends on it.
+    if len(gta_values) == len(syn_values) and len(gta_values) > 1:
+        paired = stats.ttest_rel(syn_values, gta_values)
+        paired_significant = float(paired.pvalue) < alpha
+        payload["paired"] = {
+            "t": float(paired.statistic),
+            "p": float(paired.pvalue),
+            "significant": bool(paired_significant),
+            "winner": _winner_from(delta > 0) if paired_significant else "tie",
+            "agrees_with_welch": bool(paired_significant == significant),
+        }
+
+    return winner, payload
 
 
 def within_ratio_analysis(
@@ -500,7 +545,68 @@ def main(argv: list[str] | None = None) -> int:
             "predictive": float(spearman.statistic) * expected_sign,
         })
 
+    # Holm-Bonferroni within this family. One family is the twelve metrics for
+    # one architecture and one downstream target, so a separate correction runs
+    # for each combination rather than once across all of them. Sort ascending,
+    # multiply the i-th smallest by (m - i), and enforce monotonicity with a
+    # running maximum so an adjusted value never falls below a smaller one.
+    ordered = sorted(rows, key=lambda r: r["spearman_p"])
+    running = 0.0
+    for index, row in enumerate(ordered):
+        adjusted = min(1.0, row["spearman_p"] * (len(ordered) - index))
+        running = max(running, adjusted)
+        row["spearman_p_holm"] = running
+        row["survives_holm"] = bool(running < args.alpha)
+
     rows.sort(key=lambda r: r["predictive"], reverse=True)
+
+    # Baseline. Every mixture's shift score and its downstream score both move
+    # with the synthetic proportion, which is known from the recipe without
+    # measuring anything. A metric that does not beat this baseline has not been
+    # shown to add information. Reported here so the comparison is part of the
+    # pipeline rather than an afterthought.
+    unknown = [m for m in mixes if m not in SYNTHETIC_FRACTION]
+    if unknown:
+        print(f"WARNING: no synthetic fraction recorded for {unknown}; "
+              f"baseline comparison skipped")
+        baseline = {"predictor": "synthetic_fraction", "unavailable": unknown}
+    else:
+        fractions = [SYNTHETIC_FRACTION[m] for m in mixes]
+        baseline_spearman = stats.spearmanr(fractions, miou)
+        baseline_expected_sign = 1.0 if lower_is_better else -1.0
+        baseline = {
+            "predictor": "synthetic_fraction",
+            "raw_spearman": float(baseline_spearman.statistic),
+            "spearman_p": float(baseline_spearman.pvalue),
+            "predictive": float(baseline_spearman.statistic) * baseline_expected_sign,
+            "best_metric": rows[0]["metric"] if rows else None,
+            "best_metric_predictive": rows[0]["predictive"] if rows else None,
+        }
+    if rows and "raw_spearman" in baseline:
+        baseline["margin_over_baseline"] = (
+            rows[0]["predictive"] - baseline["predictive"]
+        )
+        # At n = 9 one adjacent rank swap moves Spearman by 6/(n(n^2-1)) * 2.
+        # A margin at or below that is a single swap in the ordering, which is
+        # the smallest difference the statistic can express and not evidence of
+        # a better predictor. Reported in units of swaps rather than as a
+        # boolean, because the comparison sits exactly on the boundary here and
+        # a strict inequality would flip on floating-point noise.
+        swap = 12.0 / (len(mixes) * (len(mixes) ** 2 - 1))
+        in_swaps = baseline["margin_over_baseline"] / swap
+        baseline["one_swap_is"] = swap
+        baseline["margin_in_swaps"] = in_swaps
+        # Spearman is quantised at this n: without ties, achievable values are
+        # multiples of 1/60 apart, so margins come in whole swaps. The baseline
+        # has tied ranks, which shifts it slightly off that grid. The boundary
+        # therefore sits between one swap and two rather than just above one,
+        # so the classification does not hinge on that offset.
+        if in_swaps <= 1.5:
+            baseline["verdict"] = "within one rank swap of the baseline"
+        elif in_swaps <= 2.5:
+            baseline["verdict"] = "about two rank swaps above the baseline"
+        else:
+            baseline["verdict"] = "more than two rank swaps above the baseline"
 
     label = "ECE (lower is better)" if lower_is_better else "mIoU"
     print(f"n = {len(mixes)} mixtures | target = {args.performance_source} "
@@ -535,21 +641,40 @@ def main(argv: list[str] | None = None) -> int:
     within = within_ratio_analysis(
         distances, performance, metric_names,
         tie_threshold=threshold, per_seed=per_seed,
-        lower_is_better=lower_is_better,
+        alpha=args.alpha, lower_is_better=lower_is_better,
     )
     print_within_ratio(within, target=args.target)
+
+    print("\n\n=== baseline: does any metric beat the mixing ratio? ===")
+    print("Synthetic proportion is known from the recipe without measuring")
+    print("anything, and both the shift scores and performance move with it.\n")
+    if "predictive" in baseline:
+        print(f"  synthetic fraction     predictive = {baseline['predictive']:+.3f}")
+    if baseline.get("best_metric"):
+        print(f"  best metric ({baseline['best_metric']:<20s}) "
+              f"= {baseline['best_metric_predictive']:+.3f}")
+        print(f"  margin = {baseline['margin_over_baseline']:+.4f}, "
+              f"one adjacent rank swap = {baseline['one_swap_is']:.4f}, "
+              f"so {baseline['margin_in_swaps']:.2f} swaps")
+        print(f"  -> the best metric is {baseline['verdict']}")
+
+    survivors = sum(1 for r in rows if r.get("survives_holm"))
+    print(f"\nHolm correction within this family of {len(rows)} metrics: "
+          f"{survivors}/{len(rows)} survive at alpha = {args.alpha}.")
 
     payload = {
         "n": len(mixes),
         "model": args.model,
         "performance_source": args.performance_source,
         "target": args.target,
+        "alpha": args.alpha,
         "mixtures": mixes,
         "performance": performance,
         "performance_per_seed": per_seed,
         "seeds_requested": args.seeds,
         "tie_threshold": tie_info,
         "correlations": rows,
+        "fraction_baseline": baseline,
         "within_ratio": within,
     }
     destination = Path(args.out)
