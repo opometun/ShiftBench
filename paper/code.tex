@@ -1,579 +1,83 @@
-%% bare_jrnl.tex
-%% V1.4b
-%% 2015/08/26
-%% by Michael Shell
-%% see http://www.michaelshell.org/
-%% for current contact information.
-%%
-%% This is a skeleton file demonstrating the use of IEEEtran.cls
-%% (requires IEEEtran.cls version 1.8b or later) with an IEEE
-%% journal paper.
-%%
-%% Support sites:
-%% http://www.michaelshell.org/tex/ieeetran/
-%% http://www.ctan.org/pkg/ieeetran
-%% and
-%% http://www.ieee.org/
+% EAITHD26 (Enhancing AI Through Hybrid Datasets),~Vol.~1, No.~1, September~2026
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+%Template version as of 6/27/2024
 
-%%*************************************************************************
-%% Legal Notice:
-%% This code is offered as-is without any warranty either expressed or
-%% implied; without even the implied warranty of MERCHANTABILITY or
-%% FITNESS FOR A PARTICULAR PURPOSE! 
-%% User assumes all risk.
-%% In no event shall the IEEE or any contributor to this code be liable for
-%% any damages or losses, including, but not limited to, incidental,
-%% consequential, or any other damages, resulting from the use or misuse
-%% of any information contained here.
-%%
-%% All comments are the opinions of their respective authors and are not
-%% necessarily endorsed by the IEEE.
-%%
-%% This work is distributed under the LaTeX Project Public License (LPPL)
-%% ( http://www.latex-project.org/ ) version 1.3, and may be freely used,
-%% distributed and modified. A copy of the LPPL, version 1.3, is included
-%% in the base LaTeX documentation of all distributions of LaTeX released
-%% 2003/12/01 or later.
-%% Retain all contribution notices and credits.
-%% ** Modified files should be clearly indicated as such, including  **
-%% ** renaming them and changing author support contact information. **
-%%*************************************************************************
-
-
-% *** Authors should verify (and, if needed, correct) their LaTeX system  ***
-% *** with the testflow diagnostic prior to trusting their LaTeX platform ***
-% *** with production work. The IEEE's font choices and paper sizes can   ***
-% *** trigger bugs that do not appear when using other class files.       ***                          ***
-% The testflow support page is at:
-% http://www.michaelshell.org/tex/testflow/
-
-
-
-\documentclass[journal]{IEEEtran}
-%
-% If IEEEtran.cls has not been installed into the LaTeX system files,
-% manually specify the path to it like:
-% \documentclass[journal]{../sty/IEEEtran}
-
-
-
-
-
-% Some very useful LaTeX packages include:
-% (uncomment the ones you want to load)
-
-
-% *** MISC UTILITY PACKAGES ***
-%
-%\usepackage{ifpdf}
-% Heiko Oberdiek's ifpdf.sty is very useful if you need conditional
-% compilation based on whether the output is pdf or dvi.
-% usage:
-% \ifpdf
-%   % pdf code
-% \else
-%   % dvi code
-% \fi
-% The latest version of ifpdf.sty can be obtained from:
-% http://www.ctan.org/pkg/ifpdf
-% Also, note that IEEEtran.cls V1.7 and later provides a builtin
-% \ifCLASSINFOpdf conditional that works the same way.
-% When switching from latex to pdflatex and vice-versa, the compiler may
-% have to be run twice to clear warning/error messages.
-
-% TODO: Remove xcolor package
-% It was just added for highlighting fillers
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
 \usepackage{xcolor}
 
-
-
-
-% *** CITATION PACKAGES ***
-%
-%\usepackage{cite}
-% cite.sty was written by Donald Arseneau
-% V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
-% \cite{} output to follow that of the IEEE. Loading the cite package will
-% result in citation numbers being automatically sorted and properly
-% "compressed/ranged". e.g., [1], [9], [2], [7], [5], [6] without using
-% cite.sty will become [1], [2], [5]--[7], [9] using cite.sty. cite.sty's
-% \cite will automatically add leading space, if needed. Use cite.sty's
-% noadjust option (cite.sty V3.8 and later) if you want to turn this off
-% such as if a citation ever needs to be enclosed in parenthesis.
-% cite.sty is already installed on most LaTeX systems. Be sure and use
-% version 5.0 (2009-03-20) and later if using hyperref.sty.
-% The latest version can be obtained at:
-% http://www.ctan.org/pkg/cite
-% The documentation is contained in the cite.sty file itself.
-
-
-
-
-
-
-% *** GRAPHICS RELATED PACKAGES ***
-%
-\ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
-  % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
-  % and their extensions so you won't have to specify these with
-  % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
-\else
-  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
-  % will default to the driver specified in the system graphics.cfg if no
-  % driver is specified.
-  % \usepackage[dvips]{graphicx}
-  % declare the path(s) where your graphic files are
-  % \graphicspath{{../eps/}}
-  % and their extensions so you won't have to specify these with
-  % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.eps}
-\fi
-% graphicx was written by David Carlisle and Sebastian Rahtz. It is
-% required if you want graphics, photos, etc. graphicx.sty is already
-% installed on most LaTeX systems. The latest version and documentation
-% can be obtained at: 
-% http://www.ctan.org/pkg/graphicx
-% Another good source of documentation is "Using Imported Graphics in
-% LaTeX2e" by Keith Reckdahl which can be found at:
-% http://www.ctan.org/pkg/epslatex
-%
-% latex, and pdflatex in dvi mode, support graphics in encapsulated
-% postscript (.eps) format. pdflatex in pdf mode supports graphics
-% in .pdf, .jpeg, .png and .mps (metapost) formats. Users should ensure
-% that all non-photo figures use a vector format (.eps, .pdf, .mps) and
-% not a bitmapped formats (.jpeg, .png). The IEEE frowns on bitmapped formats
-% which can result in "jaggedy"/blurry rendering of lines and letters as
-% well as large increases in file sizes.
-%
-% You can find documentation about the pdfTeX application at:
-% http://www.tug.org/applications/pdftex
-
-
-
-
-
-% *** MATH PACKAGES ***
-%
-\usepackage{amsmath}
-% A popular package from the American Mathematical Society that provides
-% many useful and powerful commands for dealing with mathematics.
-%
-% Note that the amsmath package sets \interdisplaylinepenalty to 10000
-% thus preventing page breaks from occurring within multiline equations. Use:
-%\interdisplaylinepenalty=2500
-% after loading amsmath to restore such page breaks as IEEEtran.cls normally
-% does. amsmath.sty is already installed on most LaTeX systems. The latest
-% version and documentation can be obtained at:
-% http://www.ctan.org/pkg/amsmath
-
-
-
-
-
-% *** SPECIALIZED LIST PACKAGES ***
-%
-%\usepackage{algorithmic}
-% algorithmic.sty was written by Peter Williams and Rogerio Brito.
-% This package provides an algorithmic environment fo describing algorithms.
-% You can use the algorithmic environment in-text or within a figure
-% environment to provide for a floating algorithm. Do NOT use the algorithm
-% floating environment provided by algorithm.sty (by the same authors) or
-% algorithm2e.sty (by Christophe Fiorio) as the IEEE does not use dedicated
-% algorithm float types and packages that provide these will not provide
-% correct IEEE style captions. The latest version and documentation of
-% algorithmic.sty can be obtained at:
-% http://www.ctan.org/pkg/algorithms
-% Also of interest may be the (relatively newer and more customizable)
-% algorithmicx.sty package by Szasz Janos:
-% http://www.ctan.org/pkg/algorithmicx
-
-
-
-
-% *** ALIGNMENT PACKAGES ***
-%
-%\usepackage{array}
-% Frank Mittelbach's and David Carlisle's array.sty patches and improves
-% the standard LaTeX2e array and tabular environments to provide better
-% appearance and additional user controls. As the default LaTeX2e table
-% generation code is lacking to the point of almost being broken with
-% respect to the quality of the end results, all users are strongly
-% advised to use an enhanced (at the very least that provided by array.sty)
-% set of table tools. array.sty is already installed on most systems. The
-% latest version and documentation can be obtained at:
-% http://www.ctan.org/pkg/array
-
-
-% IEEEtran contains the IEEEeqnarray family of commands that can be used to
-% generate multiline equations as well as matrices, tables, etc., of high
-% quality.
-
-
-
-
-% *** SUBFIGURE PACKAGES ***
-%\ifCLASSOPTIONcompsoc
-%  \usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
-%\else
-%  \usepackage[caption=false,font=footnotesize]{subfig}
-%\fi
-% subfig.sty, written by Steven Douglas Cochran, is the modern replacement
-% for subfigure.sty, the latter of which is no longer maintained and is
-% incompatible with some LaTeX packages including fixltx2e. However,
-% subfig.sty requires and automatically loads Axel Sommerfeldt's caption.sty
-% which will override IEEEtran.cls' handling of captions and this will result
-% in non-IEEE style figure/table captions. To prevent this problem, be sure
-% and invoke subfig.sty's "caption=false" package option (available since
-% subfig.sty version 1.3, 2005/06/28) as this is will preserve IEEEtran.cls
-% handling of captions.
-% Note that the Computer Society format requires a larger sans serif font
-% than the serif footnote size font used in traditional IEEE formatting
-% and thus the need to invoke different subfig.sty package options depending
-% on whether compsoc mode has been enabled.
-%
-% The latest version and documentation of subfig.sty can be obtained at:
-% http://www.ctan.org/pkg/subfig
-
-
-
-
-% *** FLOAT PACKAGES ***
-%
-%\usepackage{fixltx2e}
-% fixltx2e, the successor to the earlier fix2col.sty, was written by
-% Frank Mittelbach and David Carlisle. This package corrects a few problems
-% in the LaTeX2e kernel, the most notable of which is that in current
-% LaTeX2e releases, the ordering of single and double column floats is not
-% guaranteed to be preserved. Thus, an unpatched LaTeX2e can allow a
-% single column figure to be placed prior to an earlier double column
-% figure.
-% Be aware that LaTeX2e kernels dated 2015 and later have fixltx2e.sty's
-% corrections already built into the system in which case a warning will
-% be issued if an attempt is made to load fixltx2e.sty as it is no longer
-% needed.
-% The latest version and documentation can be found at:
-% http://www.ctan.org/pkg/fixltx2e
-
-
-%\usepackage{stfloats}
-% stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
-% the ability to do double column floats at the bottom of the page as well
-% as the top. (e.g., "\begin{figure*}[!b]" is not normally possible in
-% LaTeX2e). It also provides a command:
-%\fnbelowfloat
-% to enable the placement of footnotes below bottom floats (the standard
-% LaTeX2e kernel puts them above bottom floats). This is an invasive package
-% which rewrites many portions of the LaTeX2e float routines. It may not work
-% with other packages that modify the LaTeX2e float routines. The latest
-% version and documentation can be obtained at:
-% http://www.ctan.org/pkg/stfloats
-% Do not use the stfloats baselinefloat ability as the IEEE does not allow
-% \baselineskip to stretch. Authors submitting work to the IEEE should note
-% that the IEEE rarely uses double column equations and that authors should try
-% to avoid such use. Do not be tempted to use the cuted.sty or midfloat.sty
-% packages (also by Sigitas Tolusis) as the IEEE does not format its papers in
-% such ways.
-% Do not attempt to use stfloats with fixltx2e as they are incompatible.
-% Instead, use Morten Hogholm'a dblfloatfix which combines the features
-% of both fixltx2e and stfloats:
-%
-% \usepackage{dblfloatfix}
-% The latest version can be found at:
-% http://www.ctan.org/pkg/dblfloatfix
-
-
-
-
-%\ifCLASSOPTIONcaptionsoff
-%  \usepackage[nomarkers]{endfloat}
-% \let\MYoriglatexcaption\caption
-% \renewcommand{\caption}[2][\relax]{\MYoriglatexcaption[#2]{#2}}
-%\fi
-% endfloat.sty was written by James Darrell McCauley, Jeff Goldberg and 
-% Axel Sommerfeldt. This package may be useful when used in conjunction with 
-% IEEEtran.cls'  captionsoff option. Some IEEE journals/societies require that
-% submissions have lists of figures/tables at the end of the paper and that
-% figures/tables without any captions are placed on a page by themselves at
-% the end of the document. If needed, the draftcls IEEEtran class option or
-% \CLASSINPUTbaselinestretch interface can be used to increase the line
-% spacing as well. Be sure and use the nomarkers option of endfloat to
-% prevent endfloat from "marking" where the figures would have been placed
-% in the text. The two hack lines of code above are a slight modification of
-% that suggested by in the endfloat docs (section 8.4.1) to ensure that
-% the full captions always appear in the list of figures/tables - even if
-% the user used the short optional argument of \caption[]{}.
-% IEEE papers do not typically make use of \caption[]'s optional argument,
-% so this should not be an issue. A similar trick can be used to disable
-% captions of packages such as subfig.sty that lack options to turn off
-% the subcaptions:
-% For subfig.sty:
-% \let\MYorigsubfloat\subfloat
-% \renewcommand{\subfloat}[2][\relax]{\MYorigsubfloat[]{#2}}
-% However, the above trick will not work if both optional arguments of
-% the \subfloat command are used. Furthermore, there needs to be a
-% description of each subfigure *somewhere* and endfloat does not add
-% subfigure captions to its list of figures. Thus, the best approach is to
-% avoid the use of subfigure captions (many IEEE journals avoid them anyway)
-% and instead reference/explain all the subfigures within the main caption.
-% The latest version of endfloat.sty and its documentation can obtained at:
-% http://www.ctan.org/pkg/endfloat
-%
-% The IEEEtran \ifCLASSOPTIONcaptionsoff conditional can also be used
-% later in the document, say, to conditionally put the References on a 
-% page by themselves.
-
-
-
-
-% *** PDF, URL AND HYPERLINK PACKAGES ***
-%
+% our own additions to fix reference overflow (too long url)
 \usepackage{url}
-% url.sty was written by Donald Arseneau. It provides better support for
-% handling and breaking URLs. url.sty is already installed on most LaTeX
-% systems. The latest version and documentation can be obtained at:
-% http://www.ctan.org/pkg/url
-% Basically, \url{my_url_here}.
+\usepackage{hyperref}
+\usepackage{breakurl}
 
-
-
-
-% *** Do not adjust lengths that control margins, column widths, etc. ***
-% *** Do not use packages that alter fonts (such as pslatex).         ***
-% There should be no need to do such things with IEEEtran.cls V1.6 and later.
-% (Unless specifically asked to do so by the journal or conference you plan
-% to submit to, of course. )
-
-
-% correct bad hyphenation here
-\hyphenation{op-tical net-works semi-conduc-tor}
-
-
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
-%
-% paper title
-% Titles are generally capitalized except for words such as a, an, and, as,
-% at, but, by, for, in, nor, of, on, or, the, to and up, which are usually
-% not capitalized unless they are the first or last word of the title.
-% Linebreaks \\ can be used within to get better formatting as desired.
-% Do not put math or special symbols in the title.
-\title{Our title \\ maybe 2 lines}
-%
-%
-% author names and IEEE memberships
-% note positions of commas and nonbreaking spaces ( ~ ) LaTeX will not break
-% a structure at a ~ so this keeps an author's name from being broken across
-% two lines.
-% use \thanks{} to gain access to the first footnote area
-% a separate \thanks must be used for each paragraph as LaTeX2e's \thanks
-% was not built to handle multiple paragraphs
-%
 
-\author{Michael~Shell,~\IEEEmembership{Member,~IEEE,}
-        John~Doe,~\IEEEmembership{Fellow,~OSA,}
-        and~Jane~Doe,~\IEEEmembership{Life~Fellow,~IEEE}% <-this % stops a space
-\thanks{M. Shell was with the Department
-of Electrical and Computer Engineering, Georgia Institute of Technology, Atlanta,
-GA, 30332 USA e-mail: (see http://www.michaelshell.org/contact.html).}% <-this % stops a space
-\thanks{J. Doe and J. Doe are with Anonymous University.}% <-this % stops a space
-\thanks{Manuscript received April 19, 2005; revised August 26, 2015.}}
+\title{Conference Paper Title*\\
+{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured for https://ieeexplore.ieee.org  and
+should not be used}
+\thanks{Identify applicable funding agency here. If none, delete this.}
+}
 
-% note the % following the last \IEEEmembership and also \thanks - 
-% these prevent an unwanted space from occurring between the last author name
-% and the end of the author line. i.e., if you had this:
-% 
-% \author{....lastname \thanks{...} \thanks{...} }
-%                     ^------------^------------^----Do not want these spaces!
-%
-% a space would be appended to the last name and could cause every name on that
-% line to be shifted left slightly. This is one of those "LaTeX things". For
-% instance, "\textbf{A} \textbf{B}" will typeset as "A B" not "AB". To get
-% "AB" then you have to do: "\textbf{A}\textbf{B}"
-% \thanks is no different in this regard, so shield the last } of each \thanks
-% that ends a line with a % and do not let a space in before the next \thanks.
-% Spaces after \IEEEmembership other than the last one are OK (and needed) as
-% you are supposed to have spaces between the names. For what it is worth,
-% this is a minor point as most people would not even notice if the said evil
-% space somehow managed to creep in.
+\author{\IEEEauthorblockN{1\textsuperscript{st} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\textit{name of organization (of Aff.)}\\
+City, Country \\
+email address or ORCID}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\textit{name of organization (of Aff.)}\\
+City, Country \\
+email address or ORCID}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\textit{name of organization (of Aff.)}\\
+City, Country \\
+email address or ORCID}
+\and
+\IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\textit{name of organization (of Aff.)}\\
+City, Country \\
+email address or ORCID}
+\and
+\IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\textit{name of organization (of Aff.)}\\
+City, Country \\
+email address or ORCID}
+\and
+\IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\textit{name of organization (of Aff.)}\\
+City, Country \\
+email address or ORCID}
+}
 
-
-
-% The paper headers
-\markboth{EAITHD26 (Enhancing AI Through Hybrid Datasets),~Vol.~1, No.~1, September~2026}%
-{Shell \MakeLowercase{\textit{et al.}}: Bare Demo of IEEEtran.cls for IEEE Journals}
-% The only time the second header will appear is for the odd numbered pages
-% after the title page when using the twoside option.
-% 
-% *** Note that you probably will NOT want to include the author's ***
-% *** name in the headers of peer review papers.                   ***
-% You can use \ifCLASSOPTIONpeerreview for conditional compilation here if
-% you desire.
-
-
-
-
-% If you want to put a publisher's ID mark on the page you can do it like
-% this:
-%\IEEEpubid{0000--0000/00\$00.00~\copyright~2015 IEEE}
-% Remember, if you use this you must call \IEEEpubidadjcol in the second
-% column for its text to clear the IEEEpubid mark.
-
-
-
-% use for special paper notices
-%\IEEEspecialpapernotice{(Invited Paper)}
-
-
-
-
-% make the title area
 \maketitle
 
-% As a general rule, do not put math, special symbols or citations
-% in the abstract or keywords.
 \begin{abstract}
 The abstract goes here.
 \end{abstract}
 
-% Note that keywords are not normally used for peerreview papers.
 \begin{IEEEkeywords}
 IEEE, IEEEtran, journal, \LaTeX, paper, template.
 \end{IEEEkeywords}
 
-
-
-
-
-
-% For peer review papers, you can put extra information on the cover
-% page as needed:
-% \ifCLASSOPTIONpeerreview
-% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
-% \fi
-%
-% For peerreview papers, this IEEEtran command inserts a page break and
-% creates the second title. It will be ignored for other modes.
-\IEEEpeerreviewmaketitle
-
-
-
 \section{Introduction}
-% The very first letter is a 2 line initial drop letter followed
-% by the rest of the first word in caps.
-% 
-% form to use if the first word consists of a single letter:
-% \IEEEPARstart{A}{demo} file is ....
-% 
-% form to use if you need the single drop letter followed by
-% normal text (unknown if ever used by the IEEE):
-% \IEEEPARstart{A}{}demo file is ....
-% 
-% Some journals put the first two words in caps:
-% \IEEEPARstart{T}{his demo} file is ....
-% 
-% Here we have the typical use of a "T" for an initial drop letter
-% and "HIS" in caps to complete the first word.
-\IEEEPARstart{T}{his} \textcolor{gray}{introduction still needs to be written. Bla bla. CATCHING INTRO - maybe just shift II. RESEARCH QUESTION PART to intro? Bla Bla. STUDY APPROACH}
+\textcolor{gray}{This introduction still needs to be written. Bla bla. CATCHING INTRO - maybe just shift II. RESEARCH QUESTION PART to intro? Bla Bla. STUDY APPROACH}
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
 Ten shift quantification metrics were applied to nine hybrid dataset configurations for daytime urban street scene segmentation. Correlation with downstream performance was measured across two model architectures with three random states each. \textcolor{gray}{Bla Bla MAIN FINDINGS}
-
-
-% An example of a floating figure using the graphicx package.
-% Note that \label must occur AFTER (or within) \caption.
-% For figures, \caption should occur after the \includegraphics.
-% Note that IEEEtran v1.7 and later has special internal code that
-% is designed to preserve the operation of \label within \caption
-% even when the captionsoff option is in effect. However, because
-% of issues like this, it may be the safest practice to put all your
-% \label just after \caption rather than within \caption{}.
-%
-% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
-% option should be used if it is desired that the figures are to be
-% displayed while in draft mode.
-%
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure}
-
-% Note that the IEEE typically puts floats only at the top, even when this
-% results in a large percentage of a column being occupied by floats.
-
-
-% An example of a double column floating figure using two subfigures.
-% (The subfig.sty package must be loaded for this to work.)
-% The subfigure \label commands are set within each subfloat command,
-% and the \label for the overall figure must come after \caption.
-% \hfil is used as a separator to get equal spacing.
-% Watch out that the combined width of all the subfigures on a 
-% line do not exceed the text width or a line break will occur.
-%
-%\begin{figure*}[!t]
-%\centering
-%\subfloat[Case I]{\includegraphics[width=2.5in]{box}%
-%\label{fig_first_case}}
-%\hfil
-%\subfloat[Case II]{\includegraphics[width=2.5in]{box}%
-%\label{fig_second_case}}
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure*}
-%
-% Note that often IEEE papers with subfigures do not employ subfigure
-% captions (using the optional argument to \subfloat[]), but instead will
-% reference/describe all of them (a), (b), etc., within the main caption.
-% Be aware that for subfig.sty to generate the (a), (b), etc., subfigure
-% labels, the optional argument to \subfloat must be present. If a
-% subcaption is not desired, just leave its contents blank,
-% e.g., \subfloat[].
-
-
-% An example of a floating table. Note that, for IEEE style tables, the
-% \caption command should come BEFORE the table and, given that table
-% captions serve much like titles, are usually capitalized except for words
-% such as a, an, and, as, at, but, by, for, in, nor, of, on, or, the, to
-% and up, which are usually not capitalized unless they are the first or
-% last word of the caption. Table text will default to \footnotesize as
-% the IEEE normally uses this smaller font for tables.
-% The \label must come after \caption as always.
-%
-%\begin{table}[!t]
-%% increase table row spacing, adjust to taste
-%\renewcommand{\arraystretch}{1.3}
-% if using array.sty, it might be a good idea to tweak the value of
-% \extrarowheight as needed to properly center the text within the cells
-%\caption{An Example of a Table}
-%\label{table_example}
-%\centering
-%% Some packages, such as MDW tools, offer better commands for making tables
-%% than the plain LaTeX2e tabular which is used here.
-%\begin{tabular}{|c||c|}
-%\hline
-%One & Two\\
-%\hline
-%Three & Four\\
-%\hline
-%\end{tabular}
-%\end{table}
-
-
-% Note that the IEEE does not put floats in the very first column
-% - or typically anywhere on the first page for that matter. Also,
-% in-text middle ("here") positioning is typically not used, but it
-% is allowed and encouraged for Computer Society conferences (but
-% not Computer Society journals). Most IEEE journals/conferences use
-% top floats exclusively. 
-% Note that, LaTeX2e, unlike IEEE journals/conferences, places
-% footnotes above bottom floats. This can be corrected via the
-% \fnbelowfloat command of the stfloats package.
 
 \section{Research question}
 Hybrid datasets, which combine real and synthetic data, are often used to address data-associated limitations in model performance and generalization. However, selecting an effective hybrid dataset configuration is costly when based on actual downstream performance, because it requires training a separate model for each candidate configuration. A more efficient alternative is to predict downstream performance. This study focuses on \textbf{distribution-shift-based prediction} with the following research question: 
@@ -584,21 +88,22 @@ Hybrid datasets, which combine real and synthetic data, are often used to addres
 This study evaluates the proposed approach in the context of \textbf{daytime urban street scene segmentation}.
 
 \subsection{Data preparation}
+\label{sec:datasetPreparation}
 \textcolor{gray}{Bla Bla: Describe the datasets (Cityscapes, Synscapes, GTA-V)} 
 
 \textcolor{gray}{Bla Bla: Describe the preparation (number of samples selected, how samples were selected, resizing to uniform resolution, construction of the 9 hybrid train datasets + val + test datasets and the reasoning behind it, certain class indices are ignored - 19 instead of 34 classes)} 
 
 \subsection{Shift quantification}
-A distribution shift occurs when two data distributions differ. In machine learning, this typically refers to the shift between the distribution a model is trained on (training distribution) and the distribution it will be applied to (inference distribution, approximated by the test dataset). Hybrid datasets are often motivated by the goal of reducing this distribution shift: Adding synthetic data to real data can enrich the training distribution in a controlled manner, improving coverage and diversity, and supporting generalization to shifted inference conditions. Conversely, adding real data to synthetic data can help anchoring the model in real-world statistics, reducing the reality gap and mitigating reliance on unrealistic or harmful artifacts. 
+A distribution shift occurs when two data distributions differ. In machine learning (ML), this typically refers to the shift between the distribution a model is trained on (training distribution) and the distribution it will be applied to (inference distribution, approximated by the test dataset). Hybrid datasets are often motivated by the goal of reducing this distribution shift: Adding synthetic data to real data can enrich the training distribution in a controlled manner, improving coverage and diversity, and supporting generalization to shifted inference conditions. Conversely, adding real data to synthetic data can help anchoring the model in real-world statistics, reducing the reality gap and mitigating reliance on unrealistic or harmful artifacts. 
 
 Beyond this general notion, a distribution shift can be decomposed into several distinct components. Following the formulation of \cite{liu2022}, a segmentation model can be expressed as $G(x)=C(F(x))$, where the classifier $C$ outputs the posterior probability $P(Y|F(x))$ for an input image $x$. Applying Bayes' theorem yields 
 \begin{equation}
 \label{eq:bayes_shift}
 P(Y \mid F(x)) = \frac{P(F(x) \mid Y) \cdot P(Y)}{P(F(x))}.
 \end{equation}
-The Bayes decomposition exposes the distributions that may differ between datasets. Based on the affected distribution, we can differentiate five shift types, of which this study focuses on three: covariate shift, label shift, and representation shift.\footnote{Additional shift types include class-conditional representation shift, which affects the input representation for a specific class $P(F(x)|Y)$, and concept shift, which affects the labeling function $P(Y|F(x))$ or $P(Y|X)$. Class-conditional representation shift is excluded because this study quantifies the shift at the dataset level rather than per class. Concept shift is excluded because all datasets share the same semantic label definitions.} Based on the information used for quantification, we group shift quantification metrics into three categories, each capturing a different aspect of the shift:
+The Bayes decomposition exposes the distributions that may differ between datasets. Based on the affected distribution, we differentiate between five shift types, of which this study focuses on three: covariate shift, label shift, and representation shift.\footnote{Additional shift types include class-conditional representation shift, which affects the input representation for a specific class $P(F(x)|Y)$, and concept shift, which affects the labeling function $P(Y|F(x))$ or $P(Y|X)$. Class-conditional representation shift is excluded because this study quantifies the shift at the dataset level rather than per class. Concept shift is excluded because all datasets share the same semantic label definitions.} Inspired by \cite{dale2024}, we chose our shift quantification metrics considering four criteria: Each metric must be easy to calculate, correlate with model performance on test data, provide information about the source of the gap, and react to changes in data distribution as hybrid training configurations are adjusted. Based on the information used for quantification, we group the selected shift quantification metrics into three categories, each capturing a different aspect of the shift:
 
-\textbf{Image-based metrics} quantify the covariate shift, that is, differences in the input distribution $P(X)$ that arise from changes in visual properties such as color and texture. These metrics operate on the raw images. This study considers two metrics that focus on a shift in color ($\text{js}_{\text{color}}$) and texture ($\text{js}_{\text{texture}}$) respectively. Covariate shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized mean histograms $p_{\text{train}}$, $p_{\text{test}}$. Per-image color histograms were computed in HSV space. Per-image texture histograms were computed using multiscale Local Binary Patterns (LBP) at two scales ($P=8$, $R=1$) and ($P=16$, $R=2$).
+\textbf{Image-based metrics} quantify the covariate shift, that is, differences in the input distribution $P(X)$ that arise from changes in visual properties such as color and texture. These metrics operate on the raw images. This study considers two metrics that focus on a shift in color ($\text{js}_{\text{color}}$) and texture ($\text{js}_{\text{texture}}$) respectively. Covariate shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized mean histograms $p_{\text{train}}$, $p_{\text{test}}$. Per-image color histograms were computed in HSV space using density‑based histogram counts. Per-image texture histograms were computed using multiscale Local Binary Patterns (LBP) at two scales ($P=8$, $R=1$) and ($P=16$, $R=2$).
 
 \begin{equation}
 \label{eq:js}
@@ -613,9 +118,9 @@ d_{\text{JS}}(p_{\text{train}}, p_{\text{test}})
 \end{split}
 \end{equation}
 
-\textbf{Label-based metrics} quantify the label shift, that is, differences in the class-label distribution $P(Y)$. These metrics operate on the segmentation masks. This study considers three metrics that focus on a shift in class frequency ($\text{js}_{\text{classFrequency}}$), class presence ($\text{js}_{\text{classPresence}}$), and scene complexity ($\text{js}_{\text{sceneComplexity}}$) respectively. Label shift was quantified using Jenson-Shannon distance \eqref{eq:js} between the normalized histograms $p_{\text{train}}$, $p_{\text{test}}$. The class frequency histogram of a dataset shows the fraction of all pixels belonging to each class. The class presence histogram of a dataset shows the fraction of images containing each class. The scene complexity histogram of a dataset shows the distribution of distinct-class counts per image.
+\textbf{Label-based metrics} quantify the label shift, that is, differences in the class-label distribution $P(Y)$. These metrics operate on the segmentation masks. This study considers three metrics that focus on a shift in class frequency ($\text{js}_{\text{classFrequency}}$), class presence ($\text{js}_{\text{classPresence}}$), and scene complexity ($\text{js}_{\text{sceneComplexity}}$) respectively. Label shift was quantified using Jenson-Shannon distance \eqref{eq:js} between the normalized histograms $p_{\text{train}}$, $p_{\text{test}}$. The class frequency histogram of a dataset shows the fraction of all pixels belonging to each class. The class presence histogram of a dataset shows the share of image-level class occurrences attributable to each class. The scene complexity histogram of a dataset shows the distribution of distinct-class counts per image.
 
-\textbf{Representation-based metrics} quantify the representation shift, that is, differences in the feature distribution $P(F(x))$. These metrics operate in a learned feature space on image representations produced by a feature extractor $F$. This study used two pretrained feature extractors: DINOv2‑Base \cite{oquab2024} for appearance‑focused representations and StreetCLIP \cite{haas2023} for semantic‑focused representations. They were selected because both were exposed to street-view-like imagery during training, making them well aligned with this study's target domain. Representation shift was quantified using centroid distance \eqref{eq:centroid} and Fréchet distance \eqref{eq:frechet} \cite{NIPS2017_8a1d6947} between two distributions with means $\mu_{\text{train}}$, $\mu_{\text{test}}$ and covariance matrices $\Sigma_{\text{train}}$, $\Sigma_{\text{test}}$, computed in DINOv2-Base and StreetCLIP feature spaces. This yielded four metric variants: $\text{fréchet}_{\text{dinov2}}$, $\text{centroid}_{\text{dinov2}}$, $\text{fréchet}_{\text{streetclip}}$, and $\text{centroid}_{\text{streetclip}}$.
+\textbf{Representation-based metrics} quantify the representation shift, that is, differences in the feature distribution $P(F(x))$. These metrics operate in a learned feature space on image representations produced by a feature extractor $F$. This study used two pretrained feature extractors: DINOv2‑Base \cite{oquab2024} for appearance‑focused representations and StreetCLIP \cite{haas2023} for semantic‑focused representations. They were selected because both were exposed to car-mounted street-view-like imagery during training, making them well aligned with this study's target domain. Representation shift was quantified using centroid distance \eqref{eq:centroid} and Fréchet distance \eqref{eq:frechet} \cite{NIPS2017_8a1d6947} between two distributions with means $\mu_{\text{train}}$, $\mu_{\text{test}}$ and covariance matrices $\Sigma_{\text{train}}$, $\Sigma_{\text{test}}$, computed in DINOv2-Base and StreetCLIP feature spaces. This yielded four metric variants: $\text{fréchet}_{\text{dinov2}}$, $\text{centroid}_{\text{dinov2}}$, $\text{fréchet}_{\text{streetclip}}$, and $\text{centroid}_{\text{streetclip}}$.
 
 \begin{equation}
 \label{eq:centroid}
@@ -634,7 +139,7 @@ d_{\text{centroid}}(\mu_{\text{train}},\mu_{\text{test}}) = \|\mu_{\text{train}}
 \end{equation}
 
 \smallskip
-The last representation-based metric considered in this study is \textbf{SADGE} (Structural and Appearance Domain Gap Estimator), which was shown to predict downstream model performance most reliably among the shift quantification metrics tested in \cite{bartkowiak2026}. SADGE differs fundamentally from the nine other metrics evaluated here: While all other metrics quantify distributional distance between datasets (by comparing dataset-level statistics in image, label, or feature space), SADGE computes pairwise similarity between individual images and aggregates these similarities into a dataset-level score. In our adaptation, each test image is compared to ten randomly selected candidate images from the hybrid training dataset. The strongest appearance and geometry match per test image is retained. Appearance similarity is measured using cosine similarity between DINOv3 \cite{simeoni2025dinov3} embeddings. Geometric similarity is measured using MASt3R \cite{mast3r} inlier counts. These per-image scores are averaged (to obtain dataset-level appearance similarity $\bar{A}$ and geometry similarity $\bar{G}$), standardized using z-score normalization \eqref{eq:zscore}, and fused through the pre-calibrated linear-bilinear model \eqref{eq:sadge} provided in \cite{bartkowiak2026}.
+The last representation-based metric considered in this study is \textbf{SADGE} (Structural and Appearance Domain Gap Estimator), which was shown to predict downstream model performance most reliably among the shift quantification metrics tested in \cite{bartkowiak2026}. SADGE differs fundamentally from the nine other metrics evaluated here: While all other metrics quantify distributional distance between datasets (by comparing dataset-level statistics in image, label, or feature space), SADGE computes pairwise similarity between individual images and aggregates these similarities into a dataset-level score. In our adaptation, we chose their retrieval-based comparison over their aligned comparison, because exact pairs are not available. Each test image is compared to ten randomly selected candidate images from the hybrid training dataset. The strongest appearance and geometry match per test image is retained. Appearance similarity is measured using cosine similarity between DINOv3 \cite{simeoni2025dinov3} embeddings. Geometric similarity is measured using MASt3R \cite{mast3r} inlier counts. These per-image scores are averaged (to obtain dataset-level appearance similarity $\bar{A}$ and geometry similarity $\bar{G}$), standardized using z-score normalization \eqref{eq:zscore}, and fused through the pre-calibrated linear-bilinear model \eqref{eq:sadge} provided in \cite{bartkowiak2026}.
 
 \begin{equation} \label{eq:zscore}
 \begin{aligned}
@@ -671,7 +176,12 @@ The last representation-based metric considered in this study is \textbf{SADGE} 
 
 \textcolor{gray}{Bla Bla: Relate findings to previous research}
 
-\textcolor{gray}{Bla Bla: Discuss limitations of the study}
+\textcolor{gray}{Bla Bla: Discuss limitations of the study} \\
+
+$\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. 
+% So why do those metrics differ in their correlation?
+% Shortcoming of current classPresence implementation (also applies to classFrequency)
+Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.
 
 \section{Conclusion}
 \textcolor{gray}{Bla Bla: Conclusion/Summary}
@@ -679,56 +189,8 @@ The last representation-based metric considered in this study is \textbf{SADGE} 
 \section{Reproducibility}
 \textcolor{gray}{Bla Bla: Link GitHub repo, describe it shortly, give broad instructions on how to replicate our study}
 
-
-
-
-% if have a single appendix:
-%\appendix[Proof of the Zonklar Equations]
-% or
-%\appendix  % for no appendix heading
-% do not use \section anymore after \appendix, only \section*
-% is possibly needed
-
-% use appendices with more than one appendix
-% then use \section to start each appendix
-% you must declare a \section before using any
-% \subsection or using \label (\appendices by itself
-% starts a section numbered zero.)
-%
-
-
-\appendices
-\section{Related research}
-Appendix one text goes here.
-
-% you can choose not to have a title for an appendix
-% if you want by leaving the argument blank
-\section{}
-Appendix two text goes here.
-
-
-% use section* for acknowledgment
 \section*{Acknowledgment}
-
-
 The authors would like to thank...
-
-
-% Can use something like this to put references on a page
-% by themselves when using endfloat and the captionsoff option.
-\ifCLASSOPTIONcaptionsoff
-  \newpage
-\fi
-
-
-
-% trigger a \newpage just before the given reference
-% number - used to balance the columns on the last page
-% adjust value as needed - may need to be readjusted if
-% the document is modified later
-%\IEEEtriggeratref{8}
-% The "triggered" command can be changed if desired:
-%\IEEEtriggercmd{\enlargethispage{-5in}}
 
 % REFERENCES section
 % define references style (use offical IEEE format)
@@ -736,69 +198,146 @@ The authors would like to thank...
 % connect references.bib file
 \bibliography{references}
 
-% can use a bibliography generated by BibTeX as a .bbl file
-% BibTeX documentation can be easily obtained at:
-% http://mirror.ctan.org/biblio/bibtex/contrib/doc/
-% The IEEEtran BibTeX style support page is at:
-% http://www.michaelshell.org/tex/ieeetran/bibtex/
-%\bibliographystyle{IEEEtran}
-% argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
-%
-% <OR> manually copy in the resultant .bbl file
-% set second argument of \begin to the number of references
-% (used to reserve space for the reference number labels box)
-% \begin{thebibliography}{1}
+\newpage
+\appendices
+\section{Related research}
+To the best of our knowledge, this is the first systematic assessment of distribution-shift quantification to determine the utility of hybrid image datasets before model training. However, recent research explored closely related ideas, with a primary focus on shift quantification \cite{bartkowiak2026, DetectShift, duminil2024, duminil2025, shiftForModelUtility, renza2024, dale2024, li2025}, shift reduction \cite{abramov2020, liu2022_labelShift, zhang2020}, or shift analysis \cite{UrbanSyn}.
 
-% \bibitem{IEEEhowto:kopka}
-% H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, % 3rd~ed.\hskip 1em plus
-%   0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+% SADGE
+\cite{bartkowiak2026} share our motivation for using shift quantification, namely to assess the utility of the training dataset before actual model training. However, while they focus on purely synthetic training datasets, we generalize to hybrid configurations. \cite{bartkowiak2026} distinguish "appearance" metrics, which assess whether synthetic images look domain-realistic, from "geometry" metrics, which assess whether they preserve spatial scene structure. Their experiments reveal that their combined similarity score $\text{SADGE}$ is a more reliable, dataset-agnostic predictor of downstream performance than any single-modality metric tested. Given this strong reported performance, we include SADGE as a benchmark metric in our study. 
+While their metric taxonomy differs from ours, we can roughly map our categories onto theirs: Our image- and representation-based metrics correspond to their appearance category. $\text{SADGE}$'s geometry score is the only metric in our study falling under their geometry category. Our label-based metrics, however, capture a novel shift dimension. 
 
-% \end{thebibliography}
+% DetectShift
+\cite{DetectShift} introduce DetectShift, a framework that unifies the quantification of five shift types (joint $P(X,Y)$, feature $P(X)$, label $P(Y)$, and both conditional shifts $P(X|Y)$ and $P(Y|X)$) using Kullback-Leibler (KL) divergence. The authors demonstrate their framework in an experiment structurally similar to our study, although in an image classification setting: A shift between source and target distributions is modeled by progressively mixing in samples from a second dataset in one distribution while keeping the other fixed to a single dataset. The resulting shift score is then related to model performance. 
+However, the purpose of this analysis differs: \cite{DetectShift} use shift quantification to guide targeted domain adaptation across varying shift strengths, and hence, vary the ratio of two real datasets in the test dataset. We instead use shift quantification to assess the utility of hybrid datasets for model training, and hence, vary the synthetic-to-real ratio in the training dataset.
+Both frameworks come with their own advantages and limitations: DetectShift’s unified KL-based measure allows shift magnitudes to be compared meaningfully across shift types - a property our framework currently lacks. However, their framework requires training a classifier to obtain magnitude scores, while ours relies on pretrained models at most. 
 
-% biography section
-% 
-% If you have an EPS/PDF photo (graphicx package needed) extra braces are
-% needed around the contents of the optional argument to biography to prevent
-% the LaTeX parser from getting confused when it sees the complicated
-% \includegraphics command within an optional argument. (You could create
-% your own custom macro containing the \includegraphics command to make things
-% simpler here.)
-%\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mshell}}]{Michael Shell}
-% or if you just want to reserve a space for a photo:
+% Texture-based
+\cite{duminil2024, duminil2025} quantify the realism (termed “fidelity”) of synthetic street-scene images via texture and frequency analysis: global texture using the gray level co-occurrence matrix (GLCM) and derived Haralick features, local texture using local binary patterns (LBP), and frequency analysis using the discrete wavelet transform (DWT) \cite{duminil2024} or discrete cosine transform (DCT) \cite{duminil2025}. Most fidelity score computations require training a binary classifier on the GLCM, LBP, or DWT/DCT representations of each original image to distinguish real from synthetic images. Only the Haralick-based score requires no training. Across both the individual \cite{duminil2024} and fused \cite{duminil2025} fidelity scores, synthetic images tend to exhibit different texture properties than real ones. This motivates the inclusion of $\text{js}_{\text{texture}}$ in our study. Similar to \cite{bartkowiak2026}, their fused fidelity score yields a more reliable predictor of downstream performance than any single metric alone.
 
-\begin{IEEEbiography}{Michael Shell}
-Biography text here.
-\end{IEEEbiography}
+% utility of trained model
+\cite{shiftForModelUtility} apply shift quantification to predict the utility of a trained model when applied to a new medical site. All evaluated shift quantification metrics use the trained model's output or internal feature representations of in-domain and target-domain data. Their proposed metric, Fréchet Domain Distance (FDD), produces shift scores with the highest correlation to the observed drop in model performance. Like $\text{fréchet}_{\text{dinov2}}$ and $\text{fréchet}_{\text{streetclip}}$, FDD quantifies the shift between feature representations using the Fréchet distance. The key difference is the feature source: FDD uses attention-selected features from the trained model itself, while our metrics use embeddings from an external, pretrained feature extractor.
 
-% if you will not have a photo at all:
-\begin{IEEEbiographynophoto}{John Doe}
-Biography text here.
-\end{IEEEbiographynophoto}
+% Class-wise
+\cite{renza2024} emphasize that a distribution shift is non-uniform: Different corruptions affect different classes to different degrees. They repurposed the Cumulative Spectral Gradient (CSG) metric to quantify shifts between image-classification datasets by measuring class-wise separability between original and corrupted data. Similar to our representation-based metrics, CSG relies on a pretrained feature extractor rather than raw pixel or label statistics. However, \cite{renza2024} operate at the class level to isolate which classes and corruptions drive a shift within a single dataset, whereas we quantify shifts at the dataset level to assess the overall utility of a hybrid dataset.
 
-% insert where needed to balance the two columns on the last page with
-% biographies
-%\newpage
+% no inference dist required
+\cite{dale2024} propose a framework for assessing a training dataset’s utility that bypasses the need for knowing the inference distribution. Instead of measuring the gap between training and test sets directly, they compute the training dataset’s self-similarity in the input, feature, or prediction space. Self-similarity is defined as the average pairwise similarity between training instances. In their study, they evaluate seven mixture-based data augmentation strategies to extend a hybrid training dataset's diversity, with the goal of improving generalization to a real-only test set. They find that lower self-similarity in the input and feature space corresponds to better downstream performance, whereas self-similarity in the prediction space shows no such relationship. Hence, self-similarity metrics present a promising direction for future work that addresses our study’s limitation of relying on a known inference distribution.
 
-\begin{IEEEbiographynophoto}{Jane Doe}
-Biography text here.
-\end{IEEEbiographynophoto}
+% NLP domain shift quantification
+\cite{li2025} apply shift quantification between two datasets via statistical hypothesis testing in the field of Natural Language Processing (NLP). They consider a shift in word frequency, sentence-level representation, and label frequency. All shift metrics show statistically significant correlation with cross‑domain performance degradation. Their study shows that robust shift‑quantification methods have value well beyond the scope of our work, highlighting applicability in other ML domains such as NLP.
 
-% You can push biographies down or up by placing
-% a \vfill before or after them. The appropriate
-% use of \vfill depends on what kind of text is
-% on the last page and whether or not the columns
-% are being equalized.
+% domain adaptation via color alignment
+\cite{abramov2020} show that aligning color statistics (the mean and covariance of RGB channels) and per-channel color histograms effectively reduces the domain gap between synthetic and real urban street scene datasets for object detection. This motivates the inclusion of $\text{js}_{\text{color}}$ in our study.
 
-%\vfill
+% domain adaptation via label alignment
+\cite{liu2022_labelShift} address the problem of label shift in unsupervised domain adaptation for semantic segmentation of urban scenes by aligning the conditional distribution $P(X|Y)$ across domains so that the feature extractor leans class-conditional, domain-invariant representations, and rectifying the posterior probability $P(Y|F(x))$ to correct for the distortion introduced by the mismatched class frequencies. This motivates the inclusion of label-based metrics in our study.
 
-% Can be used to pull up biographies so that the bottom of the last one
-% is flush with the other column.
-%\enlargethispage{-5in}
+% domain adaptation using both color and label alignment
+\cite{zhang2020} target both color and label shift by aligning color (via gamut-based color constancy) and label distributions (via image-level or superpixel properties) between GTA-based synthetic data and Cityscapes for semantic segmentation. All three alignment strategies improve segmentation performance individually, with their combination yielding the largest gains. Their image-level label distribution measures the distribution of classes by pixel occupancy, which is similar to our dataset-level metric $\text{js}_{\text{classFrequency}}$. However, since they operate in an unsupervised domain adaptation setting, Cityscapes' label distribution is estimated rather than measured directly.
 
+% comparative distribution analysis
+Instead of reducing distribution shift to a single score, \cite{UrbanSyn} conduct a comparative distribution analysis of the Cityscapes, GTA‑V, and Synscapes datasets. Their analysis shows that GTA‑V and Synscapes both deviate from Cityscapes, but in different ways. These findings are consistent with our own results (see Appendix~\ref{sec:datasetAnalysis}). Furthermore, they also trained DeepLabV3+ and SegFormer models on each dataset. The reported downstream performance aligns with our findings: SegFormer consistently outperforms DeepLabV3+. Models trained on Cityscapes perform best when tested on Cityscapes, while models trained on GTA-V perform worst.
 
+% you can choose not to have a title for an appendix
+% if you want by leaving the argument blank
+\section{Analysis of street scene datasets}
+\label{sec:datasetAnalysis}
+This section presents our analysis of the metric summaries for the three pure training datasets (Cityscapes100, Synscapes100, GTAV100) and the test dataset to gain a deeper insight into prominent differences in dataset characteristics. Across summaries, our Cityscapes-based training and test sets show nearly identical properties, as both were curated from the same underlying distribution.
 
-% that's all folks
+\subsection{Photorealism (color and texture analysis)}
+GTA-V exhibits a pronounced color and texture shift, whereas Synscapes' color and texture properties remain largely consistent with those of Cityscapes. 
+Both shifts might be artifacts of GTA-V's underlying rendering approach, which relies on real-time game-engine rendering and thus trades off photorealism against rendering speed, limiting illumination, reflection, and shadow accuracy compared to physically based rendering \cite{UrbanSyn}.
+
+\paragraph{Color}
+A comparison of hue, saturation, and brightness distributions (see Figure~\ref{fig:sumColor}) shows that hue and brightness are most strongly affected by this shift. In contrast to \cite{zhang2020}, we do not observe an oversaturation in GTA-V images. However, \cite{zhang2020}  also attribute part of the color shift to differing illumination conditions, which is consistent with our findings. GTA-V images exhibit increased brightness, which may create the perceptual impression of higher saturation due to the Hunt effect \cite{huntEffect}. Furthermore, GTA-V's hue distribution is sharply bimodal, peaking in orange and blue, while the other datasets show a broader, green-dominated distribution. This reflects the geographic setting of each dataset, as GTA-V is set in California, whereas Cityscapes and Synscapes depict Central European cities.
+
+\begin{figure}[h]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/color_hsv.png}
+    \caption{Mean per-image HSV histograms used in $\text{js}_{\text{color}}$}
+    \label{fig:sumColor}
+\end{figure}
+
+ \paragraph{Texture}
+ Our LBP histograms (see Figure \ref{fig:sumTexture}) reveal the strongest deviation in the last uniform bin at both LBP scales, respectively. This indicates that GTA-V images contain a higher proportion of uniform, bright regions compared to the other datasets. This observation aligns with the finding of \cite{zhang2020}, who report that GTA-V images exhibit visibly artificial texture. 
+% More information on interpreting LBP histogram:
+% - Stonger edge bins (Bin 4/5 in LBP with P=8, R=1; Bin 8/9 in LBP with P=16, R=2) and bright spot bin (bin 8 in LBP with P=8, R=1; Bin 16 in P=16, R=2) are the tallest bins across all datasets — this is typical for urban scenes: lots of straight edges (building lines, road markings, poles) and lots of locally-bright flat regions (sky, walls, road surface).
+% - near-symmetry between low bins and high bins reflects that dark-arc and bright-arc patterns of the same size occur with similar frequency
+% - n.u." (non-uniform) high -> local patches have complex/noisy micro-texture
+% - WHAT STANDS OUT: texture shift is most prominent for GTA in the highest uniform bins (8, 16) = GTA patches are disproportionately flat/bright (fewer detected edges, more uniform bright regions) 
+
+\begin{figure}[h]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/texture_lbp.png}
+    \caption{Mean per-image multiscale LBP histograms used in $\text{js}_{\text{texture}}$}
+    \label{fig:sumTexture}
+\end{figure}
+
+\subsection{Label analysis}
+Both Synscapes and GTA-V exhibit a pronounced label shift relative to Cityscapes, but the nature of this shift differs between datasets: The shift in class frequency (Figure~\ref{fig:sumClassFrequency}) is more pronounced for GTA-V, whereas the shift in class presence (Figure~\ref{fig:sumClassPresence}) and scene complexity (Figure~\ref{fig:sumSceneComplexity}) is more pronounced for Synscapes.
+
+\paragraph{Class frequency}
+The overall ranking of classes is closely tied to size relations. For example, roads often occupy a larger number of pixels than traffic signs. \cite{zhang2020} note that label distributions implicitly encode information on such underlying idiosyncrasies of urban traffic scenes.
+Synthetic and real datasets are fairly close in pixel share for common, large-area classes (e.g., ‘road’, ‘building’, ‘vegetation’, and ‘sky'). Such classes naturally occupy a larger number of pixels in any street scene, and hence, are less susceptible to label shift. 
+
+\begin{figure}[h]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/class_frequency.png}
+    \caption{Normalized class frequency used in $\text{js}_{\text{classFrequency}}$}
+    \label{fig:sumClassFrequency}
+\end{figure}
+
+\paragraph{Class presence}
+The overall class ranking between class frequency and class presence remains similar. Class presence and pixel proportion are closely related: Classes present in more samples also tend to occupy a larger total pixel area.
+Consistent with \cite{zhang2020, liu2022_labelShift, UrbanSyn}, we find that GTA-V's label shift is concentrated in specific classes, with substantially higher representation of ‘terrain’, ‘fence’, ‘wall’, and ‘truck’, and lower representation of 'bicycle’, ‘rider’, and ‘sign’. We attribute this to the dataset’s bias toward American-style urban layouts and traffic participants.
+In contrast, Synscapes exhibits a more even class presence across classes.
+
+\begin{figure}[h]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/class_presence.png}
+    \caption{Normalized class presence used in $\text{js}_{\text{classPresence}}$}
+    \label{fig:sumClassPresence}
+\end{figure}
+
+\paragraph{Scene complexity}
+Both synthetic datasets exhibit a higher scene complexity than Cityscapes.
+GTA-V shows a moderate increase in the number of distinct classes per sample. This may partly reflect our dataset curation, during which rural images recorded between urban areas were removed (see Section~\ref{sec:datasetPreparation}), as such scenes typically contain fewer distinct classes than dense urban environments.
+Synscapes exhibits the highest scene complexity overall. Combined with its even class presence and comparatively high class frequency, this points to a general overrepresentation of classes, which was also reported by \cite{UrbanSyn}. 
+
+\begin{figure}[!htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/scene_complexity.png}
+    \caption{Normalized scene complexity used in $\text{js}_{\text{sceneComplexity}}$}
+    \label{fig:sumSceneComplexity}
+\end{figure}
+
+\subsection{Distribution analysis}
+GTA-V exhibits a more prominent shift than Synscapes under both feature extractors (see Figure~\ref{fig:sumMeans}). Note that absolute distances are not comparable across extractors, as StreetCLIP embeddings are L2-normalized while DINOv2 embeddings are not. The consistent ranking across both extractors suggests that the shift reflects a genuine appearance and semantic difference rather than an artifact of a specific feature space.
+
+\begin{figure}[h]
+    \vspace{-0.5em} 
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/mean_shift_comparison.png}
+    \caption{Distance between distribution means}
+    \label{fig:sumMeans}
+\end{figure}
+
+Furthermore, GTA-V's eigenvalue spectrum lies consistently below that of Cityscapes and Synscapes (see Figure~\ref{fig:sumCovariate}). This suggests a lower variance, and thus reduced visual diversity, within the dataset. Our finding aligns with \cite{synscapes}, which hypothesize that GTA-V's reduced geometric and rendering complexity results in a smaller feature space.
+
+\begin{figure}[!htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/covariance_spectrum_comparison.png}
+    \caption{Eigenvalue spectrum of each distribution's covariance matrix}
+    \label{fig:sumCovariate}
+\end{figure}
+
 \end{document}
 
 
