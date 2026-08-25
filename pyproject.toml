@@ -61,6 +61,12 @@ dev = [
   "pytest>=8,<10",
 ]
 
+# Figure plotting
+plot = [
+  "matplotlib>=3.8",
+  "seaborn>=0.13",
+]
+
 [project.scripts]
 shiftbench-run = "shiftbench.experiments.run:main"
 

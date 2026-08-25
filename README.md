@@ -52,6 +52,7 @@ python3 -m pip install -e .
 | `.[image]` | opencv-python, scikit-image, pillow | image metrics, decoding files |
 | `.[sadge]` | opencv-python + the torch stack | SADGE (see below) |
 | `.[dev]` | pytest | development workflow |
+| `.[plot]` | matplotlib, seaborn | replicating our study's plots |
 
 SADGE additionally needs the MASt3R **git submodule** (`git submodule update
 --init --recursive` if you didn't clone recursively) and MASt3R's own runtime
