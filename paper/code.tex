@@ -77,7 +77,7 @@ IEEE, IEEEtran, journal, \LaTeX, paper, template.
 \textcolor{gray}{This introduction still needs to be written. Bla bla. CATCHING INTRO - maybe just shift II. RESEARCH QUESTION PART to intro? Bla Bla. STUDY APPROACH}
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
-Ten shift quantification metrics were applied to nine hybrid dataset configurations for daytime urban street scene segmentation. Correlation with downstream performance was measured across two model architectures with three random states each. \textcolor{gray}{Bla Bla MAIN FINDINGS}
+Twelve shift quantification metrics were applied to nine hybrid dataset configurations for daytime urban street scene segmentation. Correlation with downstream performance was measured across two model architectures with three random states each. \textcolor{gray}{Bla Bla MAIN FINDINGS}
 
 \section{Research question}
 Hybrid datasets, which combine real and synthetic data, are often used to address data-associated limitations in model performance and generalization. However, selecting an effective hybrid dataset configuration is costly when based on actual downstream performance, because it requires training a separate model for each candidate configuration. A more efficient alternative is to predict downstream performance. This study focuses on \textbf{distribution-shift-based prediction} with the following research question: 
@@ -112,16 +112,16 @@ Finally after resizing all the individual 2000 extracted samples belonging to al
 \textcolor{gray}{Bla Bla: Describe the preparation (number of samples selected, how samples were selected, resizing to uniform resolution, construction of the 9 hybrid train datasets + val + test datasets and the reasoning behind it, certain class indices are ignored - 19 instead of 34 classes)} 
 
 \subsection{Shift quantification}
-A distribution shift occurs when two data distributions differ. In machine learning (ML), this typically refers to the shift between the distribution a model is trained on (training distribution) and the distribution it will be applied to (inference distribution, approximated by the test dataset). Hybrid datasets are often motivated by the goal of reducing this distribution shift: Adding synthetic data to real data can enrich the training distribution in a controlled manner, improving coverage and diversity, and supporting generalization to shifted inference conditions. Conversely, adding real data to synthetic data can help anchoring the model in real-world statistics, reducing the reality gap and mitigating reliance on unrealistic or harmful artifacts. 
+A distribution shift occurs when two data distributions differ. In machine learning (ML), this typically refers to the shift between the distribution a model is trained on (training distribution) and the distribution it will be applied to (inference distribution, approximated by the test dataset). Hybrid datasets are often motivated by the goal of reducing this distribution shift: Adding synthetic data to real data can enrich the training distribution in a controlled manner, improving coverage and diversity, and supporting generalization to shifted inference conditions. Conversely, adding real data to synthetic data can help anchor the model in real-world statistics, reducing the reality gap and mitigating reliance on unrealistic or harmful artifacts. 
 
 Beyond this general notion, a distribution shift can be decomposed into several distinct components. Following the formulation of \cite{liu2022}, a segmentation model can be expressed as $G(x)=C(F(x))$, where the classifier $C$ outputs the posterior probability $P(Y|F(x))$ for an input image $x$. Applying Bayes' theorem yields 
 \begin{equation}
 \label{eq:bayes_shift}
 P(Y \mid F(x)) = \frac{P(F(x) \mid Y) \cdot P(Y)}{P(F(x))}.
 \end{equation}
-The Bayes decomposition exposes the distributions that may differ between datasets. Based on the affected distribution, we differentiate between five shift types, of which this study focuses on three: covariate shift, label shift, and representation shift.\footnote{Additional shift types include class-conditional representation shift, which affects the input representation for a specific class $P(F(x)|Y)$, and concept shift, which affects the labeling function $P(Y|F(x))$ or $P(Y|X)$. Class-conditional representation shift is excluded because this study quantifies the shift at the dataset level rather than per class. Concept shift is excluded because all datasets share the same semantic label definitions.} Inspired by \cite{dale2024}, we chose our shift quantification metrics considering four criteria: Each metric must be easy to calculate, correlate with model performance on test data, provide information about the source of the gap, and react to changes in data distribution as hybrid training configurations are adjusted. Based on the information used for quantification, we group the selected shift quantification metrics into three categories, each capturing a different aspect of the shift:
+The Bayes decomposition exposes the distributions that may differ between datasets. Based on the affected distribution, we differentiate between five shift types, of which this study focuses on three: covariate shift, label shift, and representation shift.\footnote{Additional shift types include class-conditional representation shift, which affects the input representation for a specific class $P(F(x)|Y)$, and concept shift, which affects the labeling function $P(Y|F(x))$ or $P(Y|X)$. Class-conditional representation shift is excluded because this study quantifies the shift at the dataset level rather than per class. Concept shift is excluded because all datasets share the same semantic label definitions.} Inspired by \cite{dale2024}, we chose our shift quantification metrics considering three criteria: Each metric must be easy to calculate, provide information about the source of the gap, and react to changes in data distribution as hybrid training configurations are adjusted. Their fourth criteria, correlation with downstream model performance, will be addressed in this study. Based on the information used for quantification, we group the selected shift quantification metrics into three categories, each capturing a different aspect of the shift:
 
-\textbf{Image-based metrics} quantify the covariate shift, that is, differences in the input distribution $P(X)$ that arise from changes in visual properties such as color and texture. These metrics operate on the raw images. This study considers two metrics that focus on a shift in color ($\text{js}_{\text{color}}$) and texture ($\text{js}_{\text{texture}}$) respectively. Covariate shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized mean histograms $p_{\text{train}}$, $p_{\text{test}}$. Per-image color histograms were computed in HSV space using density‑based histogram counts. Per-image texture histograms were computed using multiscale Local Binary Patterns (LBP) at two scales ($P=8$, $R=1$) and ($P=16$, $R=2$).
+\textbf{Image-based metrics} quantify the covariate shift, that is, differences in the input distribution $P(X)$ that arise from changes in visual properties such as color and texture. These metrics operate on the raw images. This study considers two metrics that focus on a shift in color ($\text{js}_{\text{color}}$) and texture ($\text{js}_{\text{texture}}$) respectively. Covariate shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized mean histograms $p_{\text{train}}$, $p_{\text{test}}$. Per-image color histograms were computed in HSV space using density-based histogram counts, with 32 hue bins (0-180), 16 saturation bins (0-256), and 16 brightness bins (0-256). Per-image texture histograms were computed using multiscale Local Binary Patterns (LBP) at two scales ($P=8$, $R=1$) and ($P=16$, $R=2$).
 
 \begin{equation}
 \label{eq:js}
@@ -136,7 +136,7 @@ d_{\text{JS}}(p_{\text{train}}, p_{\text{test}})
 \end{split}
 \end{equation}
 
-\textbf{Label-based metrics} quantify the label shift, that is, differences in the class-label distribution $P(Y)$. These metrics operate on the segmentation masks. This study considers three metrics that focus on a shift in class frequency ($\text{js}_{\text{classFrequency}}$), class presence ($\text{js}_{\text{classPresence}}$), and scene complexity ($\text{js}_{\text{sceneComplexity}}$) respectively. Label shift was quantified using Jenson-Shannon distance \eqref{eq:js} between the normalized histograms $p_{\text{train}}$, $p_{\text{test}}$. The class frequency histogram of a dataset shows the fraction of all pixels belonging to each class. The class presence histogram of a dataset shows the share of image-level class occurrences attributable to each class. The scene complexity histogram of a dataset shows the distribution of distinct-class counts per image.
+\textbf{Label-based metrics} quantify the label shift, that is, differences in the class-label distribution $P(Y)$. These metrics operate on the segmentation masks. This study considers three metrics that focus on a shift in class frequency ($\text{js}_{\text{classFrequency}}$), class presence ($\text{js}_{\text{classPresence}}$), and scene complexity ($\text{js}_{\text{sceneComplexity}}$) respectively. Label shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized histograms $p_{\text{train}}$, $p_{\text{test}}$. The class frequency histogram of a dataset shows the fraction of all pixels belonging to each class. The class presence histogram of a dataset shows the share of image-level class occurrences attributable to each class. The scene complexity histogram of a dataset shows the distribution of distinct-class counts per image.
 
 \textbf{Representation-based metrics} quantify the representation shift, that is, differences in the feature distribution $P(F(x))$. These metrics operate in a learned feature space on image representations produced by a feature extractor $F$. This study used two pretrained feature extractors: DINOv2‑Base \cite{oquab2024} for appearance‑focused representations and StreetCLIP \cite{haas2023} for semantic‑focused representations. They were selected because both were exposed to car-mounted street-view-like imagery during training, making them well aligned with this study's target domain. Representation shift was quantified using centroid distance \eqref{eq:centroid} and Fréchet distance \eqref{eq:frechet} \cite{NIPS2017_8a1d6947} between two distributions with means $\mu_{\text{train}}$, $\mu_{\text{test}}$ and covariance matrices $\Sigma_{\text{train}}$, $\Sigma_{\text{test}}$, computed in DINOv2-Base and StreetCLIP feature spaces. This yielded four metric variants: $\text{fréchet}_{\text{dinov2}}$, $\text{centroid}_{\text{dinov2}}$, $\text{fréchet}_{\text{streetclip}}$, and $\text{centroid}_{\text{streetclip}}$.
 
@@ -157,7 +157,7 @@ d_{\text{centroid}}(\mu_{\text{train}},\mu_{\text{test}}) = \|\mu_{\text{train}}
 \end{equation}
 
 \smallskip
-The last representation-based metric considered in this study is \textbf{SADGE} (Structural and Appearance Domain Gap Estimator), which was shown to predict downstream model performance most reliably among the shift quantification metrics tested in \cite{bartkowiak2026}. SADGE differs fundamentally from the nine other metrics evaluated here: While all other metrics quantify distributional distance between datasets (by comparing dataset-level statistics in image, label, or feature space), SADGE computes pairwise similarity between individual images and aggregates these similarities into a dataset-level score. In our adaptation, we chose their retrieval-based comparison over their aligned comparison, because exact pairs are not available. Each test image is compared to ten randomly selected candidate images from the hybrid training dataset. The strongest appearance and geometry match per test image is retained. Appearance similarity is measured using cosine similarity between DINOv3 \cite{simeoni2025dinov3} embeddings. Geometric similarity is measured using MASt3R \cite{mast3r} inlier counts. These per-image scores are averaged (to obtain dataset-level appearance similarity $\bar{A}$ and geometry similarity $\bar{G}$), standardized using z-score normalization \eqref{eq:zscore}, and fused through the pre-calibrated linear-bilinear model \eqref{eq:sadge} provided in \cite{bartkowiak2026}.
+The last representation-based metric considered in this study is \textbf{SADGE} (Structural and Appearance Domain Gap Estimator), which was shown to predict downstream model performance most reliably among the shift quantification metrics tested in \cite{bartkowiak2026}. SADGE differs fundamentally from the nine other metrics evaluated here: While all other metrics quantify distributional distance between datasets (by comparing dataset-level statistics in image, label, or feature space), SADGE computes pairwise similarity between individual images and aggregates these similarities into a dataset-level score. In our adaptation, we chose their retrieval-based comparison over their aligned comparison, because exact pairs are not available. Each test image is compared to ten randomly selected candidate images from the hybrid training dataset. The strongest appearance and geometry match per test image is retained. Appearance similarity is measured using cosine similarity between DINOv3 \cite{simeoni2025dinov3} embeddings. Geometric similarity is measured using MASt3R \cite{mast3r} inlier counts. These per-image scores are averaged (to obtain dataset-level appearance similarity $\bar{A}$ and geometry similarity $\bar{G}$), standardized using z-score normalization \eqref{eq:zscore}, and fused through the pre-calibrated linear-bilinear model \eqref{eq:sadge} provided in \cite{bartkowiak2026}. Besides the fused SADGE score, we additionally consider its two components $\text{\bar{A}}_{\text{SADGE}}$ and $\text{\bar{G}}_{\text{SADGE}}$ as individual shift quantification metrics.
 
 \begin{equation} \label{eq:zscore}
 \begin{aligned}
@@ -214,23 +214,104 @@ Our matched-ratio comparison avoids the effect entirely by holding the synthetic
 \textbf{Multiple comparisons.} Correlating twelve metrics against the same downstream scores raises the chance that at least one appears significant purely by accident. Correlation $p$-values are therefore reported alongside values adjusted by the Holm step-down procedure \cite{holm1979}, applied within each family of twelve metrics, that is separately for each architecture.
 
 \section{Results}
-\textcolor{gray}{Bla Bla: Describe the observed general dataset differences between Cityscapes, Synscapses, GTA-V - maybe plot histograms or sth like that }
+\textcolor{gray}{PARAGRAPH (1)}\\ 
+\textcolor{gray}{-- Synscapes and GTA-V differ in separate ways from Cityscapes (see Appendix~\ref{sec:datasetAnalysis})}\\
+\textcolor{gray}{-- Model performance is visibly affected by this shift (see Figure~\ref{fig:shiftModelPerformance}): The lower the ratio of in-domain/real/Cityscapes data, the lower downstream model performance.}\\
+\textcolor{gray}{-- Models trained with GTA-V as a synthetic data source perform generally worse than models trained on Synscapes as a synthetic data source.}\\
+\textcolor{gray}{-- variance (in performance, between seeds) rises at higher synthetic fractions for both models; }\\
+\textcolor{gray}{-- Segformer architecture generally performs better than DeepLabV3+}
 
-\textcolor{gray}{Bla Bla: Plot the training, validation loss progression to show that the models reach a stable state and to compare hybrid dataset configs already based on training progression}
+\begin{figure}[h]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/shiftModelPerformance.png}
+    \caption{Points show means across three training seeds. Shaded regions indicate 95\% confidence intervals computed using the unbiased sample variance.}
+    \label{fig:shiftModelPerformance}
+\end{figure}
 
-\textcolor{gray}{Bla Bla: Main correlation analysis - plot shift scores against model performance scores and measure Pearson/Spearman correlation - identify promising metrics - do promising metrics differ between synthetic datasets? - are the results stable across seeds and model architectures?}
+\textcolor{gray}{PARAGRAPH (2) - reference Figures \ref{fig:correlation1} and \ref{fig:correlation2}}
+
+\textcolor{gray}{-- shift quantification metrics produce shift scores that differ in scale}
+
+\textcolor{gray}{-- observe negative correlation for all distance-based metrics; observe positive correlation for SADGE's two similarity-based individual components; observe negative correlation for the combined SADGE score despite being similarity-based}
+
+\textcolor{gray}{-- correlation (and its p-value / statistical significance) is generally higher for DeepLabV3+ than Segformer}
+
+\textcolor{gray}{-- statistical significance: all are $p<0.05$}
+
+\textcolor{gray}{-- for a single training seed, ranking according to correlation stays similar between the two model architectures, just $\text{js}_{\text{sceneComplexity}}$ and $\text{js}_{\text{color}}$ are swapped}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/seed42_color_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_texture_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_class_frequency_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_class_presence_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_scene_complexity_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_appearance_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_geometry_miou.png}
+    
+    \caption{caption}
+    \label{fig:correlation1}
+\end{figure*}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_dinov2_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_streetclip_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_dinov2_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_streetclip_miou.png}
+    
+    \caption{continued from Figure X}
+    \label{fig:correlation2}
+\end{figure*}
+
+\textcolor{gray}{PARAGRAPH (3) - reference Figure \ref{fig:ranking}}
+
+\textcolor{gray}{-- the overall ranking stays similar when considering the mean downstream performance (across seeds), now is even identical between the two model architectures}
+
+\textcolor{gray}{-- SADGE remains the best metric in our study as well; the individual geometry and appearance SADGE components alone already work well by themselves}
+
+\textcolor{gray}{-- from our metrics, $\text{js}_{\text{classFrequency}}$ shows highest predictive power}
+
+\textcolor{gray}{-- out of our representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ works best}
+
+\textcolor{gray}{-- $\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ show lowest predictive power}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/rankingSegformer.png}
+    \vspace{1.0em}
+    \includegraphics[width=\linewidth]{images/rankingDeeplabv3plus.png}
+    \caption{Caption}
+    \label{fig:ranking}
+\end{figure}
+
+\textcolor{gray}{PARAGRAPH (4) - reference Figure~\ref{fig:matchedRatio}}
+
+\textcolor{gray}{-- matched-ratio comparisons (see Figure~\ref{fig:matchedRatio}) reveal a key difference between model architectures: tie for SegFormer architecture, across metrics, for moderate synthetic ratios. For the DeepLabV+, all metrics are able to draw a clear differentiation. } \\
+\textcolor{gray}{-- $\text{SADGE}$, $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ are unable to rank hybrid dataset utility meaningfully when keeping the synthetic fraction fixed}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/matchedRatioSegformer.png}
+    \vspace{1.0em}
+    \includegraphics[width=\linewidth]{images/matchedRatioDeepLab.png}
+    \caption{Caption}
+    \label{fig:matchedRatio}
+\end{figure}
 
 \section{Evaluation}
-\textcolor{gray}{Bla Bla: Answer research question based on findings}
-
-\textcolor{gray}{Bla Bla: Relate findings to previous research}
-
-\textcolor{gray}{Bla Bla: Discuss limitations of the study} \\
-
-$\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. 
-% So why do those metrics differ in their correlation?
-% Shortcoming of current classPresence implementation (also applies to classFrequency)
-Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.
+First, both shift quantification and downstream model performance reveal a domain gap between synthetic and real data. However, not all shift quantification metrics succeed in ranking hybrid dataset utility meaningfully. Both $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ quantify a shift type that is more prominent in Synscapes than GTA-V (Appendix~\ref{sec:datasetAnalysis}), while downstream performance is affected more by GTA-V than Synscapes (Figure~\ref{fig:shiftModelPerformance}). This shows that predictive power does not simply follow from detecting whichever shift is most prominent, but from detecting the shift types that actually impact model performance. Combining multiple metric scores in a unified shift score, similar to SADGE, could help make shift quantification independent of the dataset and its dominant shift types \cite{bartkowiak2026, duminil2025}.\\
+Second, our results reveal the problematic nature of cross-ratio, correlation-based metric evaluation, which (as described in Section~\ref{sec:analysis}) largely reflects the metric's ability to track the synthetic proportion rather than its actual predictive power. This becomes most apparent for $\text{js}_{\text{classPresence}}$, which ranks highly under Spearman's correlation (Figure~\ref{fig:sumClassPresence}) but fails in matched-ratio comparisons (Figure~\ref{fig:matchedRatioComparison}). Hence, correlation alone is insufficient for assessing shift metrics and can systematically misrepresent their true predictive value.\\ 
+Third, we confirm $\text{SADGE}$-based shift quantification as the strongest predictor among the evaluated metrics, though its fused score is miscalibrated on our data and its sign flips as a result. With $a=0$, the $\text{SADGE}$ score reduces to $\hat{A} \cdot(b + c \cdot \hat{G})$. In all of our hybrid datasets, the appearance score $\bar{A}$ is below $\text{SADGE}$'s calibrated mean $\mu_A$, and the geometry score $\bar{G}$ reports far fewer MASt3R inliers than assumed by \cite{bartkowiak2026} for calibration. The latter is a known failure mode, which was already raised in \cite{bartkowiak2026}. This forces both $\hat{A}$ and $\hat{G}$ into the negative region, such that the sign flips.\\
+Fourth, our results suggest that the predictive power of shift quantification metrics is mostly independent of the model architecture. SegFormer and DeepLabV3+ share a similar metric ranking and global rank correlations of comparable magnitude. The one place where the two architectures diverge is not in metric quality but in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets, and its higher randomness across training seeds (Figure~\ref{fig:shiftModelPerformance}).\\
+Overall, pre-training shift quantification is a promising direction to predict the utility of a hybrid dataset. However, identifying the relevant shift types, calibrating metrics appropriately, and evaluating them reliably remain open challenges that future research must address.\\
+Further research directions can be motivated by our study's limitations: \\
+First, our framework compares metrics whose raw shift scores are not directly comparable, because they rely on different distance or similarity measures and operate on different numerical scales. Constraining all shift quantification metrics to a fixed value range, such as $[0,1]$ would enable direct comparability.\\
+Second, our data samples were restricted to daytime and clear weather conditions. Future work could explore the metrics in more diverse weather and lighting conditions. This could provide deeper insight into the performance and robustness of shift quantification metrics in the field of street scene segmentation.\\
+Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.\\
 
 \section{Conclusion}
 \textcolor{gray}{Bla Bla: Conclusion/Summary}
@@ -330,7 +411,7 @@ Both Synscapes and GTA-V exhibit a pronounced label shift relative to Cityscapes
 
 \paragraph{Class frequency}
 The overall ranking of classes is closely tied to size relations. For example, roads often occupy a larger number of pixels than traffic signs. \cite{zhang2020} note that label distributions implicitly encode information on such underlying idiosyncrasies of urban traffic scenes.
-Synthetic and real datasets are fairly close in pixel share for common, large-area classes (e.g., ‘road’, ‘building’, ‘vegetation’, and ‘sky'). Such classes naturally occupy a larger number of pixels in any street scene, and hence, are less susceptible to label shift. 
+Synthetic and real datasets are fairly close in pixel share for common, large-area classes (e.g., 'road', 'building', 'vegetation', and 'sky'). Such classes naturally occupy a larger number of pixels in any street scene, and hence, are less susceptible to label shift. 
 
 \begin{figure}[h]
     \vspace{-0.5em}
