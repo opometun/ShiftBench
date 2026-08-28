@@ -214,23 +214,104 @@ Our matched-ratio comparison avoids the effect entirely by holding the synthetic
 \textbf{Multiple comparisons.} Correlating twelve metrics against the same downstream scores raises the chance that at least one appears significant purely by accident. Correlation $p$-values are therefore reported alongside values adjusted by the Holm step-down procedure \cite{holm1979}, applied within each family of twelve metrics, that is separately for each architecture.
 
 \section{Results}
-\textcolor{gray}{Bla Bla: Describe the observed general dataset differences between Cityscapes, Synscapses, GTA-V - maybe plot histograms or sth like that }
+\textcolor{gray}{PARAGRAPH (1)}\\ 
+\textcolor{gray}{-- Synscapes and GTA-V differ in separate ways from Cityscapes (see Appendix~\ref{sec:datasetAnalysis})}\\
+\textcolor{gray}{-- Model performance is visibly affected by this shift (see Figure~\ref{fig:shiftModelPerformance}): The lower the ratio of in-domain/real/Cityscapes data, the lower downstream model performance.}\\
+\textcolor{gray}{-- Models trained with GTA-V as a synthetic data source perform generally worse than models trained on Synscapes as a synthetic data source.}\\
+\textcolor{gray}{-- variance (in performance, between seeds) rises at higher synthetic fractions for both models; }\\
+\textcolor{gray}{-- Segformer architecture generally performs better than DeepLabV3+}
 
-\textcolor{gray}{Bla Bla: Plot the training, validation loss progression to show that the models reach a stable state and to compare hybrid dataset configs already based on training progression}
+\begin{figure}[h]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/shiftModelPerformance.png}
+    \caption{Points show means across three training seeds. Shaded regions indicate 95\% confidence intervals computed using the unbiased sample variance.}
+    \label{fig:shiftModelPerformance}
+\end{figure}
 
-\textcolor{gray}{Bla Bla: Main correlation analysis - plot shift scores against model performance scores and measure Pearson/Spearman correlation - identify promising metrics - do promising metrics differ between synthetic datasets? - are the results stable across seeds and model architectures?}
+\textcolor{gray}{PARAGRAPH (2) - reference Figures \ref{fig:correlation1} and \ref{fig:correlation2}}
+
+\textcolor{gray}{-- shift quantification metrics produce shift scores that differ in scale}
+
+\textcolor{gray}{-- observe negative correlation for all distance-based metrics; observe positive correlation for SADGE's two similarity-based individual components; observe negative correlation for the combined SADGE score despite being similarity-based}
+
+\textcolor{gray}{-- correlation (and its p-value / statistical significance) is generally higher for DeepLabV3+ than Segformer}
+
+\textcolor{gray}{-- statistical significance: all are $p<0.05$}
+
+\textcolor{gray}{-- for a single training seed, ranking according to correlation stays similar between the two model architectures, just $\text{js}_{\text{sceneComplexity}}$ and $\text{js}_{\text{color}}$ are swapped}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/seed42_color_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_texture_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_class_frequency_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_class_presence_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_scene_complexity_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_appearance_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_geometry_miou.png}
+    
+    \caption{caption}
+    \label{fig:correlation1}
+\end{figure*}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_dinov2_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_streetclip_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_dinov2_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_streetclip_miou.png}
+    
+    \caption{continued from Figure X}
+    \label{fig:correlation2}
+\end{figure*}
+
+\textcolor{gray}{PARAGRAPH (3) - reference Figure \ref{fig:ranking}}
+
+\textcolor{gray}{-- the overall ranking stays similar when considering the mean downstream performance (across seeds), now is even identical between the two model architectures}
+
+\textcolor{gray}{-- SADGE remains the best metric in our study as well; the individual geometry and appearance SADGE components alone already work well by themselves}
+
+\textcolor{gray}{-- from our metrics, $\text{js}_{\text{classFrequency}}$ shows highest predictive power}
+
+\textcolor{gray}{-- out of our representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ works best}
+
+\textcolor{gray}{-- $\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ show lowest predictive power}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/rankingSegformer.png}
+    \vspace{1.0em}
+    \includegraphics[width=\linewidth]{images/rankingDeeplabv3plus.png}
+    \caption{Caption}
+    \label{fig:ranking}
+\end{figure}
+
+\textcolor{gray}{PARAGRAPH (4) - reference Figure~\ref{fig:matchedRatio}}
+
+\textcolor{gray}{-- matched-ratio comparisons (see Figure~\ref{fig:matchedRatio}) reveal a key difference between model architectures: tie for SegFormer architecture, across metrics, for moderate synthetic ratios. For the DeepLabV+, all metrics are able to draw a clear differentiation. } \\
+\textcolor{gray}{-- $\text{SADGE}$, $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ are unable to rank hybrid dataset utility meaningfully when keeping the synthetic fraction fixed}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/matchedRatioSegformer.png}
+    \vspace{1.0em}
+    \includegraphics[width=\linewidth]{images/matchedRatioDeepLab.png}
+    \caption{Caption}
+    \label{fig:matchedRatio}
+\end{figure}
 
 \section{Evaluation}
-\textcolor{gray}{Bla Bla: Answer research question based on findings}
-
-\textcolor{gray}{Bla Bla: Relate findings to previous research}
-
-\textcolor{gray}{Bla Bla: Discuss limitations of the study} \\
-
-$\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. 
-% So why do those metrics differ in their correlation?
-% Shortcoming of current classPresence implementation (also applies to classFrequency)
-Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.
+First, both shift quantification and downstream model performance reveal a domain gap between synthetic and real data. However, not all shift quantification metrics succeed in ranking hybrid dataset utility meaningfully. Both $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ quantify a shift type that is more prominent in Synscapes than GTA-V (Appendix~\ref{sec:datasetAnalysis}), while downstream performance is affected more by GTA-V than Synscapes (Figure~\ref{fig:shiftModelPerformance}). This shows that predictive power does not simply follow from detecting whichever shift is most prominent, but from detecting the shift types that actually impact model performance. Combining multiple metric scores in a unified shift score, similar to SADGE, could help make shift quantification independent of the dataset and its dominant shift types \cite{bartkowiak2026, duminil2025}.\\
+Second, our results reveal the problematic nature of cross-ratio, correlation-based metric evaluation, which (as described in Section~\ref{sec:analysis}) largely reflects the metric's ability to track the synthetic proportion rather than its actual predictive power. This becomes most apparent for $\text{js}_{\text{classPresence}}$, which ranks highly under Spearman's correlation (Figure~\ref{fig:sumClassPresence}) but fails in matched-ratio comparisons (Figure~\ref{fig:matchedRatioComparison}). Hence, correlation alone is insufficient for assessing shift metrics and can systematically misrepresent their true predictive value.\\ 
+Third, we confirm $\text{SADGE}$-based shift quantification as the strongest predictor among the evaluated metrics, though its fused score is miscalibrated on our data and its sign flips as a result. With $a=0$, the $\text{SADGE}$ score reduces to $\hat{A} \cdot(b + c \cdot \hat{G})$. In all of our hybrid datasets, the appearance score $\bar{A}$ is below $\text{SADGE}$'s calibrated mean $\mu_A$, and the geometry score $\bar{G}$ reports far fewer MASt3R inliers than assumed by \cite{bartkowiak2026} for calibration. The latter is a known failure mode, which was already raised in \cite{bartkowiak2026}. This forces both $\hat{A}$ and $\hat{G}$ into the negative region, such that the sign flips.\\
+Fourth, our results suggest that the predictive power of shift quantification metrics is mostly independent of the model architecture. SegFormer and DeepLabV3+ share a similar metric ranking and global rank correlations of comparable magnitude. The one place where the two architectures diverge is not in metric quality but in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets, and its higher randomness across training seeds (Figure~\ref{fig:shiftModelPerformance}).\\
+Overall, pre-training shift quantification is a promising direction to predict the utility of a hybrid dataset. However, identifying the relevant shift types, calibrating metrics appropriately, and evaluating them reliably remain open challenges that future research must address.\\
+Further research directions can be motivated by our study's limitations: \\
+First, our framework compares metrics whose raw shift scores are not directly comparable, because they rely on different distance or similarity measures and operate on different numerical scales. Constraining all shift quantification metrics to a fixed value range, such as $[0,1]$ would enable direct comparability.\\
+Second, our data samples were restricted to daytime and clear weather conditions. Future work could explore the metrics in more diverse weather and lighting conditions. This could provide deeper insight into the performance and robustness of shift quantification metrics in the field of street scene segmentation.\\
+Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.\\
 
 \section{Conclusion}
 \textcolor{gray}{Bla Bla: Conclusion/Summary}
