@@ -269,7 +269,7 @@ Always review the LICENSE terms of any dataset you use. The datasets employed in
 across twelve metrics, and is the file to compare a new metric against.
 
 Everything else the study produced is on Google Drive: 
-the split-seperated dataset manifests, the 54 trained checkpoints, 
+the split-seperated dataset manifests, the 108 trained checkpoints, 
 their predicted masks on the test split, per-run training
 histories and test summaries, encoder embeddings, and the correlation outputs.
 [`FILESHARE.md`](FILESHARE.md) describes the layout and how to merge it back over a clone.
@@ -278,6 +278,8 @@ Contact the maintainers for access.
 Evaluating a new shift metric does not require retraining. The per-mixture mIoU
 and ECE our models achieved are in `shift_json/correlation_*.json` on the
 Drive, so a new metric can be correlated against the same downstream numbers we
-used.
+used. `shift_json/seeds6/` holds the same analysis over all six seeds, which is
+the version the paper reports; the files directly under `shift_json/` are the
+earlier three-seed run and are kept only so the older figures remain traceable.
 
 [`REPRODUCE.md`](REPRODUCE.md) lists every command that produced these results, in order.
