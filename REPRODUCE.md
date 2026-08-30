@@ -70,13 +70,13 @@ Repeat seeds. Seed 42 writes to `output/<mixture>/<model>/`, anything else to
 `output/<mixture>/<model>_seed<N>/`, so these never collide:
 
 ```bash
-for s in 43 44; do
+for s in 43 44 45 46 47; do
   sbatch --export=ALL,SEED=$s --array=1,3,5,7,9,11,13,15,17%2 scripts/hpc/train_array.sbatch
   sbatch --export=ALL,SEED=$s --array=2,4,6,8,10,12,14,16,18%2 scripts/hpc/train_array.sbatch
 done
 ```
 
-54 runs total. SegFormer takes roughly 1.75 h each, DeepLabV3+ about 40 min.
+108 runs total. SegFormer takes roughly 1.75 h each, DeepLabV3+ about 40 min.
 
 ## 5. Test-split evaluation
 
@@ -86,7 +86,7 @@ computed against the test split, so downstream performance has to come from the
 same split or the two axes describe different distributions.
 
 ```bash
-for m in segformer deeplabv3plus; do for s in 42 43 44; do
+for m in segformer deeplabv3plus; do for s in 42 43 44 45 46 47; do
   sbatch --export=ALL,MODEL=$m,SEED=$s scripts/hpc/evaluate_test.sbatch
 done; done
 ```
@@ -149,14 +149,19 @@ inverted.
 srun --partition=workq --time=00:10:00 --cpus-per-task=2 bash -c \
   "cd <repo> && source ~/shiftbench-venv/bin/activate && \
    for m in segformer deeplabv3plus; do for t in miou ece; do \
-     python scripts/analyze_correlation.py --model \$m --target \$t --seeds 42 43 44; \
+     sfx=\"\"; [ \$t = ece ] && sfx=_ece; \
+     python scripts/analyze_correlation.py --model \$m --target \$t \
+       --seeds 42 43 44 45 46 47 \
+       --out results/shift/seeds6/correlation_\$m\$sfx.json; \
    done; done"
 ```
 
-Writes four files: `correlation_<model>.json` and
-`correlation_<model>_ece.json`. Each reports Spearman and Pearson against the
-downstream target, plus the within-ratio test that holds synthetic fraction
-fixed and decides matched pairs with a Welch t-test on the per-seed values.
+Writes four files into `results/shift/seeds6/`: `correlation_<model>.json`
+and `correlation_<model>_ece.json`. Eight exist in total — the earlier
+three-seed pass sits directly under `results/shift/`, and the paper reports
+the six-seed one. Each reports Spearman and Pearson against the downstream
+target, plus the within-ratio test that holds synthetic fraction fixed and
+decides matched pairs with a Welch t-test on the per-seed values.
 
 With `--seeds`, the tie threshold is measured from the observed spread rather
 than assumed. With one seed it falls back to a fixed constant and says so.

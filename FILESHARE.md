@@ -21,9 +21,9 @@ logs/                                                             18 MB  173 fil
 study's shift quantification. They are only required for exact study replication. 
 
 `checkpoints/` are the trained models, one per mixture, architecture and seed.
-Nine mixtures times two architectures times three seeds. These are the only
-artifacts that cannot be reproduced without re-running the study, which took
-about 40 GPU hours.
+Nine mixtures times two architectures times six seeds, so 108 runs. These
+are the only artifacts that cannot be reproduced without re-running the
+study, which took about 40 GPU hours.
 
 `predictions/` are the per-pixel outputs each model produced on the 975
 held-out real test images, 975 PNGs per run. Included so qualitative analysis
