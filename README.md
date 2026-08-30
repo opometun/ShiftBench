@@ -39,10 +39,14 @@ The project targets Python `3.11.9`.
 git clone --recursive <repo>   # --recursive is needed only for SADGE (MASt3R)
 python3.11 -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e .
+python3 -m pip install -e ".[features]" 
 ```
 
-`numpy` and `scipy` are the only required dependencies. Extras per family:
+`numpy` and `scipy` are the only *declared* base dependencies, but a bare
+`pip install -e .` is not enough to import the package: `shiftbench.metrics`
+imports `torch` at module scope for SADGE, and `shiftbench.config` imports
+the metric registry in turn. `.[features]` is the practical minimum for
+running the tests or computing any metric. Extras per family:
 
 | extra | installs | needed for |
 | --- | --- | --- |
@@ -239,13 +243,14 @@ paper/                                   Scientific paper (IEEE format)
 python3 -m unittest discover -s tests
 ```
 
-Most tests require only `numpy` and `scipy`; some skip without the optional
-extras. They cover config validation (including per-metric `[shift]` rules),
-schema and manifest handling, the metric registries, characterization pins of
-every histogram metric's numbers, equivalence of the summary-artifact path
-with the original implementations, and run artifacts including refusal paths.
-Encoder backends are wiring-tested against stubs; real forward passes need
-`.[features]` and a checkpoint download.
+The tests need the same `.[features]` install as the rest of the project; a
+few additionally skip without the other optional extras. They cover config
+validation (including per-metric `[shift]` rules), schema and manifest
+handling, the metric registries, characterization pins of every histogram
+metric's numbers, equivalence of the summary-artifact path with the original
+implementations, and run artifacts including refusal paths. Encoder backends
+are wiring-tested against stubs; real forward passes also need a checkpoint
+download.
 
 ## Known Gaps
 
