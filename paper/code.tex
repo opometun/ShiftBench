@@ -20,47 +20,37 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Conference Paper Title*\\
-{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured for https://ieeexplore.ieee.org  and
-should not be used}
-\thanks{Identify applicable funding agency here. If none, delete this.}
-}
+\title{Conference Paper Title}
 
-\author{\IEEEauthorblockN{1\textsuperscript{st} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\author{\IEEEauthorblockN{Silvie Opolka}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+sopolka@uni-osnabrueck.de}
 \and
-\IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\IEEEauthorblockN{Sigur Stück}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+sstueck@uni-osnabrueck.de}
 \and
-\IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\IEEEauthorblockN{Oleksandr Pometum}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+opometun@uni-osnabrueck.de}
 \and
-\IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\IEEEauthorblockN{Krishnendu Bose}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+krbose@uni-osnabrueck.de}
 \and
-\IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\IEEEauthorblockN{Srishti Pandey}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+spandey@uni-osnabrueck.de}
 }
 
 \maketitle
@@ -74,15 +64,14 @@ IEEE, IEEEtran, journal, \LaTeX, paper, template.
 \end{IEEEkeywords}
 
 \section{Introduction}
-\textcolor{gray}{This introduction still needs to be written. Bla bla. CATCHING INTRO - maybe just shift II. RESEARCH QUESTION PART to intro? Bla Bla. STUDY APPROACH}
-% You must have at least 2 lines in the paragraph with the drop letter
-% (should never be an issue)
-Twelve shift quantification metrics were applied to nine hybrid dataset configurations for daytime urban street scene segmentation. Correlation with downstream performance was measured across two model architectures with three random states each. \textcolor{gray}{Bla Bla MAIN FINDINGS}
+Hybrid datasets, which combine real and synthetic data, are often used to address data-associated limitations in model performance and generalization. However, selecting an effective hybrid dataset configuration is costly when based on actual downstream performance, because it requires training a separate model for each candidate configuration. A more efficient alternative is to predict downstream performance. This study focuses on \textbf{distribution-shift-based prediction} with the following research question: \textit{Can pre-training shift quantification predict the utility of a hybrid dataset reliably and therefore replace naive selection among candidate configurations?}\\
 
-\section{Research question}
-Hybrid datasets, which combine real and synthetic data, are often used to address data-associated limitations in model performance and generalization. However, selecting an effective hybrid dataset configuration is costly when based on actual downstream performance, because it requires training a separate model for each candidate configuration. A more efficient alternative is to predict downstream performance. This study focuses on \textbf{distribution-shift-based prediction} with the following research question: 
-
-\textit{Can pre-training shift quantification predict the utility of a hybrid dataset reliably and therefore replace naive selection among candidate configurations?}
+The contributions of this paper are threefold: 
+\begin{itemize}
+\item We analyze the key differences between real and synthetic urban street scene datasets.
+\item We develop nine distance-based shift quantification metrics, each quantifying a different shift type, and systematically compare their predictive power for hybrid dataset utility with the current state-of-the-art.
+\item We assess the practical viability of shift-based dataset evaluation and identify the metrics with highest reliability.
+\end{itemize}
 
 \section{Methods}
 This study evaluates the proposed approach in the context of \textbf{daytime urban street scene segmentation}.
@@ -303,25 +292,29 @@ Our matched-ratio comparison avoids the effect entirely by holding the synthetic
     \label{fig:matchedRatio}
 \end{figure}
 
-\section{Evaluation}
-First, both shift quantification and downstream model performance reveal a domain gap between synthetic and real data. However, not all shift quantification metrics succeed in ranking hybrid dataset utility meaningfully. Both $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ quantify a shift type that is more prominent in Synscapes than GTA-V (Appendix~\ref{sec:datasetAnalysis}), while downstream performance is affected more by GTA-V than Synscapes (Figure~\ref{fig:shiftModelPerformance}). This shows that predictive power does not simply follow from detecting whichever shift is most prominent, but from detecting the shift types that actually impact model performance. Combining multiple metric scores in a unified shift score, similar to SADGE, could help make shift quantification independent of the dataset and its dominant shift types \cite{bartkowiak2026, duminil2025}.\\
-Second, our results reveal the problematic nature of cross-ratio, correlation-based metric evaluation, which (as described in Section~\ref{sec:analysis}) largely reflects the metric's ability to track the synthetic proportion rather than its actual predictive power. This becomes most apparent for $\text{js}_{\text{classPresence}}$, which ranks highly under Spearman's correlation (Figure~\ref{fig:sumClassPresence}) but fails in matched-ratio comparisons (Figure~\ref{fig:matchedRatio}). Hence, correlation alone is insufficient for assessing shift metrics and can systematically misrepresent their true predictive value.\\ 
-Third, we confirm $\text{SADGE}$-based shift quantification as the strongest predictor among the evaluated metrics, though its fused score is miscalibrated on our data and its sign flips as a result. With $a=0$, the $\text{SADGE}$ score reduces to $\hat{A} \cdot(b + c \cdot \hat{G})$. In all of our hybrid datasets, the appearance score $\bar{A}$ is below $\text{SADGE}$'s calibrated mean $\mu_A$, and the geometry score $\bar{G}$ reports far fewer MASt3R inliers than assumed by \cite{bartkowiak2026} for calibration. The latter is a known failure mode, which was already raised in \cite{bartkowiak2026}. This forces both $\hat{A}$ and $\hat{G}$ into the negative region, such that the sign flips.\\
-Fourth, our results suggest that the predictive power of shift quantification metrics is mostly independent of the model architecture. SegFormer and DeepLabV3+ share a similar metric ranking and global rank correlations of comparable magnitude. The one place where the two architectures diverge is not in metric quality but in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets, and its higher randomness across training seeds (Figure~\ref{fig:shiftModelPerformance}).\\
-Overall, pre-training shift quantification is a promising direction to predict the utility of a hybrid dataset. However, identifying the relevant shift types, calibrating metrics appropriately, and evaluating them reliably remain open challenges that future research must address.\\
-Further research directions can be motivated by our study's limitations: \\
-First, our framework compares metrics whose raw shift scores are not directly comparable, because they rely on different distance or similarity measures and operate on different numerical scales. Constraining all shift quantification metrics to a fixed value range, such as $[0,1]$ would enable direct comparability.\\
-Second, our data samples were restricted to daytime and clear weather conditions. Future work could explore the metrics in more diverse weather and lighting conditions. This could provide deeper insight into the performance and robustness of shift quantification metrics in the field of street scene segmentation.\\
-Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.\\
+\section{Discussion}
+In this study, we applied twelve shift quantification metrics to nine hybrid dataset configurations for daytime urban street scene segmentation, and measured correlation with downstream performance across two model architectures with six random seeds each. We can draw four main conclusions from our findings:
 
-\section{Conclusion}
-\textcolor{gray}{Bla Bla: Conclusion/Summary}
+First, both shift quantification and downstream model performance confirm a measurable domain gap between synthetic and real data. However, not all shift quantification metrics succeed in ranking hybrid dataset utility meaningfully. Both $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ quantify a shift type that is more prominent in Synscapes than GTA-V (Appendix~\ref{sec:datasetAnalysis}), while downstream performance is affected more by GTA-V than Synscapes (Figure~\ref{fig:shiftModelPerformance}). This shows that predictive power does not simply follow from detecting whichever shift is most prominent, but from detecting the shift types that actually impact model performance. Combining multiple metric scores in a unified shift score, similar to SADGE, could help make shift quantification independent of the dataset and its dominant shift types \cite{bartkowiak2026, duminil2025}.
+
+Second, our results reveal the problematic nature of cross-ratio, correlation-based metric evaluation, which (as described in Section~\ref{sec:analysis}) largely reflects the metric's ability to track the synthetic proportion rather than its actual predictive power. This becomes most apparent for $\text{js}_{\text{classPresence}}$, which ranks highly under Spearman's correlation (Figure~\ref{fig:sumClassPresence}) but fails in matched-ratio comparisons (Figure~\ref{fig:matchedRatio}). Hence, correlation alone is insufficient for assessing shift metrics and can systematically misrepresent their true predictive value.
+
+Third, we confirm $\text{SADGE}$-based shift quantification as the strongest predictor among the evaluated metrics, though its fused score is miscalibrated on our data and its sign flips as a result. With $a=0$, the $\text{SADGE}$ score reduces to $\hat{A} \cdot(b + c \cdot \hat{G})$. In all of our hybrid datasets, the appearance score $\bar{A}$ is below $\text{SADGE}$'s calibrated mean $\mu_A$, and the geometry score $\bar{G}$ reports far fewer MASt3R inliers than assumed by \cite{bartkowiak2026} for calibration. The latter is a known failure mode, which was already raised in \cite{bartkowiak2026}. This forces both $\hat{A}$ and $\hat{G}$ into the negative region, such that the sign flips.
+
+Fourth, our results suggest that the predictive power of shift quantification metrics is mostly independent of the model architecture. SegFormer and DeepLabV3+ share a similar metric ranking and global rank correlations of comparable magnitude. The one place where the two architectures diverge is not in metric quality but in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets, and its higher randomness across training seeds (Figure~\ref{fig:shiftModelPerformance}).
+
+Overall, pre-training shift quantification is a promising direction to predict the utility of a hybrid dataset. However, identifying the relevant shift types, calibrating metrics appropriately, and evaluating them reliably remain open challenges that future research must address.
+
+Further research directions can be motivated by our study's limitations: 
+
+First, our framework compares metrics whose raw shift scores are not directly comparable, because they rely on different distance or similarity measures and operate on different numerical scales. Constraining all shift quantification metrics to a fixed value range, such as $[0,1]$, would enable direct comparability.
+
+Second, our data samples were restricted to daytime and clear weather conditions. Future work could explore the metrics in more diverse weather and lighting conditions. This could provide deeper insight into the performance and robustness of shift quantification metrics in the field of street scene segmentation.
+
+Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.
 
 \section{Reproducibility}
 \textcolor{gray}{Bla Bla: Link GitHub repo, describe it shortly, give broad instructions on how to replicate our study}
-
-\section*{Acknowledgment}
-The authors would like to thank...
 
 % REFERENCES section
 % define references style (use offical IEEE format)
