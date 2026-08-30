@@ -318,7 +318,14 @@ Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relat
 \textcolor{gray}{Bla Bla: Conclusion/Summary}
 
 \section{Reproducibility}
-\textcolor{gray}{Bla Bla: Link GitHub repo, describe it shortly, give broad instructions on how to replicate our study}
+Source code, configuration files, and the computed shift scores could be found at \url{https://github.com/opometun/ShiftBench}, tagged release - (will be here once we are done with commits)
+The dataset images are not redistributed. Users obtains Cityscapes, Synscapes, and GTA-V from their providers 
+and reconstructs the exact experimental subsets from the manifest files (data/study). 
+Reproduction is possible at two levels. First, the shift scores can be calculated again once the nine training configurations have 
+been reconstructed from the original datasets using the released sample lists and compared with the released shift scores. 
+Second, the full experiment can be retrained according to the training protocol described in the paper. We do not claim identical checkpoints 
+or mIoU values across environments. The reported comparisons combine results across six training seeds as described in the respective section. 
+Downstream performance records and trained checkpoints are available from the authors on request.
 
 \section*{Acknowledgment}
 The authors would like to thank...
