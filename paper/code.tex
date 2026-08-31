@@ -294,9 +294,9 @@ Second, our data samples were restricted to daytime and clear weather conditions
 Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.
 
 \section{Reproducibility}
-Source code, configuration files, and the computed shift scores could be found at \url{https://github.com/opometun/ShiftBench}, tagged release - (will be here once we are done with commits)
-The dataset images are not redistributed. Users obtains Cityscapes, Synscapes, and GTA-V from their providers 
-and reconstructs the exact experimental subsets from the manifest files (data/study). 
+Source code, configuration files, and the computed shift scores are available at \url{https://github.com/opometun/ShiftBench} (release \texttt{v1.0.0}).
+The dataset images are not redistributed. Users obtain Cityscapes, Synscapes, and GTA-V from their providers 
+and reconstruct the exact experimental subsets from the manifest files (data/study). 
 Reproduction is possible at two levels. First, the shift scores can be calculated again once the nine training configurations have 
 been reconstructed from the original datasets using the released sample lists and compared with the released shift scores. 
 Second, the full experiment can be retrained according to the training protocol described in the paper. We do not claim identical checkpoints 
