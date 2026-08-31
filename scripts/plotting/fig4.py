@@ -49,7 +49,7 @@ RATIOS = np.array([0, 25, 50, 75, 100])
 
 
 def load(key):
-    path = Path(f"results/shift/correlation_{key}.json")
+    path = Path(f"results/shift/shift_json/correlation_{key}.json")
 
     if not path.is_file():
         raise SystemExit(f"Missing input: {path}")
