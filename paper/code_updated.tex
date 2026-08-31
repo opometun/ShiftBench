@@ -1,0 +1,490 @@
+% EAITHD26 (Enhancing AI Through Hybrid Datasets),~Vol.~1, No.~1, September~2026
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+%Template version as of 6/27/2024
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+
+% our own additions to fix reference overflow (too long url)
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{breakurl}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Conference Paper Title}
+
+\author{\IEEEauthorblockN{Silvie Opolka}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+sopolka@uni-osnabrueck.de}
+\and
+\IEEEauthorblockN{Sigur Stück}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+sstueck@uni-osnabrueck.de}
+\and
+\IEEEauthorblockN{Oleksandr Pometum}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+opometun@uni-osnabrueck.de}
+\and
+\IEEEauthorblockN{Krishnendu Bose}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+krbose@uni-osnabrueck.de}
+\and
+\IEEEauthorblockN{Srishti Pandey}
+\IEEEauthorblockA{\textit{Institute of Cognitive Science} \\
+\textit{University Osnabrück}\\
+Osnabrück, Germany \\
+spandey@uni-osnabrueck.de}
+}
+
+\maketitle
+
+\begin{abstract}
+The abstract goes here.
+\end{abstract}
+
+\begin{IEEEkeywords}
+IEEE, IEEEtran, journal, \LaTeX, paper, template.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Hybrid datasets, which combine real and synthetic data, are often used to address data-associated limitations in model performance and generalization. However, selecting an effective hybrid dataset configuration is costly when based on actual downstream performance, because it requires training a separate model for each candidate configuration. A more efficient alternative is to predict downstream performance. This study focuses on \textbf{distribution-shift-based prediction} with the following research question: \textit{Can pre-training shift quantification predict the utility of a hybrid dataset reliably and therefore replace naive selection among candidate configurations?}\\
+
+The contributions of this paper are threefold: 
+\begin{itemize}
+\item We analyze the key differences between real and synthetic urban street scene datasets.
+\item We develop nine distance-based shift quantification metrics, each quantifying a different shift type, and systematically compare their predictive power for hybrid dataset utility with the current state-of-the-art.
+\item We assess the practical viability of shift-based dataset evaluation and identify the metrics with highest reliability.
+\end{itemize}
+
+\section{Methods}
+This study evaluates the proposed approach in the context of \textbf{daytime urban street scene segmentation}.
+
+\subsection{Data preparation}
+\label{sec:datasetPreparation}
+\textcolor{gray}{Bla Bla: Describe the datasets (Cityscapes, Synscapes, GTA-V)} 
+
+% Revision Notes and Clarification questions
+
+% Does the Synscapes dataset contain fine or coarse annotations? Can't remember at this moment. Need sleep lol.
+
+% Why did we specifically choose 2000 samples for all the datasets? Do we need to link the relevant literature for this?
+
+% Might need to include the LANCZOS and NEAREST Sampling justification literature
+
+
+In order to train the different models and then test the shift quantification metrics (described below) based on the trained models, we chose three different datasets; which are the Cityscapes dataset \cite{cityscapes}, the Synscapes dataset \cite{synscapes} and, finally the GTA V dataset \cite{GTA_V}. The Cityscapes dataset \cite{cityscapes} is a huge dataset that encompasses varied stereo video sequences, which were recorded based on street scenes belonging to 50 different german cities. The creators of this dataset divided the entire dataset into 5000 frames with accompanied coarsely annotated high-pixel quality segmentation masks and created train, test and validation splits based on these aforementioned 5000 samples. After that, they took the remaining 20000 frames and their accompanied weakly annotated segmentation masks and consolidated these 20000 samples into a different training set.The Synscapes dataset \cite {synscapes} contains 25000 artificially generated image frames resembling real-life street scenes containing different buildings, vehicles, and pedestrians moving about. Since these 25000 frames were uniquely generated, they contain a wide variety and combination of features. One can also notice the high amount of reused models of different animate and inanimate objects, which appear in different scenes and provide different unique interactions happening between these animate and inanimate objects. These 25000 samples also come with their associated coarsely annotated masks. Finally, the last dataset that we chose is also a synthetically generated dataset \cite{GTA_V} and is derived from the GTA-V gameplay scenes. This dataset consists of 24966 samples accompanied with coarsely annotated segmentation masks. 
+
+For the purpose of model training and shift quantification measurement, we decided to choose different mixtures of artificial and real samples extracted from the three aforementioned datasets. In order to reach a point where we could predict model downstream performance, we need to have different training and testing divisions of the three aforementioned datasets and then, we need to train our model(s) on various hybrid data configurations, resulting from the mixture of different amounts of real and artificial samples taken from the original collection of images present in these datasets. Before diving into the intricacies of the different data mixtures, it needs to be made clear that we decided to keep 2000 total samples in the different dataset combinations that we created, because we deemed from literature that 2000 total samples would be sufficient. When we decided to apply this rationale to the different datasets, we faced some issues. The Cityscapes testing data were missing all their associated coarsely annotated segmentation masks and we were left with totally blacked out annotation masks for the test samples provided by the Cityscapes dataset curators. We wanted to train the our models with data samples containing only coarsely annotated segmentation masks and not finely annotated segmentation masks, so that any additional sources of bias doesn't stem from the annotation masks themselves. In order to circumvent this issue, we chose 975 samples belonging to 5 different german city street scenes, out of the 2975 training samples that were provided to us alongside 2975 coarsely annotated segmentation masks. This left us with 2000 training samples, which was what we wanted in the first place. For the Synscapes dataset, we extracted 2000 random frames from their 25000 data samples. In case of the GTA-V dataset, their were some ambiguities and inconsistencies in the individual frames resulting from night-time darkness in the images; strong sunset and week sunset in the images; rural and highway images, which were too far from the city center and could have introduced additional artifacts in the images which we wanted to avoid. We took careful considerations in choosing individual samples which had object categories and features similar to the other two datasets.
+
+After this, we encountered another source of problems based on the varying resolutions of the samples belonging to these three different datasets. The Cityscapes samples were of the dimension \textbf{2048x1024}; the Synscapes samples were of the dimension \textbf{1440x720} and the Gta-V samples were of the dimension \textbf{1914x1052}. In order to not introduce resolution-related biases and artifacts inside the model, we decided to resize and crop all the samples belonging to the three different datasets to the \textbf{1024x512} resolution. This was easy to implement for the Cityscapes and the Synscapes datasets because their samples were in the 2:1 ratio. The problem arose when we wanted to resize the Gta-V samples because their samples were in the ratio of 1.82:1. We decided to center-crop the Gta-V samples and then resize them to 1024x512, so that the resultant ratio of all the samples are 2:1. For changing the resolution of the image samples, we used the LANCZOS upscaling and downscaling technique because it preserves the most amount of information. For resizing the annotated segmentation masks, we did some experimentation and found that the NEAREST upscaling and downscaling technique preserved the most amount of class labels amongst all the sampling techniques present. 
+
+Finally after resizing all the individual 2000 extracted samples belonging to all the datasets, we created 9 different hybrid and real training data combinations, based on different amounts of real and synthetic samples present in these combinations. Out of all these dataset configurations, the hybrid ones had real samples from the Cityscapes dataset in the range of 500 to 1500, in increments of 500 and the rest 500 to 1500 belongs to one of the other two synthetic datasets (Synscapes and GTA-V) in decrements of 500. The only testing data configuration consisted of 2000 real samples from the Cityscapes dataset.
+
+
+\textcolor{gray}{Bla Bla: Describe the preparation (number of samples selected, how samples were selected, resizing to uniform resolution, construction of the 9 hybrid train datasets + val + test datasets and the reasoning behind it, certain class indices are ignored - 19 instead of 34 classes)} 
+
+\subsection{Shift quantification}
+A distribution shift occurs when two data distributions differ. In machine learning (ML), this typically refers to the shift between the distribution a model is trained on (training distribution) and the distribution it will be applied to (inference distribution, approximated by the test dataset). Hybrid datasets are often motivated by the goal of reducing this distribution shift: Adding synthetic data to real data can enrich the training distribution in a controlled manner, improving coverage and diversity, and supporting generalization to shifted inference conditions. Conversely, adding real data to synthetic data can help anchor the model in real-world statistics, reducing the reality gap and mitigating reliance on unrealistic or harmful artifacts. 
+
+Beyond this general notion, a distribution shift can be decomposed into several distinct components. Following the formulation of \cite{liu2022}, a segmentation model can be expressed as $G(x)=C(F(x))$, where the classifier $C$ outputs the posterior probability $P(Y|F(x))$ for an input image $x$. Applying Bayes' theorem yields 
+\begin{equation}
+\label{eq:bayes_shift}
+P(Y \mid F(x)) = \frac{P(F(x) \mid Y) \cdot P(Y)}{P(F(x))}.
+\end{equation}
+The Bayes decomposition exposes the distributions that may differ between datasets. Based on the affected distribution, we differentiate between five shift types, of which this study focuses on three: covariate shift, label shift, and representation shift.\footnote{Additional shift types include class-conditional representation shift, which affects the input representation for a specific class $P(F(x)|Y)$, and concept shift, which affects the labeling function $P(Y|F(x))$ or $P(Y|X)$. Class-conditional representation shift is excluded because this study quantifies the shift at the dataset level rather than per class. Concept shift is excluded because all datasets share the same semantic label definitions.} Inspired by \cite{dale2024}, we chose our shift quantification metrics considering three criteria: Each metric must be easy to calculate, provide information about the source of the gap, and react to changes in data distribution as hybrid training configurations are adjusted. Their fourth criteria, correlation with downstream model performance, will be addressed in this study. Based on the information used for quantification, we group the selected shift quantification metrics into three categories, each capturing a different aspect of the shift:
+
+\textbf{Image-based metrics} quantify the covariate shift, that is, differences in the input distribution $P(X)$ that arise from changes in visual properties such as color and texture. These metrics operate on the raw images. This study considers two metrics that focus on a shift in color ($\text{js}_{\text{color}}$) and texture ($\text{js}_{\text{texture}}$) respectively. Covariate shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized mean histograms $p_{\text{train}}$, $p_{\text{test}}$. Per-image color histograms were computed in HSV space using density-based histogram counts, with 32 hue bins (0-180), 16 saturation bins (0-256), and 16 brightness bins (0-256). Per-image texture histograms were computed using multiscale Local Binary Patterns (LBP) at two scales ($P=8$, $R=1$) and ($P=16$, $R=2$).
+
+\begin{equation}
+\label{eq:js}
+\begin{split}
+d_{\text{JS}}(p_{\text{train}}, p_{\text{test}})
+= \sqrt{
+\frac{1}{2} D_{\text{KL}}\!\left( p_{\text{train}} \,\middle\|\, m \right)
++
+\frac{1}{2} D_{\text{KL}}\!\left( p_{\text{test}} \,\middle\|\, m \right)
+}, \\
+\text{with } m = \frac{1}{2}\left(p_{\text{train}} + p_{\text{test}}\right)
+\end{split}
+\end{equation}
+
+\textbf{Label-based metrics} quantify the label shift, that is, differences in the class-label distribution $P(Y)$. These metrics operate on the segmentation masks. This study considers three metrics that focus on a shift in class frequency ($\text{js}_{\text{classFrequency}}$), class presence ($\text{js}_{\text{classPresence}}$), and scene complexity ($\text{js}_{\text{sceneComplexity}}$) respectively. Label shift was quantified using Jensen-Shannon distance \eqref{eq:js} between the normalized histograms $p_{\text{train}}$, $p_{\text{test}}$. The class frequency histogram of a dataset shows the fraction of all pixels belonging to each class. The class presence histogram of a dataset shows the share of image-level class occurrences attributable to each class. The scene complexity histogram of a dataset shows the distribution of distinct-class counts per image.
+
+\textbf{Representation-based metrics} quantify the representation shift, that is, differences in the feature distribution $P(F(x))$. These metrics operate in a learned feature space on image representations produced by a feature extractor $F$. This study used two pretrained feature extractors: DINOv2‑Base \cite{oquab2024} for appearance‑focused representations and StreetCLIP \cite{haas2023} for semantic‑focused representations. They were selected because both were exposed to car-mounted street-view-like imagery during training, making them well aligned with this study's target domain. Representation shift was quantified using centroid distance \eqref{eq:centroid} and Fréchet distance \eqref{eq:frechet} \cite{NIPS2017_8a1d6947} between two distributions with means $\mu_{\text{train}}$, $\mu_{\text{test}}$ and covariance matrices $\Sigma_{\text{train}}$, $\Sigma_{\text{test}}$, computed in DINOv2-Base and StreetCLIP feature spaces. This yielded four metric variants: $\text{fréchet}_{\text{dinov2}}$, $\text{centroid}_{\text{dinov2}}$, $\text{fréchet}_{\text{streetclip}}$, and $\text{centroid}_{\text{streetclip}}$.
+
+\begin{equation}
+\label{eq:centroid}
+d_{\text{centroid}}(\mu_{\text{train}},\mu_{\text{test}}) = \|\mu_{\text{train}} - \mu_{\text{test}}\|
+\end{equation}
+
+\begin{equation}
+\label{eq:frechet}
+\begin{aligned}
+&d_{\text{Fréchet}}(\mu_{\text{train}},\Sigma_{\text{train}};\mu_{\text{test}},\Sigma_{\text{test}}) = \\
+&\sqrt{
+\|\mu_{\text{train}} - \mu_{\text{test}}\|^2
++ \mathrm{Tr}\!\left(\Sigma_{\text{train}} + \Sigma_{\text{test}} - 2(\Sigma_{\text{train}} \Sigma_{\text{test}})^{\frac{1}{2}}\right)
+}
+\end{aligned}
+\end{equation}
+
+\smallskip
+The last representation-based metric considered in this study is \textbf{SADGE} (Structural and Appearance Domain Gap Estimator), which was shown to predict downstream model performance most reliably among the shift quantification metrics tested in \cite{bartkowiak2026}. SADGE differs fundamentally from the nine other metrics evaluated here: While all other metrics quantify distributional distance between datasets (by comparing dataset-level statistics in image, label, or feature space), SADGE computes pairwise similarity between individual images and aggregates these similarities into a dataset-level score. In our adaptation, we chose their retrieval-based comparison over their aligned comparison, because exact pairs are not available. Each test image is compared to ten randomly selected candidate images from the hybrid training dataset. The strongest appearance and geometry match per test image is retained. Appearance similarity is measured using cosine similarity between DINOv3 \cite{simeoni2025dinov3} embeddings. Geometric similarity is measured using MASt3R \cite{mast3r} inlier counts. These per-image scores are averaged (to obtain dataset-level appearance similarity $\bar{A}$ and geometry similarity $\bar{G}$), standardized using z-score normalization \eqref{eq:zscore}, and fused through the pre-calibrated linear-bilinear model \eqref{eq:sadge} provided in \cite{bartkowiak2026}. Besides the fused SADGE score, we additionally consider its two components $\bar{A}_{\text{SADGE}}$ and $\bar{G}_{\text{SADGE}}$ as individual shift quantification metrics.
+
+\begin{equation} \label{eq:zscore}
+\begin{aligned}
+\hat{A} &= \frac{\bar{A} - \mu_A}{\sigma_A}, && \text{with } \mu_A = 0.6359, \, \sigma_A = 0.1918 \\
+\hat{G} &= \frac{\log(1+\bar{G}) - \mu_G}{\sigma_G}, && \text{with } \mu_G = 7.9420, \, \sigma_G = 1.7384
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\label{eq:sadge}
+\begin{split}
+\text{SADGE}(\text{ds}_\text{test}, \text{ds}_\text{train}) = a \cdot \hat{G} + b \cdot \hat{A} + c \cdot \hat{G} \cdot \hat{A}
+\\
+\text{with } a=0.0\text{, } b=1.8548\text{, } c=1.3399
+\end{split}
+\end{equation}
+
+\subsection{Model training}
+Downstream utility was measured by training semantic segmentation models on each of the nine candidate training datasets and evaluating them on a held-out real inference dataset. We trained two architectures to assess whether the findings depend on the model class: SegFormer-B2 \cite{xie2021segformer}, a hierarchical transformer encoder with a lightweight all-MLP decoder, and DeepLabV3+ \cite{chen2018deeplabv3plus} with a ResNet-101 backbone \cite{he2016resnet}, a dilated convolutional architecture with atrous spatial pyramid pooling. Both encoders were initialized from ImageNet-pretrained weights and all decoder parameters were randomly initialized, so no supervision from Cityscapes or any other segmentation dataset entered the models before training. Had the encoders carried prior segmentation knowledge of the inference domain, downstream performance would partly reflect that pretraining rather than the composition of the training dataset.
+
+\textbf{Model input.} Images and masks were already resized to $1440 \times 720$ during data preparation, and training reads exactly those prepared files. Beyond the channel-wise normalization the pretrained encoders expect, using the ImageNet statistics, no further transformation was applied: No cropping, scaling, flipping or photometric distortion.
+
+The reason is that the training data must remain the data the shift metrics measured. Any transformation applied during training would change the distribution the model actually sees relative to the one that was quantified, so an observed performance difference could no longer be attributed to dataset composition alone. This does mean the setup departs from standard segmentation pipelines, which do augment, and the reference recipes for both architectures additionally apply random resizing, flipping and cropping on Cityscapes. Model performance reported here is therefore not comparable to published Cityscapes results and is expected to fall below them. Producing state-of-the-art segmentation performance is not the aim of our study; comparisons are between candidate training datasets, never against literature values.
+
+\textbf{Training setting.} Models were optimized with AdamW at a weight decay of $0.01$. The learning rate was warmed up linearly over 1000 optimizer steps, rising from $10^{-3}$ of its target value, and then decayed polynomially with power $0.9$. Because warmup is specified in steps rather than epochs, the early-stopped runs spend a substantial fraction of their training inside it; Appendix~\ref{sec:warmup} quantifies this. This follows the reference Cityscapes recipe for SegFormer, which pairs AdamW with a polynomial schedule at batch size 8 \cite{xie2021segformer}. SegFormer used a single uniform rate of $5 \times 10^{-5}$ across all parameters, close to but not identical to the $6 \times 10^{-5}$ of that recipe, together with a hidden dropout probability of $0.1$. Because the decoder is randomly initialized while the encoder is pretrained, DeepLabV3+ instead used a discriminative learning rate, $1 \times 10^{-4}$ for the backbone and $1 \times 10^{-3}$ for the decoder. Both architectures used a batch size of $8$. The loss was pixel-wise cross-entropy computed over the 19 Cityscapes evaluation classes, with void-labeled pixels excluded from the gradient.
+
+Training ran for a maximum of 35 epochs with early stopping on validation loss after five epochs without improvement, and the retained checkpoint was the one achieving the highest validation mean Intersection-over-Union (mIoU). Termination and model selection are therefore governed by different quantities, which do not always peak at the same epoch.
+
+Each configuration was trained with six random seeds (42 to 47), yielding 108 training runs in total. Repeat seeds are what make a difference between two candidate training datasets interpretable at all, since without a measured noise floor there is no basis for judging whether an observed gap exceeds run-to-run variation. The seed-to-seed variability in test mIoU is reported with the results and used to decide which between-source differences can be resolved.
+
+Training was conducted on NVIDIA A100-SXM4-80GB and H100 accelerators, one GPU per run, consuming $76.3$ GPU hours across the 108 runs, using Python 3.11 with PyTorch 2.13.0, torchvision 0.28.0, and Hugging Face Transformers 5.14.1. Per-epoch training loss, validation loss and validation mIoU were recorded for every run. Further quantities not used in this study were also retained, including expected calibration error, prediction entropy, per-class IoU and the predicted masks themselves; they are described in the accompanying repository and support analyses beyond the scope of this paper.
+
+Within each architecture the protocol was held identical across all nine candidate training datasets and all seeds, leaving the training data as the only quantity that varies between configurations. The two architectures use different learning rates, so datasets are compared within an architecture rather than between them. Running both shows whether a pattern holds independently of the model class.
+
+\textbf{Inference-time evaluation.} Final performance was measured on the 975 held-out real Cityscapes test images, disjoint from every training and validation split and the same images used as the inference set for shift quantification. The validation split determined both early stopping and checkpoint selection, so validation performance is optimistically biased and the test split is the appropriate basis for comparison.
+
+Downstream performance is reported as mIoU across the 19 evaluated classes \eqref{eq:miou}, computed over the confusion matrix accumulated across all test images, with void pixels excluded.
+
+\begin{equation}
+\label{eq:miou}
+\text{mIoU} = \frac{1}{C}\sum_{c=1}^{C} \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c + \text{FN}_c}
+\end{equation}
+
+\subsection{Analysis of shift quantification metrics}
+\label{sec:analysis}
+\textbf{Correlation.} Spearman's rank correlation was computed between the shift score of each metric and the test mIoU of each segmentation model, across all nine candidate training datasets. Two variants are considered: The correlation against a single seed's test mIoU, and the correlation against the mean across the six seeds. We chose Spearman over Pearson because our question is whether a metric orders the datasets correctly, not whether the relationship between shift score and performance is linear, and because a rank statistic does not require the twelve metrics to share a scale.
+
+\textbf{Metric ranking.} The expected direction of correlation differs between our twelve metrics: The nine distance-based metrics are expected to correlate negatively with mIoU, since a larger distance should accompany worse downstream performance, while the three SADGE similarity-based metrics are expected to correlate positively. For the metric ranking the sign of the distance metrics is therefore inverted, so that a positive value always indicates the expected behaviour and all twelve become comparable on one scale.
+
+\textbf{Matched-ratio comparison.} The proportion of synthetic data can itself drive both the shift score and downstream performance, since both vary monotonically along each arm of the design. So a correlation computed across ratios partly measures how well a metric tracks the synthetic proportion. That proportion is already known from the dataset recipe and requires no measurement. Comparing it directly against downstream performance quantifies how much of the correlation it accounts for; the result is reported in Appendix~\ref{sec:baseline}.
+
+Our matched-ratio comparison avoids the effect entirely by holding the synthetic proportion fixed. At each of the four non-zero ratios the two synthetic sources are compared directly: The downstream difference is tested with a two-sided Welch $t$-test on the per-seed scores at $\alpha = 0.05$, and each metric is scored on whether it places the better-performing source closer to the inference set. Runs sharing a seed number share controlled randomness, since the seed fixes decoder initialization and the data-loader shuffle, so a paired test is also defensible. We retain Welch's test as the primary analysis and report paired tests as a sensitivity analysis. Where the downstream difference is not significant the pair is recorded as a tie and no metric is scored on it, so that metrics are never credited or penalised for a comparison the data cannot resolve.
+
+\textbf{Multiple comparisons.} Correlating twelve metrics against the same downstream scores raises the chance that at least one appears significant purely by accident. Correlation $p$-values are therefore reported alongside values adjusted by the Holm step-down procedure \cite{holm1979}, applied within each family of twelve metrics, that is separately for each architecture.
+
+\section{Results}
+\textcolor{gray}{PARAGRAPH (1)}
+
+\begin{itemize}
+    \item \textcolor{gray}{Synscapes and GTA-V differ in separate ways from Cityscapes (see Appendix~\ref{sec:datasetAnalysis}).}
+    \item \textcolor{gray}{Model performance is visibly affected by this shift (see Figure~\ref{fig:shiftModelPerformance}). The lower the ratio of in-domain/real/Cityscapes data, the lower downstream model performance.}
+    \item \textcolor{gray}{Models trained with GTA-V as a synthetic data source perform generally worse than models trained on Synscapes.}
+    \item \textcolor{gray}{Variance between seeds rises at higher synthetic fractions for both models.}
+    \item \textcolor{gray}{Segformer architecture generally performs better than DeepLabV3+.}
+\end{itemize}
+
+\begin{figure}[htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/shiftModelPerformance.png}
+    \caption{Points show means across three training seeds. Shaded regions indicate 95\% confidence intervals computed using the unbiased sample variance.}
+    \label{fig:shiftModelPerformance}
+\end{figure}
+
+\textcolor{gray}{PARAGRAPH (2) - reference Figures \ref{fig:correlation1} and \ref{fig:correlation2}}
+
+\begin{itemize}
+    \item \textcolor{gray}{shift quantification metrics produce shift scores that differ in scale}
+    \item \textcolor{gray}{observe negative correlation for all distance-based metrics; observe positive correlation for SADGE's two similarity-based individual components; observe negative correlation for the combined SADGE score despite being similarity-based}
+    \item \textcolor{gray}{correlation (and its p-value / statistical significance) is generally higher for DeepLabV3+ than Segformer}
+    \item \textcolor{gray}{statistical significance: all are $p<0.05$}
+    \item \textcolor{gray}{for a single training seed, ranking according to correlation stays similar between the two model architectures, just $\text{js}_{\text{sceneComplexity}}$ and $\text{js}_{\text{color}}$ are swapped}
+\end{itemize}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/seed42_color_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_texture_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_class_frequency_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_class_presence_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_scene_complexity_js_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_appearance_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_geometry_miou.png}
+    
+    \caption{caption}
+    \label{fig:correlation1}
+\end{figure*}
+
+\begin{figure*}[!htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_dinov2_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_streetclip_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_dinov2_miou.png}
+    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_streetclip_miou.png}
+    
+    \caption{continued from Figure X}
+    \label{fig:correlation2}
+\end{figure*}
+
+\textcolor{gray}{PARAGRAPH (3) - reference Figure \ref{fig:ranking}}
+
+\begin{itemize}
+    \item \textcolor{gray}{the overall ranking stays similar when considering the mean downstream performance (across seeds), now is even identical between the two model architectures}
+    \item \textcolor{gray}{SADGE remains the best metric in our study as well; the individual geometry and appearance SADGE components alone already work well by themselves}
+    \item \textcolor{gray}{From our metrics, $\text{js}_{\text{classFrequency}}$ shows highest predictive power}
+    \item \textcolor{gray}{out of our representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ works best}
+    \item \textcolor{gray}{$\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ show lowest predictive power}
+\end{itemize}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/rankingSegformer.png}
+    \vspace{1.0em}
+    \includegraphics[width=\linewidth]{images/rankingDeeplabv3plus.png}
+    \caption{Caption}
+    \label{fig:ranking}
+\end{figure}
+
+\textcolor{gray}{PARAGRAPH (4) - reference Figure~\ref{fig:matchedRatio}}
+
+\begin{itemize}
+    \item \textcolor{gray}{matched-ratio comparisons (see Figure~\ref{fig:matchedRatio}) reveal a key difference between model architectures: tie for SegFormer architecture, across metrics, for moderate synthetic ratios. For the DeepLabV+, all metrics are able to draw a clear differentiation. } 
+    \item \textcolor{gray}{$\text{SADGE}$, $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ are unable to rank hybrid dataset utility meaningfully when keeping the synthetic fraction fixed}
+\end{itemize}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/matchedRatioSegformer.png}
+    \vspace{1.0em}
+    \includegraphics[width=\linewidth]{images/matchedRatioDeepLab.png}
+    \caption{Caption}
+    \label{fig:matchedRatio}
+\end{figure}
+
+\section{Discussion}
+In this study, we applied twelve shift quantification metrics to nine hybrid dataset configurations for daytime urban street scene segmentation, and measured correlation with downstream performance across two model architectures with six random seeds each. We can draw four main conclusions from our findings:
+
+First, both shift quantification and downstream model performance confirm a measurable domain gap between synthetic and real data. However, not all shift quantification metrics succeed in ranking hybrid dataset utility meaningfully. Both $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ quantify a shift type that is more prominent in Synscapes than GTA-V (Appendix~\ref{sec:datasetAnalysis}), while downstream performance is affected more by GTA-V than Synscapes (Figure~\ref{fig:shiftModelPerformance}). This shows that predictive power does not simply follow from detecting whichever shift is most prominent, but from detecting the shift types that actually impact model performance. Combining multiple metric scores in a unified shift score, similar to SADGE, could help make shift quantification independent of the dataset and its dominant shift types \cite{bartkowiak2026, duminil2025}.
+
+Second, our results reveal the problematic nature of cross-ratio, correlation-based metric evaluation, which (as described in Section~\ref{sec:analysis}) largely reflects the metric's ability to track the synthetic proportion rather than its actual predictive power. This becomes most apparent for $\text{js}_{\text{classPresence}}$, which ranks highly under Spearman's correlation (Figure~\ref{fig:sumClassPresence}) but fails in matched-ratio comparisons (Figure~\ref{fig:matchedRatio}). Hence, correlation alone is insufficient for assessing shift metrics and can systematically misrepresent their true predictive value.
+
+Third, we confirm $\text{SADGE}$-based shift quantification as the strongest predictor among the evaluated metrics, though its fused score is miscalibrated on our data and its sign flips as a result. With $a=0$, the $\text{SADGE}$ score reduces to $\hat{A} \cdot(b + c \cdot \hat{G})$. In all of our hybrid datasets, the appearance score $\bar{A}$ is below $\text{SADGE}$'s calibrated mean $\mu_A$, and the geometry score $\bar{G}$ reports far fewer MASt3R inliers than assumed by \cite{bartkowiak2026} for calibration. The latter is a known failure mode, which was already raised in \cite{bartkowiak2026}. This forces both $\hat{A}$ and $\hat{G}$ into the negative region, such that the sign flips.
+
+Fourth, our results suggest that the predictive power of shift quantification metrics is mostly independent of the model architecture. SegFormer and DeepLabV3+ share a similar metric ranking and global rank correlations of comparable magnitude. The one place where the two architectures diverge is not in metric quality but in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets, and its higher randomness across training seeds (Figure~\ref{fig:shiftModelPerformance}).
+
+Overall, pre-training shift quantification is a promising direction to predict the utility of a hybrid dataset. However, identifying the relevant shift types, calibrating metrics appropriately, and evaluating them reliably remain open challenges that future research must address.
+
+Further research directions can be motivated by our study's limitations: 
+
+First, our framework compares metrics whose raw shift scores are not directly comparable, because they rely on different distance or similarity measures and operate on different numerical scales. Constraining all shift quantification metrics to a fixed value range, such as $[0,1]$, would enable direct comparability.
+
+Second, our data samples were restricted to daytime and clear weather conditions. Future work could explore the metrics in more diverse weather and lighting conditions. This could provide deeper insight into the performance and robustness of shift quantification metrics in the field of street scene segmentation.
+
+Third, $\text{js}_{\text{classPresence}}$ quantifies shifts in the \textit{relative} class presence between datasets, analogous to $\text{js}_{\text{classFrequency}}$ but measured at the image rather than pixel level. Because the histogram is normalized across classes, two datasets can differ substantially in their absolute per-class presence rates yet yield a small JS distance if their relative class-presence composition remains similar. A complementary formulation could quantify the shift in the \textit{absolute} fraction of images each class appears in. We leave a comparison of these two formulations, and their respective correlation with downstream performance, to future work.
+
+\section{Reproducibility}
+Source code, configuration files, and the computed shift scores could be found at \url{https://github.com/opometun/ShiftBench}, tagged release - (will be here once we are done with commits)
+The dataset images are not redistributed. Users obtains Cityscapes, Synscapes, and GTA-V from their providers 
+and reconstructs the exact experimental subsets from the manifest files (data/study). 
+Reproduction is possible at two levels. First, the shift scores can be calculated again once the nine training configurations have 
+been reconstructed from the original datasets using the released sample lists and compared with the released shift scores. 
+Second, the full experiment can be retrained according to the training protocol described in the paper. We do not claim identical checkpoints 
+or mIoU values across environments. The reported comparisons combine results across six training seeds as described in the respective section. 
+Downstream performance records and trained checkpoints are available from the authors on request.
+
+% REFERENCES section
+% define references style (use offical IEEE format)
+\bibliographystyle{IEEEtran}
+% connect references.bib file
+\bibliography{references}
+
+\newpage
+\appendices
+\section{Related research}
+To the best of our knowledge, this is the first systematic assessment of distribution-shift quantification to determine the utility of hybrid image datasets before model training. However, recent research explored closely related ideas, with a primary focus on shift quantification \cite{bartkowiak2026, DetectShift, duminil2024, duminil2025, shiftForModelUtility, renza2024, dale2024, li2025}, shift reduction \cite{abramov2020, liu2022_labelShift, zhang2020}, or shift analysis \cite{UrbanSyn}.
+
+% SADGE
+\cite{bartkowiak2026} share our motivation for using shift quantification, namely to assess the utility of the training dataset before actual model training. However, while they focus on purely synthetic training datasets, we generalize to hybrid configurations. \cite{bartkowiak2026} distinguish "appearance" metrics, which assess whether synthetic images look domain-realistic, from "geometry" metrics, which assess whether they preserve spatial scene structure. Their experiments reveal that their combined similarity score $\text{SADGE}$ is a more reliable, dataset-agnostic predictor of downstream performance than any single-modality metric tested. Given this strong reported performance, we include SADGE as a benchmark metric in our study. 
+While their metric taxonomy differs from ours, we can roughly map our categories onto theirs: Our image- and representation-based metrics correspond to their appearance category. $\text{SADGE}$'s geometry score is the only metric in our study falling under their geometry category. Our label-based metrics, however, capture a novel shift dimension. 
+
+% DetectShift
+\cite{DetectShift} introduce DetectShift, a framework that unifies the quantification of five shift types (joint $P(X,Y)$, feature $P(X)$, label $P(Y)$, and both conditional shifts $P(X|Y)$ and $P(Y|X)$) using Kullback-Leibler (KL) divergence. The authors demonstrate their framework in an experiment structurally similar to our study, although in an image classification setting: A shift between source and target distributions is modeled by progressively mixing in samples from a second dataset in one distribution while keeping the other fixed to a single dataset. The resulting shift score is then related to model performance. 
+However, the purpose of this analysis differs: \cite{DetectShift} use shift quantification to guide targeted domain adaptation across varying shift strengths, and hence, vary the ratio of two real datasets in the test dataset. We instead use shift quantification to assess the utility of hybrid datasets for model training, and hence, vary the synthetic-to-real ratio in the training dataset.
+Both frameworks come with their own advantages and limitations: DetectShift’s unified KL-based measure allows shift magnitudes to be compared meaningfully across shift types - a property our framework currently lacks. However, their framework requires training a classifier to obtain magnitude scores, while ours relies on pretrained models at most. 
+
+% Texture-based
+\cite{duminil2024, duminil2025} quantify the realism (termed “fidelity”) of synthetic street-scene images via texture and frequency analysis: global texture using the gray level co-occurrence matrix (GLCM) and derived Haralick features, local texture using local binary patterns (LBP), and frequency analysis using the discrete wavelet transform (DWT) \cite{duminil2024} or discrete cosine transform (DCT) \cite{duminil2025}. Most fidelity score computations require training a binary classifier on the GLCM, LBP, or DWT/DCT representations of each original image to distinguish real from synthetic images. Only the Haralick-based score requires no training. Across both the individual \cite{duminil2024} and fused \cite{duminil2025} fidelity scores, synthetic images tend to exhibit different texture properties than real ones. This motivates the inclusion of $\text{js}_{\text{texture}}$ in our study. Similar to \cite{bartkowiak2026}, their fused fidelity score yields a more reliable predictor of downstream performance than any single metric alone.
+
+% utility of trained model
+\cite{shiftForModelUtility} apply shift quantification to predict the utility of a trained model when applied to a new medical site. All evaluated shift quantification metrics use the trained model's output or internal feature representations of in-domain and target-domain data. Their proposed metric, Fréchet Domain Distance (FDD), produces shift scores with the highest correlation to the observed drop in model performance. Like $\text{fréchet}_{\text{dinov2}}$ and $\text{fréchet}_{\text{streetclip}}$, FDD quantifies the shift between feature representations using the Fréchet distance. The key difference is the feature source: FDD uses attention-selected features from the trained model itself, while our metrics use embeddings from an external, pretrained feature extractor.
+
+% Class-wise
+\cite{renza2024} emphasize that a distribution shift is non-uniform: Different corruptions affect different classes to different degrees. They repurposed the Cumulative Spectral Gradient (CSG) metric to quantify shifts between image-classification datasets by measuring class-wise separability between original and corrupted data. Similar to our representation-based metrics, CSG relies on a pretrained feature extractor rather than raw pixel or label statistics. However, \cite{renza2024} operate at the class level to isolate which classes and corruptions drive a shift within a single dataset, whereas we quantify shifts at the dataset level to assess the overall utility of a hybrid dataset.
+
+% no inference dist required
+\cite{dale2024} propose a framework for assessing a training dataset’s utility that bypasses the need for knowing the inference distribution. Instead of measuring the gap between training and test sets directly, they compute the training dataset’s self-similarity in the input, feature, or prediction space. Self-similarity is defined as the average pairwise similarity between training instances. In their study, they evaluate seven mixture-based data augmentation strategies to extend a hybrid training dataset's diversity, with the goal of improving generalization to a real-only test set. They find that lower self-similarity in the input and feature space corresponds to better downstream performance, whereas self-similarity in the prediction space shows no such relationship. Hence, self-similarity metrics present a promising direction for future work that addresses our study’s limitation of relying on a known inference distribution.
+
+% NLP domain shift quantification
+\cite{li2025} apply shift quantification between two datasets via statistical hypothesis testing in the field of Natural Language Processing (NLP). They consider a shift in word frequency, sentence-level representation, and label frequency. All shift metrics show statistically significant correlation with cross‑domain performance degradation. Their study shows that robust shift‑quantification methods have value well beyond the scope of our work, highlighting applicability in other ML domains such as NLP.
+
+% domain adaptation via color alignment
+\cite{abramov2020} show that aligning color statistics (the mean and covariance of RGB channels) and per-channel color histograms effectively reduces the domain gap between synthetic and real urban street scene datasets for object detection. This motivates the inclusion of $\text{js}_{\text{color}}$ in our study.
+
+% domain adaptation via label alignment
+\cite{liu2022_labelShift} address the problem of label shift in unsupervised domain adaptation for semantic segmentation of urban scenes by aligning the conditional distribution $P(X|Y)$ across domains so that the feature extractor leans class-conditional, domain-invariant representations, and rectifying the posterior probability $P(Y|F(x))$ to correct for the distortion introduced by the mismatched class frequencies. This motivates the inclusion of label-based metrics in our study.
+
+% domain adaptation using both color and label alignment
+\cite{zhang2020} target both color and label shift by aligning color (via gamut-based color constancy) and label distributions (via image-level or superpixel properties) between GTA-based synthetic data and Cityscapes for semantic segmentation. All three alignment strategies improve segmentation performance individually, with their combination yielding the largest gains. Their image-level label distribution measures the distribution of classes by pixel occupancy, which is similar to our dataset-level metric $\text{js}_{\text{classFrequency}}$. However, since they operate in an unsupervised domain adaptation setting, Cityscapes' label distribution is estimated rather than measured directly.
+
+% comparative distribution analysis
+Instead of reducing distribution shift to a single score, \cite{UrbanSyn} conduct a comparative distribution analysis of the Cityscapes, GTA‑V, and Synscapes datasets. Their analysis shows that GTA‑V and Synscapes both deviate from Cityscapes, but in different ways. These findings are consistent with our own results (see Appendix~\ref{sec:datasetAnalysis}). Furthermore, they also trained DeepLabV3+ and SegFormer models on each dataset. The reported downstream performance aligns with our findings: SegFormer consistently outperforms DeepLabV3+. Models trained on Cityscapes perform best when tested on Cityscapes, while models trained on GTA-V perform worst.
+
+% you can choose not to have a title for an appendix
+% if you want by leaving the argument blank
+\section{Analysis of street scene datasets}
+\label{sec:datasetAnalysis}
+This section presents our analysis of the metric summaries for the three pure training datasets (Cityscapes100, Synscapes100, GTAV100) and the test dataset to gain a deeper insight into prominent differences in dataset characteristics. Across summaries, our Cityscapes-based training and test sets show nearly identical properties, as both were curated from the same underlying distribution.
+
+\subsection{Photorealism (color and texture analysis)}
+GTA-V exhibits a pronounced color and texture shift, whereas Synscapes' color and texture properties remain largely consistent with those of Cityscapes. 
+Both shifts might be artifacts of GTA-V's underlying rendering approach, which relies on real-time game-engine rendering and thus trades off photorealism against rendering speed, limiting illumination, reflection, and shadow accuracy compared to physically based rendering \cite{UrbanSyn}.
+
+\paragraph{Color}
+A comparison of hue, saturation, and brightness distributions (see Figure~\ref{fig:sumColor}) shows that hue and brightness are most strongly affected by this shift. In contrast to \cite{zhang2020}, we do not observe an oversaturation in GTA-V images. However, \cite{zhang2020}  also attribute part of the color shift to differing illumination conditions, which is consistent with our findings. GTA-V images exhibit increased brightness, which may create the perceptual impression of higher saturation due to the Hunt effect \cite{huntEffect}. Furthermore, GTA-V's hue distribution is sharply bimodal, peaking in orange and blue, while the other datasets show a broader, green-dominated distribution. This reflects the geographic setting of each dataset, as GTA-V is set in California, whereas Cityscapes and Synscapes depict Central European cities.
+
+\begin{figure}[htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/color_hsv.png}
+    \caption{Mean per-image HSV histograms used in $\text{js}_{\text{color}}$}
+    \label{fig:sumColor}
+\end{figure}
+
+ \paragraph{Texture}
+ Our LBP histograms (see Figure \ref{fig:sumTexture}) reveal the strongest deviation in the last uniform bin at both LBP scales, respectively. This indicates that GTA-V images contain a higher proportion of uniform, bright regions compared to the other datasets. This observation aligns with the finding of \cite{zhang2020}, who report that GTA-V images exhibit visibly artificial texture. 
+% More information on interpreting LBP histogram:
+% - Stonger edge bins (Bin 4/5 in LBP with P=8, R=1; Bin 8/9 in LBP with P=16, R=2) and bright spot bin (bin 8 in LBP with P=8, R=1; Bin 16 in P=16, R=2) are the tallest bins across all datasets — this is typical for urban scenes: lots of straight edges (building lines, road markings, poles) and lots of locally-bright flat regions (sky, walls, road surface).
+% - near-symmetry between low bins and high bins reflects that dark-arc and bright-arc patterns of the same size occur with similar frequency
+% - n.u." (non-uniform) high -> local patches have complex/noisy micro-texture
+% - WHAT STANDS OUT: texture shift is most prominent for GTA in the highest uniform bins (8, 16) = GTA patches are disproportionately flat/bright (fewer detected edges, more uniform bright regions) 
+
+\begin{figure}[htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/texture_lbp.png}
+    \caption{Mean per-image multiscale LBP histograms used in $\text{js}_{\text{texture}}$}
+    \label{fig:sumTexture}
+\end{figure}
+
+\subsection{Label analysis}
+Both Synscapes and GTA-V exhibit a pronounced label shift relative to Cityscapes, but the nature of this shift differs between datasets: The shift in class frequency (Figure~\ref{fig:sumClassFrequency}) is more pronounced for GTA-V, whereas the shift in class presence (Figure~\ref{fig:sumClassPresence}) and scene complexity (Figure~\ref{fig:sumSceneComplexity}) is more pronounced for Synscapes.
+
+\paragraph{Class frequency}
+The overall ranking of classes is closely tied to size relations. For example, roads often occupy a larger number of pixels than traffic signs. \cite{zhang2020} note that label distributions implicitly encode information on such underlying idiosyncrasies of urban traffic scenes.
+Synthetic and real datasets are fairly close in pixel share for common, large-area classes (e.g., 'road', 'building', 'vegetation', and 'sky'). Such classes naturally occupy a larger number of pixels in any street scene, and hence, are less susceptible to label shift. 
+
+\begin{figure}[htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/class_frequency.png}
+    \caption{Normalized class frequency used in $\text{js}_{\text{classFrequency}}$}
+    \label{fig:sumClassFrequency}
+\end{figure}
+
+\paragraph{Class presence}
+The overall class ranking between class frequency and class presence remains similar. Class presence and pixel proportion are closely related: Classes present in more samples also tend to occupy a larger total pixel area.
+Consistent with \cite{zhang2020, liu2022_labelShift, UrbanSyn}, we find that GTA-V's label shift is concentrated in specific classes, with substantially higher representation of ‘terrain’, ‘fence’, ‘wall’, and ‘truck’, and lower representation of 'bicycle’, ‘rider’, and ‘sign’. We attribute this to the dataset’s bias toward American-style urban layouts and traffic participants.
+In contrast, Synscapes exhibits a more even class presence across classes.
+
+\begin{figure}[htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/class_presence.png}
+    \caption{Normalized class presence used in $\text{js}_{\text{classPresence}}$}
+    \label{fig:sumClassPresence}
+\end{figure}
+
+\paragraph{Scene complexity}
+Both synthetic datasets exhibit a higher scene complexity than Cityscapes.
+GTA-V shows a moderate increase in the number of distinct classes per sample. This may partly reflect our dataset curation, during which rural images recorded between urban areas were removed (see Section~\ref{sec:datasetPreparation}), as such scenes typically contain fewer distinct classes than dense urban environments.
+Synscapes exhibits the highest scene complexity overall. Combined with its even class presence and comparatively high class frequency, this points to a general overrepresentation of classes, which was also reported by \cite{UrbanSyn}. 
+
+\begin{figure}[!htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/scene_complexity.png}
+    \caption{Normalized scene complexity used in $\text{js}_{\text{sceneComplexity}}$}
+    \label{fig:sumSceneComplexity}
+\end{figure}
+
+\subsection{Distribution analysis}
+GTA-V exhibits a more prominent shift than Synscapes under both feature extractors (see Figure~\ref{fig:sumMeans}). Note that absolute distances are not comparable across extractors, as StreetCLIP embeddings are L2-normalized while DINOv2 embeddings are not. The consistent ranking across both extractors suggests that the shift reflects a genuine appearance and semantic difference rather than an artifact of a specific feature space.
+
+\begin{figure}[htbp]
+    \vspace{-0.5em} 
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/mean_shift_comparison.png}
+    \caption{Distance between distribution means}
+    \label{fig:sumMeans}
+\end{figure}
+
+Furthermore, GTA-V's eigenvalue spectrum lies consistently below that of Cityscapes and Synscapes (see Figure~\ref{fig:sumCovariate}). This suggests a lower variance, and thus reduced visual diversity, within the dataset. Our finding aligns with \cite{synscapes}, which hypothesize that GTA-V's reduced geometric and rendering complexity results in a smaller feature space.
+
+\begin{figure}[!htbp]
+    \vspace{-0.5em}
+    \centering
+    \includegraphics[width=\columnwidth, keepaspectratio]{images/covariance_spectrum_comparison.png}
+    \caption{Eigenvalue spectrum of each distribution's covariance matrix}
+    \label{fig:sumCovariate}
+\end{figure}
+
+\section{How much of the correlation is explained by the synthetic proportion?}
+\label{sec:baseline}
+The synthetic proportion of a candidate training dataset is known from its recipe and requires no measurement. Because both the shift scores and downstream performance vary monotonically along each arm of the design, that proportion alone is already a strong predictor, and any correlation reported for a shift metric has to be read against it.
+
+Using the proportion directly as the predictor, with the same rank correlation, gives $0.983$ for both architectures. The best of the twelve shift metrics reaches $1.000$. With nine datasets a single adjacent swap in the ranking moves Spearman's $\rho$ by $12/(n(n^2-1)) = 0.0167$, so the entire advantage of the best metric over the proportion amounts to one swap: The smallest difference the statistic can express at this sample size.
+
+This does not show that the metrics are uninformative. The proportion is only predictive here because our inference set is real Cityscapes and both synthetic sources lie further from it than real data does; against a target the synthetic data resembled more closely, the same predictor would point the wrong way, whereas a shift metric is computed against whatever inference set it is given. What it does show is that the correlations in Section~\ref{sec:analysis} cannot by themselves establish that measuring shift adds information beyond knowing the recipe. That is the reason for the matched-ratio comparison, which holds the proportion fixed and so removes the effect entirely.
+
+\section{Warmup as a fraction of training}
+\label{sec:warmup}
+Learning-rate warmup was specified in optimizer steps rather than epochs. With 2{,}000 training images at batch size $8$, one epoch is 250 optimizer steps, so the 1000-step warmup spans the first four epochs of every run. Early stopping, however, terminates runs at widely different epochs.
+
+DeepLabV3+ runs ended between 6 and 12 epochs, placing between $33\%$ and $67\%$ of their training inside the warmup. SegFormer runs ended between 9 and 35 epochs, giving $11\%$ to $44\%$. The effect is largest for the purely synthetic datasets, which stop earliest, and it differs systematically between the two architectures.
+
+Part of the performance gap between datasets may therefore reflect the learning-rate schedule rather than the data itself, and the two architectures were not trained under equivalent effective schedules. The direction of the effect works against the purely synthetic datasets, which are already the weakest performers, so it inflates rather than creates the observed gap.
+
+\end{document}
+
+
