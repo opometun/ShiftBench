@@ -67,7 +67,7 @@ VALUE_OFFSET = 0.045
 
 
 def load(model):
-    path = Path(f"results/shift/correlation_{model}.json")
+    path = Path(f"results/shift/shift_json/correlation_{model}.json")
 
     if not path.is_file():
         raise SystemExit(f"Missing input: {path}")

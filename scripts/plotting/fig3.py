@@ -17,18 +17,18 @@ mpl.rcParams.update({
 
 
 LABELS = {
-    "color_js": r"$\mathrm{JS}_{\mathrm{color}}$",
-    "texture_js": r"$\mathrm{JS}_{\mathrm{texture}}$",
-    "class_frequency_js": r"$\mathrm{JS}_{\mathrm{classFrequency}}$",
-    "class_presence_js": r"$\mathrm{JS}_{\mathrm{classPresence}}$",
-    "scene_complexity_js": r"$\mathrm{JS}_{\mathrm{sceneComplexity}}$",
-    "frechet_dinov2": r"$\mathrm{Fr\acute{e}chet}_{\mathrm{DINOv2}}$",
-    "centroid_dinov2": r"$\mathrm{Centroid}_{\mathrm{DINOv2}}$",
-    "frechet_streetclip": r"$\mathrm{Fr\acute{e}chet}_{\mathrm{StreetCLIP}}$",
-    "centroid_streetclip": r"$\mathrm{Centroid}_{\mathrm{StreetCLIP}}$",
-    "sadge": r"$\mathrm{SADGE}$",
-    "sadge_appearance": r"$\overline{A}_{\mathrm{SADGE}}$",
-    "sadge_geometry": r"$\overline{G}_{\mathrm{SADGE}}$",
+    "color_js": r"$\text{js}_{\text{color}}$",
+    "texture_js": r"$\text{js}_{\text{texture}}$",
+    "class_frequency_js": r"$\text{js}_{\text{classFrequency}}$",
+    "class_presence_js": r"$\text{js}_{\text{classPresence}}$",
+    "scene_complexity_js": r"$\text{js}_{\text{sceneComplexity}}$",
+    "frechet_dinov2": r"$\text{fréchet}_{\text{dinov2}}$",
+    "centroid_dinov2": r"$\text{centroid}_{\text{dinov2}}$",
+    "frechet_streetclip": r"$\text{fréchet}_{\text{streetclip}}$",
+    "centroid_streetclip": r"$\text{centroid}_{\text{streetclip}}$",
+    "sadge": r"$\text{SADGE}$",
+    "sadge_appearance": r"$\overline{A}_{\text{SADGE}}$",
+    "sadge_geometry": r"$\overline{G}_{\text{SADGE}}$",
 }
 
 ARCH = {
@@ -40,7 +40,7 @@ OUT_OF_RANGE = {"sadge"}
 
 
 def load(model):
-    path = Path(f"results/shift/correlation_{model}.json")
+    path = Path(f"results/shift/shift_json/correlation_{model}.json")
 
     if not path.is_file():
         raise SystemExit(f"Missing input: {path}")

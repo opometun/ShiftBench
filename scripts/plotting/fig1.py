@@ -48,18 +48,18 @@ METRICS = [
 ]
 
 LABELS = {
-    "centroid_dinov2": "Centroid distance (DINOv2)",
-    "centroid_streetclip": "Centroid distance (StreetCLIP)",
-    "frechet_dinov2": "Fréchet distance (DINOv2)",
-    "frechet_streetclip": "Fréchet distance (StreetCLIP)",
-    "color_js": "Jensen–Shannon distance (color)",
-    "texture_js": "Jensen–Shannon distance (texture)",
-    "class_frequency_js": "Jensen–Shannon distance (class frequency)",
-    "class_presence_js": "Jensen–Shannon distance (class presence)",
-    "scene_complexity_js": "Jensen–Shannon distance (scene complexity)",
-    "sadge": "SADGE fused similarity",
-    "sadge_appearance": r"$\bar{A}_{\mathrm{SADGE}}$",
-    "sadge_geometry": r"$\bar{G}_{\mathrm{SADGE}}$",
+    "color_js": r"$\text{js}_{\text{color}}$",
+    "texture_js": r"$\text{js}_{\text{texture}}$",
+    "class_frequency_js": r"$\text{js}_{\text{classFrequency}}$",
+    "class_presence_js": r"$\text{js}_{\text{classPresence}}$",
+    "scene_complexity_js": r"$\text{js}_{\text{sceneComplexity}}$",
+    "frechet_dinov2": r"$\text{fréchet}_{\text{dinov2}}$",
+    "centroid_dinov2": r"$\text{centroid}_{\text{dinov2}}$",
+    "frechet_streetclip": r"$\text{fréchet}_{\text{streetclip}}$",
+    "centroid_streetclip": r"$\text{centroid}_{\text{streetclip}}$",
+    "sadge": r"$\text{SADGE}$",
+    "sadge_appearance": r"$\overline{A}_{\text{SADGE}}$",
+    "sadge_geometry": r"$\overline{G}_{\text{SADGE}}$",
 }
 
 ARCH = {
@@ -106,7 +106,7 @@ def main():
     distances = load("results/shift/distances.json")
 
     analyses = {
-        model: load(f"results/shift/correlation_{model}.json")
+        model: load(f"results/shift/shift_json/correlation_{model}.json")
         for model in ARCH
     }
 
@@ -178,13 +178,19 @@ def main():
         axis.spines[["top", "right"]].set_visible(False)
         axis.tick_params(direction="out", length=3, width=0.7)
 
+        if metric in ("sadge_appearance", "sadge_geometry"):
+            text_x, ha = 0.965, "right"
+        else:
+            text_x, ha = 0.035, "left"
+
         axis.text(
-            0.035,
+            text_x,
             0.035,
             "\n".join(notes),
             transform=axis.transAxes,
             fontsize=8.3,
             va="bottom",
+            ha=ha,
             bbox={
                 "facecolor": "white",
                 "edgecolor": "#999999",
@@ -192,7 +198,7 @@ def main():
                 "pad": 3,
             },
         )
-
+        
         legend_handles = [
             Line2D(
                 [0], [0],
