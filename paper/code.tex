@@ -240,95 +240,146 @@ Our matched-ratio comparison avoids the effect entirely by holding the synthetic
 
 \textbf{Multiple comparisons.} Correlating twelve metrics against the same downstream scores raises the chance that at least one appears significant purely by accident. Correlation $p$-values are therefore reported alongside values adjusted by the Holm step-down procedure \cite{holm1979}, applied within each family of twelve metrics, that is separately for each architecture.
 
+% \section{Results}
+% \textcolor{gray}{PARAGRAPH (1)}
+
+% \begin{itemize}
+%     \item \textcolor{gray}{Synscapes and GTA-V differ in separate ways from Cityscapes (see Appendix~\ref{sec:datasetAnalysis}).}
+%     \item \textcolor{gray}{Model performance is visibly affected by this shift (see Figure~\ref{fig:shiftModelPerformance}). The lower the ratio of in-domain/real/Cityscapes data, the lower downstream model performance.}
+%     \item \textcolor{gray}{Models trained with GTA-V as a synthetic data source perform generally worse than models trained on Synscapes.}
+%     \item \textcolor{gray}{Variance between seeds rises at higher synthetic fractions for both models.}
+%     \item \textcolor{gray}{Segformer architecture generally performs better than DeepLabV3+.}
+% \end{itemize}
+
+% \begin{figure}[htbp]
+%     \vspace{-0.5em}
+%     \centering
+%     \includegraphics[width=\columnwidth, keepaspectratio]{images/shiftModelPerformance.png}
+%     \caption{Points show means across three training seeds. Shaded regions indicate 95\% confidence intervals computed using the unbiased sample variance.}
+%     \label{fig:shiftModelPerformance}
+% \end{figure}
+
+% \textcolor{gray}{PARAGRAPH (2) - reference Figures \ref{fig:correlation1} and \ref{fig:correlation2}}
+
+% \begin{itemize}
+%     \item \textcolor{gray}{shift quantification metrics produce shift scores that differ in scale}
+%     \item \textcolor{gray}{observe negative correlation for all distance-based metrics; observe positive correlation for SADGE's two similarity-based individual components; observe negative correlation for the combined SADGE score despite being similarity-based}
+%     \item \textcolor{gray}{correlation (and its p-value / statistical significance) is generally higher for DeepLabV3+ than Segformer}
+%     \item \textcolor{gray}{statistical significance: all are $p<0.05$}
+%     \item \textcolor{gray}{for a single training seed, ranking according to correlation stays similar between the two model architectures, just $\text{js}_{\text{sceneComplexity}}$ and $\text{js}_{\text{color}}$ are swapped}
+% \end{itemize}
+
+% \begin{figure*}[!htbp]
+%     \centering
+%     \includegraphics[width=0.48\textwidth]{images/seed42_color_js_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_texture_js_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_class_frequency_js_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_class_presence_js_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_scene_complexity_js_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_sadge_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_sadge_appearance_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_sadge_geometry_miou.png}
+    
+%     \caption{caption}
+%     \label{fig:correlation1}
+% \end{figure*}
+
+% \begin{figure*}[!htbp]
+%     \centering
+%     \includegraphics[width=0.48\textwidth]{images/seed42_centroid_dinov2_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_centroid_streetclip_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_frechet_dinov2_miou.png}
+%     \includegraphics[width=0.48\textwidth]{images/seed42_frechet_streetclip_miou.png}
+    
+%     \caption{continued from Figure X}
+%     \label{fig:correlation2}
+% \end{figure*}
+
+% \textcolor{gray}{PARAGRAPH (3) - reference Figure \ref{fig:ranking}}
+
+% \begin{itemize}
+%     \item \textcolor{gray}{the overall ranking stays similar when considering the mean downstream performance (across seeds), now is even identical between the two model architectures}
+%     \item \textcolor{gray}{SADGE remains the best metric in our study as well; the individual geometry and appearance SADGE components alone already work well by themselves}
+%     \item \textcolor{gray}{From our metrics, $\text{js}_{\text{classFrequency}}$ shows highest predictive power}
+%     \item \textcolor{gray}{out of our representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ works best}
+%     \item \textcolor{gray}{$\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ show lowest predictive power}
+% \end{itemize}
+
+% \begin{figure}[!htbp]
+%     \centering
+%     \includegraphics[width=\linewidth]{images/rankingSegformer.png}
+%     \vspace{1.0em}
+%     \includegraphics[width=\linewidth]{images/rankingDeeplabv3plus.png}
+%     \caption{Caption}
+%     \label{fig:ranking}
+% \end{figure}
+
+% \textcolor{gray}{PARAGRAPH (4) - reference Figure~\ref{fig:matchedRatio}}
+
+% \begin{itemize}
+%     \item \textcolor{gray}{matched-ratio comparisons (see Figure~\ref{fig:matchedRatio}) reveal a key difference between model architectures: tie for SegFormer architecture, across metrics, for moderate synthetic ratios. For the DeepLabV+, all metrics are able to draw a clear differentiation. } 
+%     \item \textcolor{gray}{$\text{SADGE}$, $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ are unable to rank hybrid dataset utility meaningfully when keeping the synthetic fraction fixed}
+% \end{itemize}
+
+% \begin{figure}[!htbp]
+%     \centering
+%     \includegraphics[width=\linewidth]{images/matchedRatioSegformer.png}
+%     \vspace{1.0em}
+%     \includegraphics[width=\linewidth]{images/matchedRatioDeepLab.png}
+%     \caption{Caption}
+%     \label{fig:matchedRatio}
+% \end{figure}
+
 \section{Results}
-\textcolor{gray}{PARAGRAPH (1)}
+Overall, the results are consistent across the evaluated settings: hybrid datasets with a larger synthetic share tend to perform worse, the strongest degradation appears in the most synthetic-heavy mixtures, and the gap is larger for GTA-V than for Synscapes. The same pattern is reflected in the shift metrics, where the strongest predictors recover the expected negative relationship between dataset shift and downstream performance, while the matched-ratio comparison provides the clearest evidence for ranking candidate sources under a fixed data budget.
 
-\begin{itemize}
-    \item \textcolor{gray}{Synscapes and GTA-V differ in separate ways from Cityscapes (see Appendix~\ref{sec:datasetAnalysis}).}
-    \item \textcolor{gray}{Model performance is visibly affected by this shift (see Figure~\ref{fig:shiftModelPerformance}). The lower the ratio of in-domain/real/Cityscapes data, the lower downstream model performance.}
-    \item \textcolor{gray}{Models trained with GTA-V as a synthetic data source perform generally worse than models trained on Synscapes.}
-    \item \textcolor{gray}{Variance between seeds rises at higher synthetic fractions for both models.}
-    \item \textcolor{gray}{Segformer architecture generally performs better than DeepLabV3+.}
-\end{itemize}
+\subsection{Downstream performance by synthetic fraction}
+Figure~\ref{fig:shiftModelPerformance} summarizes the mean test mIoU across the nine hybrid training settings. The pattern is consistent across architectures: increasing the synthetic fraction reduces performance, and the decline is steeper for GTA-V than for Synscapes. SegFormer remains the better model on average, but the gap between the two synthetic sources is relatively small in the mid-range ratios and becomes clearer only at higher synthetic fractions.
 
-\begin{figure}[htbp]
-    \vspace{-0.5em}
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=\columnwidth, keepaspectratio]{images/shiftModelPerformance.png}
-    \caption{Points show means across three training seeds. Shaded regions indicate 95\% confidence intervals computed using the unbiased sample variance.}
+    \includegraphics[width=\columnwidth, trim=0 40 0 10, clip]{../results/figures/figure4/figure4_miou_ci95.png}
+    \caption{Mean test mIoU as a function of the synthetic fraction in the training mixture. Points show the mean across six training seeds and shaded regions show 95\% confidence intervals. Results are reported separately for Synscapes-containing and GTA-containing mixtures, for both model architectures.}
     \label{fig:shiftModelPerformance}
 \end{figure}
 
-\textcolor{gray}{PARAGRAPH (2) - reference Figures \ref{fig:correlation1} and \ref{fig:correlation2}}
+Figure~\ref{fig:shiftModelPerformance} shows that the synthetic proportion is a strong driver of downstream performance, while the source of the synthetic data controls the severity of the drop. The trend is consistent across both architectures, indicating that the ordering of the dataset mixtures is robust before any individual shift metric is considered.
 
-\begin{itemize}
-    \item \textcolor{gray}{shift quantification metrics produce shift scores that differ in scale}
-    \item \textcolor{gray}{observe negative correlation for all distance-based metrics; observe positive correlation for SADGE's two similarity-based individual components; observe negative correlation for the combined SADGE score despite being similarity-based}
-    \item \textcolor{gray}{correlation (and its p-value / statistical significance) is generally higher for DeepLabV3+ than Segformer}
-    \item \textcolor{gray}{statistical significance: all are $p<0.05$}
-    \item \textcolor{gray}{for a single training seed, ranking according to correlation stays similar between the two model architectures, just $\text{js}_{\text{sceneComplexity}}$ and $\text{js}_{\text{color}}$ are swapped}
-\end{itemize}
-
-\begin{figure*}[!htbp]
-    \centering
-    \includegraphics[width=0.48\textwidth]{images/seed42_color_js_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_texture_js_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_class_frequency_js_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_class_presence_js_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_scene_complexity_js_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_appearance_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_sadge_geometry_miou.png}
-    
-    \caption{caption}
-    \label{fig:correlation1}
-\end{figure*}
-
-\begin{figure*}[!htbp]
-    \centering
-    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_dinov2_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_centroid_streetclip_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_dinov2_miou.png}
-    \includegraphics[width=0.48\textwidth]{images/seed42_frechet_streetclip_miou.png}
-    
-    \caption{continued from Figure X}
-    \label{fig:correlation2}
-\end{figure*}
-
-\textcolor{gray}{PARAGRAPH (3) - reference Figure \ref{fig:ranking}}
-
-\begin{itemize}
-    \item \textcolor{gray}{the overall ranking stays similar when considering the mean downstream performance (across seeds), now is even identical between the two model architectures}
-    \item \textcolor{gray}{SADGE remains the best metric in our study as well; the individual geometry and appearance SADGE components alone already work well by themselves}
-    \item \textcolor{gray}{From our metrics, $\text{js}_{\text{classFrequency}}$ shows highest predictive power}
-    \item \textcolor{gray}{out of our representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ works best}
-    \item \textcolor{gray}{$\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ show lowest predictive power}
-\end{itemize}
+\subsection{Shift-performance relationships}
+The metric plots indicate that the relationship between shift score and test mIoU is mostly monotonic, but not equally strong across all metrics. Distance-based metrics tend to move in the expected direction: larger shift corresponds to lower mIoU. The strongest negative correlations are obtained by the class-frequency and representation-based distances, while the SADGE similarity scores move in the opposite direction as expected.
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=\linewidth]{images/rankingSegformer.png}
-    \vspace{1.0em}
-    \includegraphics[width=\linewidth]{images/rankingDeeplabv3plus.png}
-    \caption{Caption}
+    \includegraphics[width=\columnwidth, trim=0 40 0 10, clip]{../results/figures/figure1/figure1_seed42_class_frequency_js_miou.png}
+    \caption{Example scatter plot of the class-frequency Jensen-Shannon distance against test mIoU. Marker shape denotes the model architecture and color denotes the synthetic source. The reported Spearman correlation shows the expected negative relationship between shift and downstream performance.}
+    \label{fig:shiftmetric_example}
+\end{figure}
+
+Figure~\ref{fig:shiftmetric_example} illustrates the central trend in the metric analysis: as the synthetic ratio increases, the class-frequency shift rises and the downstream mIoU decreases. The same qualitative pattern holds across the other distance-based metrics, although the strength of the relation varies between metrics and between architectures.
+
+\subsection{Metric ranking}
+Figure~\ref{fig:ranking} summarizes the sign-adjusted correlations across all twelve metrics. The ordering is stable across architectures, with SADGE and the class-frequency distance among the strongest predictors. The appearance and geometry components of SADGE remain competitive when considered separately, whereas the weakest metrics are mainly those based on color and scene complexity.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\columnwidth, trim=0 40 0 10, clip]{../results/figures/figure2/figure2_combined_miou_standard.png}
+    \caption{Sign-adjusted Spearman correlation of each metric with test mIoU. Distances are scored positively when they correlate negatively with mIoU; similarities are scored positively when they correlate positively with mIoU. Higher values indicate stronger predictive power.}
     \label{fig:ranking}
 \end{figure}
 
-\textcolor{gray}{PARAGRAPH (4) - reference Figure~\ref{fig:matchedRatio}}
+Figure~\ref{fig:ranking} makes the difference across metric families explicit: some shift types are more informative for predicting hybrid-dataset utility than others. The strongest predictors are not simply the ones with the largest raw shift values, but the ones that best reflect the mismatch that harms semantic segmentation performance.
 
-\begin{itemize}
-    \item \textcolor{gray}{matched-ratio comparisons (see Figure~\ref{fig:matchedRatio}) reveal a key difference between model architectures: tie for SegFormer architecture, across metrics, for moderate synthetic ratios. For the DeepLabV+, all metrics are able to draw a clear differentiation. } 
-    \item \textcolor{gray}{$\text{SADGE}$, $\text{js}_{\text{classPresence}}$ and $\text{js}_{\text{sceneComplexity}}$ are unable to rank hybrid dataset utility meaningfully when keeping the synthetic fraction fixed}
-\end{itemize}
+\subsection{Matched-ratio comparison}
+The matched-ratio comparison removes the effect of the synthetic proportion itself. It therefore provides a stricter test of a metric's usefulness. When the synthetic fraction is fixed, the difference between the two synthetic sources becomes clearer: DeepLabV3+ separates the sources more reliably at the same ratio, while SegFormer shows smaller and often non-significant differences at intermediate ratios.
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=\linewidth]{images/matchedRatioSegformer.png}
-    \vspace{1.0em}
-    \includegraphics[width=\linewidth]{images/matchedRatioDeepLab.png}
-    \caption{Caption}
+    \includegraphics[width=\columnwidth, trim=0 40 0 10, clip]{../results/figures/figure3/figure3_combined_miou_standard.png}
+    \caption{Matched-ratio comparison for the two synthetic sources at fixed synthetic fractions. Green cells indicate that the metric correctly prefers the better-performing source, red cells indicate the opposite, and gray cells indicate a tie that was not scored.}
     \label{fig:matchedRatio}
 \end{figure}
+
+Figure~\ref{fig:matchedRatio} is the most relevant comparison for dataset selection, because the question is not whether a metric tracks the overall synthetic share, but whether it can rank two candidate sources fairly under a fixed data budget. Taken together, these results show that pre-training shift quantification can predict the utility of hybrid datasets, but the reliability depends on the metric and on the evaluation protocol.
 
 \section{Discussion}
 In this study, we applied twelve shift quantification metrics to nine hybrid dataset configurations for daytime urban street scene segmentation, and measured correlation with downstream performance across two model architectures with six random seeds each. We can draw four main conclusions from our findings:
