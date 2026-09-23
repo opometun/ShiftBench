@@ -105,7 +105,7 @@ Finally, similar to \cite{cityscapes}, only 19 of the 34 different Cityscapes cl
 \subsection{Shift quantification}
 A distribution shift occurs when two data distributions differ. In machine learning (ML), this typically refers to the shift between the distribution a model is trained on (training distribution) and the distribution it will be applied to (inference distribution, approximated by the test dataset). Hybrid datasets are often motivated by the goal of reducing this distribution shift: Adding synthetic data to real data can enrich the training distribution in a controlled manner, improving coverage and diversity, and supporting generalization to shifted inference conditions. Conversely, adding real data to synthetic data can help anchor the model in real-world statistics, reducing the reality gap and mitigating reliance on unrealistic or harmful artifacts. 
 
-Beyond this general notion, a distribution shift can be decomposed into several distinct components. Following the formulation of \cite{liu2022}, a segmentation model can be expressed as $G(x)=C(F(x))$, where the classifier $C$ outputs the posterior probability $P(Y|F(x))$ for an input image $x$. Applying Bayes' theorem yields 
+Beyond this general notion, a distribution shift can be decomposed into several distinct components. Following the formulation of \cite{liu2022_labelShift}, a segmentation model can be expressed as $G(x)=C(F(x))$, where the classifier $C$ outputs the posterior probability $P(Y|F(x))$ for an input image $x$. Applying Bayes' theorem yields 
 \begin{equation}
 \label{eq:bayes_shift}
 P(Y \mid F(x)) = \frac{P(F(x) \mid Y) \cdot P(Y)}{P(F(x))}.
