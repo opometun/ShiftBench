@@ -76,7 +76,7 @@ for s in 43 44 45 46 47; do
 done
 ```
 
-108 runs total. SegFormer takes roughly 1.75 h each, DeepLabV3+ about 40 min.
+108 runs total, 76.3 GPU hours measured with `sacct` (summed elapsed time, one GPU per job; 61 runs on A100, 47 on H100). Average time per run: SegFormer about 84 min on A100 and 45 min on H100, DeepLabV3+ about 24 min on A100 and 12 min on H100. These are averages: because of early stopping, runs last 6–35 epochs depending on model and mixture, so pure-synthetic runs finish considerably faster than Cityscapes100.
 
 ## 5. Test-split evaluation
 
