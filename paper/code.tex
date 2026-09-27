@@ -202,19 +202,19 @@ Downstream performance is reported as mIoU across the 19 evaluated classes \eqre
 
 Our matched-ratio comparison avoids the effect entirely by holding the synthetic proportion fixed. Matched GTA-V and Synscapes mixtures share the identical Cityscapes subset, and the real subsets are nested across ratios. At each of the four non-zero ratios the two synthetic sources are compared directly: The downstream difference is tested with a two-sided Welch $t$-test on the per-seed scores at $\alpha = 0.05$, and each metric is scored on whether it places the better-performing source closer to the inference set. Runs sharing a seed number share controlled randomness, since the seed fixes decoder initialization and the data-loader shuffle, so a paired test is also defensible. We retain Welch's test as the primary analysis and report paired tests as a sensitivity analysis. Where the downstream difference is not significant the pair is recorded as a tie and no metric is scored on it, so that metrics are never credited or penalised for a comparison the data cannot resolve.
 
-\textbf{Multiple comparisons.} Correlating twelve metrics against the same downstream scores raises the chance that at least one appears significant purely by accident. Correlation $p$-values are therefore reported alongside values adjusted by the Holm step-down procedure \cite{holm1979}, applied within each family of twelve metrics, that is separately for each architecture.
+\textbf{Multiple comparisons.} Correlating twelve metrics against the same downstream scores raises the chance that at least one appears significant purely by accident. Correlation $p$-values are therefore additionally adjusted by the Holm step-down procedure \cite{holm1979}, applied within each family of twelve metrics, that is separately for each architecture, and we report whether they remain significant.
 
 \section{Results}
 
 \subsection{Downstream performance by synthetic fraction}
 Synscapes and GTA-V differ in separate ways from Cityscapes (see Appendix~\ref{sec:datasetAnalysis}). Model performance is visibly affected by this shift, as increasing the synthetic fraction consistently reduces the mean test mIoU (see Figure~\ref{fig:shiftModelPerformance}). Within the same model architecture, training with GTA-V as a synthetic data source results in consistently lower performance compared to using Synscapes. The performance gap between the two synthetic sources becomes more prominent as their fraction increases. The SegFormer architecture performs superior to DeepLabV3+.
 
-Those findings show that the synthetic proportion is a strong driver of downstream performance, while the source of the synthetic data controls the severity of the drop. The trend is consistent across both architectures, indicating that the ordering of the dataset mixtures is model-independent.
+Those findings show that the synthetic proportion is a strong driver of downstream performance, while the source of the synthetic data controls the severity of the drop. The trend is consistent across both architectures, indicating that the ordering of the dataset mixtures is model-independent. Part of the drop for the purely synthetic training datasets may also reflect the training schedule: These runs stop earliest and therefore spend the largest share of training in learning-rate warmup (Appendix~\ref{sec:warmup}).
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=\columnwidth, keepaspectratio]{images/shiftModelPerformance.png}
-    \caption{Mean test mIoU as a function of the synthetic fraction in the training mixture. Points show the mean across six training seeds and shaded regions show 95\% confidence intervals.}
+    \caption{Mean test mIoU as a function of the synthetic fraction in the training mixture. Points show the mean across six training seeds and shaded regions show two-sided 95\% $t$-confidence intervals of the mean over the six seeds.}
     \label{fig:shiftModelPerformance}
 \end{figure}
 
@@ -222,14 +222,12 @@ Those findings show that the synthetic proportion is a strong driver of downstre
 Since the shift quantification metrics produce shift scores on different scales, we assess their relationships using Spearman's correlation analysis (Figures~\ref{fig:correlation1} and~\ref{fig:correlation2}). Almost all metrics yield the expected correlation direction, though the strength of these correlations varies across metrics and architectures. All distance-based metrics correlate negatively, while both similarity-based SADGE components correlate positively, as expected. The fused SADGE score is the sole exception: Despite being similarity-based, it exhibits a negative correlation. All reported correlations are statistically significant ($p<0.05$) and remain so after Holm correction across the twelve metrics.
 
 \subsection{Metric ranking}
-We rank the twelve metrics according to their sign-adjusted correlations with mean test mIoU (averaged across six training seeds; see Figure~\ref{fig:ranking}). The ranking is stable across model architectures, with $\bar{A}_{\text{SADGE}}$, $\bar{G}_{\text{SADGE}}$, and $\text{js}_{\text{classFrequency}}$ emerging as the strongest predictors. Among the representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ performs best. $\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ rank lowest in predictive power.
+We rank the twelve metrics according to their sign-adjusted correlations with mean test mIoU (averaged across six training seeds; see Figure~\ref{fig:ranking}). Both architectures order the nine training datasets identically by mean test mIoU (Figure~\ref{fig:shiftModelPerformance}). Since the shift scores do not depend on the model, the rank correlations, and hence the ranking, are identical for SegFormer and DeepLabV3+, so Figure~\ref{fig:ranking} shows it once. $\bar{A}_{\text{SADGE}}$, $\bar{G}_{\text{SADGE}}$, and $\text{js}_{\text{classFrequency}}$ rank highest. Among the representation-based metrics, $\text{centroid}_{\text{streetCLIP}}$ performs best. $\text{js}_{\text{color}}$ and $\text{js}_{\text{sceneComplexity}}$ rank lowest. The synthetic proportion alone, known from the dataset recipe, already reaches a rank correlation of $0.983$ for both architectures, so the lead of the best metrics ($1.000$) amounts to a single adjacent rank swap (Appendix~\ref{sec:baseline}). Global correlations alone therefore cannot show that the top-ranked metrics add information beyond the recipe; the matched-ratio comparison addresses this.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=\linewidth]{images/rankingSegformer.png}
-    \par\vspace{1.0em}\par
-    \includegraphics[width=\linewidth]{images/rankingDeeplabv3plus.png}
-    \caption{Metric ranking according to sign-adjusted Spearman's correlation with mean test mIoU. Higher values indicate stronger predictive power.}
+    \caption{Metric ranking according to sign-adjusted Spearman's correlation with mean test mIoU across six seeds, shown for SegFormer; the ranking for DeepLabV3+ is identical (see text). Higher values indicate a stronger cross-configuration rank correlation. Hatched: fused SADGE is evaluated outside the range assumed by its calibration.}
     \label{fig:ranking}
 \end{figure}
 
@@ -241,7 +239,7 @@ The matched-ratio comparison (Figure~\ref{fig:matchedRatio}) shows that once the
     \includegraphics[width=\linewidth]{images/matchedRatioSegformer.jpg}
     \par\vspace{0.3em}\par
     \includegraphics[width=\linewidth]{images/matchedRatioDeepLab.jpg}
-    \caption{Matched-ratio comparison for the two synthetic sources at fixed synthetic fractions. Green cells indicate that the metric correctly prefers the better-performing source, red cells indicate the opposite, and gray cells indicate a tie that was not scored.}
+    \caption{Matched-ratio comparison for the two synthetic sources at fixed synthetic fractions. Green cells indicate that the metric correctly prefers the better-performing source, red cells indicate the opposite, and gray cells indicate a tie that was not scored. The hatched row marks the fused SADGE score, which is evaluated outside the range assumed by its calibration.}
     \label{fig:matchedRatio}
 \end{figure}
 
@@ -257,7 +255,7 @@ The matched-ratio comparison (Figure~\ref{fig:matchedRatio}) shows that once the
     \includegraphics[width=0.48\textwidth]{images/seed42_sadge_appearance_miou.jpg}
     \includegraphics[width=0.48\textwidth]{images/seed42_sadge_geometry_miou.jpg}
     
-    \caption{Spearman's correlation between quantified shift and downstream model performance. Marker shape denotes the model architecture (SegFormer: square, DeepLabV3+: circle). Color denotes the synthetic source (100\% real: black; Synscapes-containing: blue; GTA-V-containing: orange). Correlations use the test mIoU of seed 42. Inset $p$-values are unadjusted; all twelve remain significant after Holm correction (largest adjusted $p = 0.036$ for SegFormer and $0.013$ for DeepLabV3+).}
+    \caption{Spearman's correlation between quantified shift and downstream model performance. Marker shape denotes the model architecture (SegFormer: square, DeepLabV3+: circle). Color denotes the synthetic source (100\% real: black; Synscapes-containing: blue; GTA-V-containing: orange), with color intensity increasing with the synthetic fraction. Correlations use the test mIoU of seed 42. Inset $p$-values are unadjusted; all twelve remain significant after Holm correction (largest adjusted $p = 0.036$ for SegFormer and $0.013$ for DeepLabV3+).}
     \label{fig:correlation1}
 \end{figure*}
 
@@ -281,7 +279,7 @@ Second, our results reveal the problematic nature of cross-ratio, correlation-ba
 
 Third, we confirm $\text{SADGE}$-based shift quantification as the strongest predictor among the evaluated metrics, though its fused score is miscalibrated on our data and its sign flips as a result. With $a=0$, the $\text{SADGE}$ score reduces to $\hat{A} \cdot(b + c \cdot \hat{G})$. In all of our hybrid datasets, the appearance score $\bar{A}$ is below $\text{SADGE}$'s calibrated mean $\mu_A$, and the geometry score $\bar{G}$ reports far fewer MASt3R inliers than assumed by \cite{bartkowiak2026} for calibration. The latter is a known failure mode, which was already raised in \cite{bartkowiak2026}. This forces both $\hat{A}$ and $\hat{G}$ into the negative region, such that the sign flips. The practical concern this raises is that a metric intended to be dataset-independent and usable out-of-the-box may in fact require re-calibration. This weakens its applicability as a generally reliable tool for selecting a promising hybrid training dataset configuration.
 
-Fourth, our results suggest that the predictive power of shift quantification metrics is mostly independent of the model architecture. SegFormer and DeepLabV3+ share a similar metric ranking and global rank correlations of comparable magnitude. The one place where the two architectures diverge is not in metric quality but in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets (Figure~\ref{fig:shiftModelPerformance}).
+Fourth, the metric ranking does not differ between SegFormer and DeepLabV3+. This follows from both architectures ordering the nine training datasets identically by mean test mIoU, so it shows that the two architectures agree on the ranking of the training datasets rather than that metric quality is independent of the architecture. The one place where the two architectures diverge is in how much signal is available for the metrics to be scored against. Unlike DeepLabV3+, SegFormer's performance is statistically indistinguishable at moderate synthetic fractions. We attribute this to SegFormer's higher robustness to the synthetic source, which is reflected in the narrow performance gap between synthetic datasets (Figure~\ref{fig:shiftModelPerformance}).
 
 Overall, pre-training shift quantification is a promising direction to predict the utility of a hybrid dataset. However, identifying the relevant shift types, calibrating metrics appropriately, and evaluating them reliably remain open challenges that future research must address.
 
