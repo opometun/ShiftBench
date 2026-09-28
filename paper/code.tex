@@ -14,7 +14,6 @@
 % our own additions to fix reference overflow (too long url)
 \usepackage{url}
 \usepackage{hyperref}
-\usepackage{breakurl}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -90,6 +89,13 @@ The \textbf{Synscapes dataset} \cite{synscapes} comprises 25,000 synthetic image
 The \textbf{GTA-V dataset} \cite{GTA_V} comprises 24,966 synthetic images, which were captured in the fictional city Los Santos of the videogame \textit{Grand Theft Auto V}. Los Santos is inspired by the American city Los Angeles in Southern California. When compared to the European setting of Cityscapes, GTA-V data exhibits pronounced visual and semantic differences (see Appendix~\ref{sec:datasetAnalysis}). Our 2,000-sample training set is drawn from the first 2,526 images, omitting 526 samples that fall outside our study's scope due to poor natural lighting or their depiction of rural rather than urban street scenes.
 
 Image resolutions differ across the three datasets: The Cityscapes samples are of the dimension 2048x1024; the Synscapes samples are of the dimension 1440x720, and the GTA-V samples are of the dimension 1914x1052. To eliminate the influence of resolution on both shift quantification and model training, we resized all samples uniformly to 1440x720. This resolution was chosen based on Synscapes' strict data policy, which prohibits any modification of its data. Cityscapes images and segmentation masks were downscaled directly to a resolution of 1440x720. GTA-V images and segmentation masks were first downscaled to preserve their original aspect ratio and then center-cropped to 1440x720. Image resizing used the LANCZOS technique, which preserves the most information among common sampling methods \cite{kuswantoriautomatic}. For the segmentation masks, we applied NEAREST downscaling technique, which preserves the most amount of class labels among common sampling techniques \cite{rukundo2026beyond}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{images/dataset_samples.png}
+\caption{Representative samples from the three datasets used in this study: Cityscapes (real-world urban scenes), Synscapes (photorealistic synthetic street scenes), and GTA-V (game-generated urban scenes). The examples highlight the different appearance and scene characteristics that motivate the subsequent distribution-shift analysis.}
+\label{fig:dataset_samples}
+\end{figure}
 
 A total of nine different training datasets were created, each comprising 2,000 samples. The number of samples was kept constant to eliminate the influence of dataset size on both shift quantification and model training. Besides the three pure training datasets ($Cityscapes100$, $Synscapes100$, $GTAV100$), six additional hybrid training dataset configurations were sampled randomly from the pure datasets:
 
